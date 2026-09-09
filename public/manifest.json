@@ -1,0 +1,21 @@
+{
+  "name": "Closebook Production OS",
+  "short_name": "Closebook",
+  "description": "Zero-budget, user-owned production and project management operating system.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "icons": [
+    {
+      "src": "/quill-icon.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "/quill-icon.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

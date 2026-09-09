@@ -1,0 +1,161 @@
+@import "tailwindcss";
+
+@theme {
+  --color-electric-indigo: #1500ff;
+  --color-obsidian: #050505;
+  --color-charcoal: #151515;
+  --color-graphite: #1e1e1e;
+  --color-paper: #fdfdfd;
+  --color-silver: #e5e5e5;
+  --color-pearl: #d4d4d4;
+  --color-slate: #2f2f2f;
+  --color-ash: #a3a3a3;
+  --color-stone: #737373;
+
+  --radius-xl: 14px;
+  --radius-card: 14px;
+  --radius-full: 9999px;
+}
+
+:root {
+  --color-electric-indigo: #1500ff;
+  --color-obsidian: #050505;
+  --color-charcoal: #151515;
+  --color-graphite: #1e1e1e;
+  --color-paper: #fdfdfd;
+  --color-silver: #e5e5e5;
+  --color-pearl: #d4d4d4;
+  --color-slate: #2f2f2f;
+  --color-ash: #a3a3a3;
+  --color-stone: #737373;
+
+  --surface-canvas: #050505;
+  --surface-elevated: #151515;
+  --surface-deep: #1e1e1e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  background-color: var(--surface-canvas);
+  color: var(--color-paper);
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Editorial Typography matching Savee Guidelines */
+.display-headline {
+  font-size: clamp(48px, 8vw, 96px);
+  line-height: 0.96;
+  letter-spacing: -0.04em;
+  font-weight: 500;
+  color: var(--color-paper);
+}
+
+.editorial-prose {
+  font-size: clamp(24px, 3.5vw, 36px);
+  line-height: 1.13;
+  letter-spacing: -0.01em;
+  font-weight: 400;
+  color: var(--color-paper);
+}
+
+.subhead-caption {
+  font-size: clamp(15px, 1.8vw, 18px);
+  line-height: 1.5;
+  color: var(--color-pearl);
+}
+
+/* Primary Pill Button: Sole chromatic action in the system */
+.btn-primary-indigo {
+  background-color: var(--color-electric-indigo);
+  color: var(--color-paper);
+  border-radius: 9999px;
+  padding: 12px 28px;
+  font-size: 15px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.btn-primary-indigo:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+/* Ghost Pill Button: Subtle bordered pill */
+.btn-ghost-pill {
+  background-color: transparent;
+  color: var(--color-paper);
+  border: 1px solid rgba(253, 253, 253, 0.25);
+  border-radius: 9999px;
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.btn-ghost-pill:hover {
+  border-color: rgba(253, 253, 253, 0.7);
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+/* Pill Tags */
+.tag-pill {
+  border-radius: 9999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+/* Surfaces - Zero Drop Shadows, Surface Stepping Only */
+.surface-card {
+  background-color: var(--surface-elevated);
+  border-radius: 14px;
+  border: none;
+  box-shadow: none !important;
+}
+
+.surface-overlay {
+  background-color: var(--surface-deep);
+  border-radius: 14px;
+  border: none;
+  box-shadow: none !important;
+}
+
+/* Custom scrollbars matching obsidian aesthetic */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #050505;
+}
+::-webkit-scrollbar-thumb {
+  background: #2f2f2f;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #737373;
+}
