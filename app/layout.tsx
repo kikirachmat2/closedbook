@@ -43,7 +43,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={inter.variable} data-theme="obsidian" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('closebook_theme');if(!t||!['obsidian','indigo','emerald','amber','paper'].includes(t)){t='obsidian';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className="bg-[var(--surface-canvas,#050505)] text-[var(--color-paper,#fdfdfd)] antialiased selection:bg-[var(--color-primary,#ff1e42)] selection:text-[#ffffff]">
         <PreferencesProvider>
           {children}
