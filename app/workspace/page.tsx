@@ -7,7 +7,6 @@ import {
   useClosebookStore,
 } from "@/lib/store";
 import {
-  Clapperboard,
   LayoutDashboard,
   Receipt,
   WalletCards,
@@ -17,25 +16,21 @@ import {
   Bell,
   HardDrive,
   FileSpreadsheet,
-  ArrowRight,
   Plus,
   Search,
-  Filter,
   CheckCircle2,
   XCircle,
   AlertTriangle,
   Camera,
   ArrowUpRight,
-  ShieldCheck,
   Send,
   MessageSquare,
-  Clock,
   MapPin,
   CloudRain,
   Phone,
   ArrowLeft,
   X,
-  RefreshCw,
+  Layers,
 } from "lucide-react";
 
 type TabId =
@@ -149,139 +144,139 @@ export default function WorkspacePage() {
   const activeAlertsCount = store.alerts.filter((a) => !a.isResolved).length;
 
   return (
-    <div className="min-h-screen bg-[#050505] text-[#fdfdfd] selection:bg-[#ff1e42] selection:text-[#ffffff] flex flex-col md:flex-row">
-      {/* 1. Sidebar Navigation */}
-      <aside className="w-full md:w-64 bg-[#0a0a0a] border-r border-white/[0.06] flex flex-col justify-between shrink-0 p-4">
+    <div className="min-h-screen bg-[#050505] text-[#fdfdfd] selection:bg-[#ff1e42] selection:text-[#ffffff] flex flex-col md:flex-row pb-20 md:pb-0">
+      {/* 1. Desktop & Tablet Sidebar (Hidden on Mobile) */}
+      <aside className="hidden md:flex w-64 lg:w-72 bg-[#090909] border-r border-white/[0.06] flex-col justify-between shrink-0 p-5">
         <div>
           {/* Brand Header */}
-          <div className="flex items-center justify-between pb-6 mb-6 border-b border-white/[0.06] pt-2">
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-full overflow-hidden bg-[#121212] border border-white/[0.08] flex items-center justify-center">
-                <Image src="/icon.png" alt="Closebook" width={28} height={28} className="object-cover" />
+          <div className="flex items-center justify-between pb-6 mb-6 border-b border-white/[0.06]">
+            <Link href="/" className="flex items-center gap-3 min-h-[44px]">
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-[#121212] border border-white/[0.08] flex items-center justify-center">
+                <Image src="/icon.png" alt="Closebook" width={32} height={32} className="object-cover" />
               </div>
               <span className="text-base font-medium tracking-tight text-[#fdfdfd]">
                 closebook<span className="text-[#ff1e42]">.</span>
               </span>
             </Link>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#181818] text-[#a3a3a3] border border-white/[0.06]">
+            <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-[#181818] text-[#a3a3a3] border border-white/[0.06]">
               OS v1.0
             </span>
           </div>
 
-          {/* Project Switcher Info */}
-          <div className="surface-overlay p-3 mb-6">
-            <span className="text-[10px] uppercase tracking-wider text-[#737373] block mb-0.5 font-medium">
-              Active Project
+          {/* Project Switcher Info Card */}
+          <div className="surface-overlay p-3.5 mb-6">
+            <span className="text-[10px] uppercase tracking-wider text-[#737373] block mb-1 font-medium">
+              Active Production
             </span>
             <span className="text-xs font-medium text-[#fdfdfd] block truncate">
               {store.project.name}
             </span>
-            <div className="flex items-center gap-1.5 mt-2 text-[11px] text-[#a3a3a3]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#ff1e42]" />
+            <div className="flex items-center gap-2 mt-2 text-[11px] text-[#a3a3a3]">
+              <span className="w-2 h-2 rounded-full bg-[#ff1e42] animate-pulse" />
               <span>Day 4 of 16</span>
               <span>•</span>
-              <span className="text-[#737373]">Live Sync</span>
+              <span className="text-[#10b981] font-medium">Sync Active</span>
             </div>
           </div>
 
-          {/* Nav Items */}
-          <nav className="space-y-1">
+          {/* Nav Items (Ergonomic min-h-[44px] touch target) */}
+          <nav className="space-y-1.5">
             <button
               onClick={() => setActiveTab("overview")}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`w-full flex items-center gap-3 px-3.5 min-h-[44px] rounded-xl text-xs font-medium transition-all ${
                 activeTab === "overview"
-                  ? "bg-[#181818] text-[#ffffff] border border-white/[0.08]"
+                  ? "bg-[#181818] text-[#ffffff] border border-white/[0.12] shadow-sm"
                   : "text-[#a3a3a3] hover:text-[#fdfdfd] hover:bg-[#121212]"
               }`}
             >
-              <LayoutDashboard className="w-4 h-4 text-[#ff1e42]" />
+              <LayoutDashboard className="w-4 h-4 text-[#ff1e42] shrink-0" />
               <span>Executive Overview</span>
             </button>
 
             <button
               onClick={() => setActiveTab("transactions")}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`w-full flex items-center justify-between px-3.5 min-h-[44px] rounded-xl text-xs font-medium transition-all ${
                 activeTab === "transactions"
-                  ? "bg-[#181818] text-[#ffffff] border border-white/[0.08]"
+                  ? "bg-[#181818] text-[#ffffff] border border-white/[0.12] shadow-sm"
                   : "text-[#a3a3a3] hover:text-[#fdfdfd] hover:bg-[#121212]"
               }`}
             >
               <div className="flex items-center gap-3">
-                <Receipt className="w-4 h-4 text-[#ff1e42]" />
+                <Receipt className="w-4 h-4 text-[#ff1e42] shrink-0" />
                 <span>Petty Cash Ledger</span>
               </div>
-              <span className="text-[10px] font-mono text-[#737373] bg-[#121212] px-1.5 py-0.5 rounded">
+              <span className="text-[10px] font-mono text-[#737373] bg-[#121212] px-2 py-0.5 rounded-full">
                 {store.transactions.length}
               </span>
             </button>
 
             <button
               onClick={() => setActiveTab("pockets")}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`w-full flex items-center gap-3 px-3.5 min-h-[44px] rounded-xl text-xs font-medium transition-all ${
                 activeTab === "pockets"
-                  ? "bg-[#181818] text-[#ffffff] border border-white/[0.08]"
+                  ? "bg-[#181818] text-[#ffffff] border border-white/[0.12] shadow-sm"
                   : "text-[#a3a3a3] hover:text-[#fdfdfd] hover:bg-[#121212]"
               }`}
             >
-              <WalletCards className="w-4 h-4 text-[#ff1e42]" />
+              <WalletCards className="w-4 h-4 text-[#ff1e42] shrink-0" />
               <span>Multi-Pocket Cashflow</span>
             </button>
 
             <button
               onClick={() => setActiveTab("tasks")}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`w-full flex items-center justify-between px-3.5 min-h-[44px] rounded-xl text-xs font-medium transition-all ${
                 activeTab === "tasks"
-                  ? "bg-[#181818] text-[#ffffff] border border-white/[0.08]"
+                  ? "bg-[#181818] text-[#ffffff] border border-white/[0.12] shadow-sm"
                   : "text-[#a3a3a3] hover:text-[#fdfdfd] hover:bg-[#121212]"
               }`}
             >
               <div className="flex items-center gap-3">
-                <CheckSquare className="w-4 h-4 text-[#ff1e42]" />
+                <CheckSquare className="w-4 h-4 text-[#ff1e42] shrink-0" />
                 <span>Department Tasks</span>
               </div>
-              <span className="text-[10px] font-mono text-[#737373] bg-[#121212] px-1.5 py-0.5 rounded">
+              <span className="text-[10px] font-mono text-[#737373] bg-[#121212] px-2 py-0.5 rounded-full">
                 {store.tasks.filter((t) => t.status !== "completed").length}
               </span>
             </button>
 
             <button
               onClick={() => setActiveTab("callsheet")}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`w-full flex items-center gap-3 px-3.5 min-h-[44px] rounded-xl text-xs font-medium transition-all ${
                 activeTab === "callsheet"
-                  ? "bg-[#181818] text-[#ffffff] border border-white/[0.08]"
+                  ? "bg-[#181818] text-[#ffffff] border border-white/[0.12] shadow-sm"
                   : "text-[#a3a3a3] hover:text-[#fdfdfd] hover:bg-[#121212]"
               }`}
             >
-              <Film className="w-4 h-4 text-[#ff1e42]" />
+              <Film className="w-4 h-4 text-[#ff1e42] shrink-0" />
               <span>Digital Call Sheet</span>
             </button>
 
             <button
               onClick={() => setActiveTab("equipment")}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`w-full flex items-center gap-3 px-3.5 min-h-[44px] rounded-xl text-xs font-medium transition-all ${
                 activeTab === "equipment"
-                  ? "bg-[#181818] text-[#ffffff] border border-white/[0.08]"
+                  ? "bg-[#181818] text-[#ffffff] border border-white/[0.12] shadow-sm"
                   : "text-[#a3a3a3] hover:text-[#fdfdfd] hover:bg-[#121212]"
               }`}
             >
-              <Package className="w-4 h-4 text-[#ff1e42]" />
+              <Package className="w-4 h-4 text-[#ff1e42] shrink-0" />
               <span>Equipment Rental</span>
             </button>
 
             <button
               onClick={() => setActiveTab("alerts")}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`w-full flex items-center justify-between px-3.5 min-h-[44px] rounded-xl text-xs font-medium transition-all ${
                 activeTab === "alerts"
-                  ? "bg-[#181818] text-[#ffffff] border border-white/[0.08]"
+                  ? "bg-[#181818] text-[#ffffff] border border-white/[0.12] shadow-sm"
                   : "text-[#a3a3a3] hover:text-[#fdfdfd] hover:bg-[#121212]"
               }`}
             >
               <div className="flex items-center gap-3">
-                <Bell className="w-4 h-4 text-[#ff1e42]" />
+                <Bell className="w-4 h-4 text-[#ff1e42] shrink-0" />
                 <span>Automated Alerts</span>
               </div>
               {activeAlertsCount > 0 && (
-                <span className="text-[10px] font-mono font-bold text-white bg-[#ff1e42] px-1.5 py-0.5 rounded-full">
+                <span className="text-[10px] font-mono font-bold text-white bg-[#ff1e42] px-2 py-0.5 rounded-full">
                   {activeAlertsCount}
                 </span>
               )}
@@ -289,23 +284,23 @@ export default function WorkspacePage() {
 
             <button
               onClick={() => setActiveTab("sync")}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`w-full flex items-center gap-3 px-3.5 min-h-[44px] rounded-xl text-xs font-medium transition-all ${
                 activeTab === "sync"
-                  ? "bg-[#181818] text-[#ffffff] border border-white/[0.08]"
+                  ? "bg-[#181818] text-[#ffffff] border border-white/[0.12] shadow-sm"
                   : "text-[#a3a3a3] hover:text-[#fdfdfd] hover:bg-[#121212]"
               }`}
             >
-              <FileSpreadsheet className="w-4 h-4 text-[#ff1e42]" />
+              <FileSpreadsheet className="w-4 h-4 text-[#ff1e42] shrink-0" />
               <span>Google Sheet Mirror</span>
             </button>
           </nav>
         </div>
 
-        {/* Bottom Actions */}
+        {/* Bottom Sidebar Controls */}
         <div className="pt-6 border-t border-white/[0.06] space-y-3">
           <button
             onClick={() => setIsLogModalOpen(true)}
-            className="w-full btn-primary-crimson text-xs py-2.5"
+            className="w-full btn-primary-crimson text-xs min-h-[44px]"
           >
             <Plus className="w-4 h-4" />
             <span>Log Petty Cash</span>
@@ -313,54 +308,67 @@ export default function WorkspacePage() {
 
           <Link
             href="/"
-            className="w-full btn-ghost-pill text-xs py-2 text-center flex items-center justify-center gap-1.5 text-[#737373] hover:text-[#fdfdfd]"
+            className="w-full btn-ghost-pill text-xs min-h-[44px] text-center flex items-center justify-center gap-1.5 text-[#737373] hover:text-[#fdfdfd]"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Return to Public Site</span>
+            <ArrowLeft className="w-4 h-4" />
+            <span>Public Site</span>
           </Link>
         </div>
       </aside>
 
       {/* 2. Main Workspace Body */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        {/* Top Header Bar */}
-        <header className="h-16 border-b border-white/[0.06] bg-[#050505]/80 backdrop-blur-md px-6 flex items-center justify-between shrink-0">
+        {/* Top Header Bar (Adaptive Mobile/Desktop) */}
+        <header className="h-16 border-b border-white/[0.06] bg-[#050505]/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between shrink-0 sticky top-0 z-30">
           <div className="flex items-center gap-3">
-            <h1 className="text-sm font-medium text-[#fdfdfd] capitalize">
-              {activeTab === "overview" && "Executive Dashboard"}
-              {activeTab === "transactions" && "Petty Cash Transactions Ledger"}
-              {activeTab === "pockets" && "Multi-Pocket Cashflow Hierarchy"}
-              {activeTab === "tasks" && "Department Workflows & Tasks"}
-              {activeTab === "callsheet" && "Today's Call Sheet & Schedule"}
-              {activeTab === "equipment" && "Rental Gear & Vendor Tracker"}
-              {activeTab === "alerts" && "Automated Warnings & Reminders"}
-              {activeTab === "sync" && "Google Workspace Sync Engine"}
-            </h1>
+            {/* Mobile Brand Logo */}
+            <Link href="/" className="md:hidden flex items-center gap-2 min-h-[44px]">
+              <div className="w-7 h-7 rounded-full overflow-hidden bg-[#121212] border border-white/[0.08] flex items-center justify-center">
+                <Image src="/icon.png" alt="Closebook" width={28} height={28} className="object-cover" />
+              </div>
+              <span className="text-sm font-medium tracking-tight text-[#fdfdfd]">
+                closebook<span className="text-[#ff1e42]">.</span>
+              </span>
+            </Link>
+
+            <div className="hidden md:block">
+              <h1 className="text-sm font-medium text-[#fdfdfd] capitalize">
+                {activeTab === "overview" && "Executive Dashboard"}
+                {activeTab === "transactions" && "Petty Cash Transactions Ledger"}
+                {activeTab === "pockets" && "Multi-Pocket Cashflow Hierarchy"}
+                {activeTab === "tasks" && "Department Workflows & Tasks"}
+                {activeTab === "callsheet" && "Today's Call Sheet & Schedule"}
+                {activeTab === "equipment" && "Rental Gear & Vendor Tracker"}
+                {activeTab === "alerts" && "Automated Warnings & Reminders"}
+                {activeTab === "sync" && "Google Workspace Sync Engine"}
+              </h1>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-[#121212] border border-white/[0.06] text-xs text-[#a3a3a3]">
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#121212] border border-white/[0.06] text-xs text-[#a3a3a3] min-h-[36px]">
               <span className="w-2 h-2 rounded-full bg-[#ff1e42] animate-pulse" />
-              <span>Owner Drive: Connected</span>
+              <span className="hidden sm:inline">Drive Vault:</span>
+              <span className="font-mono text-[#fdfdfd] text-[11px]">Synced</span>
             </div>
 
             <button
               onClick={() => setIsLogModalOpen(true)}
-              className="btn-primary-crimson text-xs py-1.5 px-3.5 hidden sm:inline-flex"
+              className="btn-primary-crimson text-xs min-h-[40px] px-3.5 hidden sm:inline-flex"
             >
               <Plus className="w-3.5 h-3.5" />
-              Quick Log
+              <span>Log Expense</span>
             </button>
           </div>
         </header>
 
         {/* Tab Content Panels */}
-        <div className="p-6 md:p-8 space-y-8 flex-1">
+        <div className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8 flex-1">
           {/* ========================================================================= */}
           {/* TAB 1: EXECUTIVE OVERVIEW */}
           {/* ========================================================================= */}
           {activeTab === "overview" && (
-            <div className="space-y-8 animate-fade-in">
+            <div className="space-y-6 sm:space-y-8 animate-fade-in">
               {/* Stat Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="surface-panel p-5">
@@ -376,17 +384,17 @@ export default function WorkspacePage() {
                   <span className="text-2xl font-mono font-medium text-[#fdfdfd]">
                     ${totalSpent.toLocaleString()}
                   </span>
-                  <span className="text-[11px] text-[#ff1e42] mt-2 block">
+                  <span className="text-[11px] text-[#ff1e42] mt-2 block font-medium">
                     {((totalSpent / totalAllocated) * 100).toFixed(1)}% burn rate
                   </span>
                 </div>
 
                 <div className="surface-panel p-5">
                   <span className="text-xs text-[#737373] block mb-1">UPM Field Cash on Hand</span>
-                  <span className="text-2xl font-mono font-medium text-[#fdfdfd]">
+                  <span className="text-2xl font-mono font-medium text-[#10b981]">
                     ${store.pockets.find((p) => p.id === "pkt-upm")?.balance.toLocaleString()}
                   </span>
-                  <span className="text-[11px] text-[#10b981] mt-2 block">Sufficient for Day 4</span>
+                  <span className="text-[11px] text-[#a3a3a3] mt-2 block">Sufficient for Day 4</span>
                 </div>
 
                 <div className="surface-panel p-5">
@@ -394,21 +402,23 @@ export default function WorkspacePage() {
                   <span className="text-2xl font-mono font-medium text-[#ff1e42]">
                     {activeAlertsCount} Flags
                   </span>
-                  <span className="text-[11px] text-[#a3a3a3] mt-2 block">Requires review</span>
+                  <span className="text-[11px] text-[#a3a3a3] mt-2 block">Audit required</span>
                 </div>
               </div>
 
               {/* Department Budget Burn-rate Progress Bars */}
-              <div className="surface-panel p-6">
+              <div className="surface-panel p-5 sm:p-6">
                 <div className="flex items-center justify-between pb-4 mb-6 border-b border-white/[0.06]">
                   <div>
                     <h3 className="text-sm font-medium text-[#fdfdfd]">Department Budget Realization</h3>
                     <p className="text-xs text-[#737373] mt-0.5">Real-time spend tracking against departmental ceiling</p>
                   </div>
-                  <span className="text-xs text-[#a3a3a3] font-mono">{store.departments.length} Departments</span>
+                  <span className="text-xs text-[#a3a3a3] font-mono hidden sm:inline">
+                    {store.departments.length} Departments
+                  </span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
                   {store.departments.map((dept) => {
                     const pct = Math.min(100, Math.round((dept.spentAmount / dept.allocatedBudget) * 100));
                     const isHigh = pct >= 80;
@@ -416,7 +426,7 @@ export default function WorkspacePage() {
                       <div key={dept.id} className="space-y-2">
                         <div className="flex items-center justify-between text-xs">
                           <span className="font-medium text-[#fdfdfd] flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: dept.color }} />
+                            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: dept.color }} />
                             {dept.name}
                           </span>
                           <span className="font-mono text-[#a3a3a3]">
@@ -427,7 +437,7 @@ export default function WorkspacePage() {
                           </span>
                         </div>
                         {/* Progress track */}
-                        <div className="h-1.5 w-full bg-[#181818] rounded-full overflow-hidden">
+                        <div className="h-2 w-full bg-[#181818] rounded-full overflow-hidden">
                           <div
                             className="h-full rounded-full transition-all duration-500"
                             style={{
@@ -445,12 +455,12 @@ export default function WorkspacePage() {
               {/* Quick Split: Recent Ledger & Live Alerts */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 {/* Recent Transactions */}
-                <div className="lg:col-span-7 surface-panel p-6">
+                <div className="lg:col-span-7 surface-panel p-5 sm:p-6">
                   <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.06]">
                     <h3 className="text-sm font-medium text-[#fdfdfd]">Recent Petty Cash Entries</h3>
                     <button
                       onClick={() => setActiveTab("transactions")}
-                      className="text-xs text-[#ff1e42] hover:underline"
+                      className="text-xs text-[#ff1e42] hover:underline min-h-[36px] flex items-center"
                     >
                       View All Ledger
                     </button>
@@ -458,7 +468,7 @@ export default function WorkspacePage() {
 
                   <div className="divide-y divide-white/[0.04] text-xs">
                     {store.transactions.slice(0, 4).map((tx) => (
-                      <div key={tx.id} className="py-3 flex items-center justify-between">
+                      <div key={tx.id} className="py-3.5 flex items-center justify-between">
                         <div>
                           <div className="font-medium text-[#fdfdfd] flex items-center gap-2">
                             {tx.description}
@@ -474,7 +484,7 @@ export default function WorkspacePage() {
                             ${tx.amount.toFixed(2)}
                           </span>
                           <span
-                            className={`text-[10px] capitalize ${
+                            className={`text-[10px] font-medium capitalize ${
                               tx.status === "approved"
                                 ? "text-[#10b981]"
                                 : tx.status === "rejected"
@@ -491,7 +501,7 @@ export default function WorkspacePage() {
                 </div>
 
                 {/* Live System Alerts */}
-                <div className="lg:col-span-5 surface-panel p-6">
+                <div className="lg:col-span-5 surface-panel p-5 sm:p-6">
                   <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.06]">
                     <h3 className="text-sm font-medium text-[#fdfdfd]">Active Production Flags</h3>
                     <span className="text-xs text-[#737373]">Cron Guardrails</span>
@@ -501,7 +511,7 @@ export default function WorkspacePage() {
                     {store.alerts.filter((a) => !a.isResolved).map((alert) => (
                       <div
                         key={alert.id}
-                        className="surface-overlay p-3.5 flex items-start gap-3"
+                        className="surface-overlay p-4 flex items-start gap-3"
                       >
                         <AlertTriangle
                           className={`w-4 h-4 shrink-0 mt-0.5 ${
@@ -509,17 +519,17 @@ export default function WorkspacePage() {
                           }`}
                         />
                         <div className="flex-1">
-                          <span className="text-xs font-medium text-[#fdfdfd] block mb-0.5">
+                          <span className="text-xs font-medium text-[#fdfdfd] block mb-1">
                             {alert.title}
                           </span>
-                          <p className="text-[11px] text-[#a3a3a3] leading-relaxed mb-2">
+                          <p className="text-[11px] text-[#a3a3a3] leading-relaxed mb-3">
                             {alert.message}
                           </p>
                           <div className="flex items-center justify-between">
                             <span className="text-[10px] text-[#737373]">{alert.timestamp}</span>
                             <button
                               onClick={() => store.resolveAlert(alert.id)}
-                              className="text-[10px] font-medium text-[#ff1e42] hover:underline"
+                              className="text-[11px] font-medium text-[#ff1e42] hover:underline min-h-[36px] flex items-center"
                             >
                               Resolve
                             </button>
@@ -539,23 +549,23 @@ export default function WorkspacePage() {
           {activeTab === "transactions" && (
             <div className="space-y-6 animate-fade-in">
               {/* Action Bar & Filters */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3 flex-1 max-w-md">
-                  <div className="relative w-full">
-                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#737373]" />
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1 max-w-xl">
+                  <div className="relative flex-1">
+                    <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#737373]" />
                     <input
                       type="text"
-                      placeholder="Search transactions, vendor, or ID..."
+                      placeholder="Search description, vendor, or ID..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-[#121212] border border-white/[0.08] rounded-full pl-9 pr-4 py-2 text-xs text-[#fdfdfd] placeholder-[#737373] focus:outline-none focus:border-[#ff1e42]"
+                      className="w-full bg-[#121212] border border-white/[0.08] rounded-full pl-10 pr-4 min-h-[44px] text-xs text-[#fdfdfd] placeholder-[#737373] focus:outline-none focus:border-[#ff1e42]"
                     />
                   </div>
 
                   <select
                     value={selectedDeptFilter}
                     onChange={(e) => setSelectedDeptFilter(e.target.value)}
-                    className="bg-[#121212] border border-white/[0.08] rounded-full px-3 py-2 text-xs text-[#fdfdfd] focus:outline-none"
+                    className="bg-[#121212] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none"
                   >
                     <option value="all">All Departments</option>
                     {store.departments.map((d) => (
@@ -568,9 +578,9 @@ export default function WorkspacePage() {
 
                 <button
                   onClick={() => setIsLogModalOpen(true)}
-                  className="btn-primary-crimson text-xs py-2 px-5"
+                  className="btn-primary-crimson text-xs min-h-[44px] px-5"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="w-4 h-4" />
                   <span>Log Petty Cash</span>
                 </button>
               </div>
@@ -612,43 +622,45 @@ export default function WorkspacePage() {
                           </td>
                           <td className="p-4">
                             <span
-                              className={`text-[10px] font-mono px-2 py-0.5 rounded-full uppercase ${
+                              className={`text-[10px] font-mono px-2.5 py-1 rounded-full uppercase ${
                                 tx.status === "approved"
-                                  ? "bg-[#10b981]/10 text-[#10b981]"
+                                  ? "bg-[#10b981]/15 text-[#10b981] font-semibold"
                                   : tx.status === "rejected"
-                                  ? "bg-[#ff1e42]/10 text-[#ff1e42]"
-                                  : "bg-amber-400/10 text-amber-400"
+                                  ? "bg-[#ff1e42]/15 text-[#ff1e42] font-semibold"
+                                  : "bg-amber-400/15 text-amber-400 font-semibold"
                               }`}
                             >
                               {tx.status}
                             </span>
                           </td>
-                          <td className="p-4 text-right space-x-1.5">
-                            {tx.status === "pending" && (
-                              <>
-                                <button
-                                  onClick={() => store.updateTransactionStatus(tx.id, "approved")}
-                                  className="p-1 text-[#10b981] hover:bg-white/[0.05] rounded"
-                                  title="Approve Transaction"
-                                >
-                                  <CheckCircle2 className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => store.updateTransactionStatus(tx.id, "rejected")}
-                                  className="p-1 text-[#ff1e42] hover:bg-white/[0.05] rounded"
-                                  title="Reject Transaction"
-                                >
-                                  <XCircle className="w-4 h-4" />
-                                </button>
-                              </>
-                            )}
-                            <button
-                              onClick={() => setActiveCommentTxId(activeCommentTxId === tx.id ? null : tx.id)}
-                              className="p-1 text-[#737373] hover:text-[#fdfdfd] hover:bg-white/[0.05] rounded"
-                              title="View Context Discussion"
-                            >
-                              <MessageSquare className="w-4 h-4" />
-                            </button>
+                          <td className="p-4 text-right">
+                            <div className="inline-flex items-center gap-1">
+                              {tx.status === "pending" && (
+                                <>
+                                  <button
+                                    onClick={() => store.updateTransactionStatus(tx.id, "approved")}
+                                    className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[#10b981] hover:bg-white/[0.05] rounded-full"
+                                    title="Approve Transaction"
+                                  >
+                                    <CheckCircle2 className="w-5 h-5" />
+                                  </button>
+                                  <button
+                                    onClick={() => store.updateTransactionStatus(tx.id, "rejected")}
+                                    className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[#ff1e42] hover:bg-white/[0.05] rounded-full"
+                                    title="Reject Transaction"
+                                  >
+                                    <XCircle className="w-5 h-5" />
+                                  </button>
+                                </>
+                              )}
+                              <button
+                                onClick={() => setActiveCommentTxId(activeCommentTxId === tx.id ? null : tx.id)}
+                                className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[#737373] hover:text-[#fdfdfd] hover:bg-white/[0.05] rounded-full"
+                                title="Context Discussion"
+                              >
+                                <MessageSquare className="w-5 h-5" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -657,9 +669,9 @@ export default function WorkspacePage() {
                 </div>
               </div>
 
-              {/* Contextual Discussion Drawer (if transaction opened) */}
+              {/* Contextual Discussion Drawer */}
               {activeCommentTxId && (
-                <div className="surface-panel p-6 border border-[#ff1e42]/30 animate-fade-in">
+                <div className="surface-panel p-5 sm:p-6 border border-[#ff1e42]/30 animate-fade-in">
                   <div className="flex items-center justify-between pb-3 mb-4 border-b border-white/[0.06]">
                     <div className="flex items-center gap-2">
                       <MessageSquare className="w-4 h-4 text-[#ff1e42]" />
@@ -669,9 +681,9 @@ export default function WorkspacePage() {
                     </div>
                     <button
                       onClick={() => setActiveCommentTxId(null)}
-                      className="text-[#737373] hover:text-[#fdfdfd]"
+                      className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[#737373] hover:text-[#fdfdfd]"
                     >
-                      ✕
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
 
@@ -696,13 +708,13 @@ export default function WorkspacePage() {
                       value={commentText}
                       onChange={(e) => setCommentText(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleSendComment(activeCommentTxId)}
-                      className="flex-1 bg-[#121212] border border-white/[0.08] rounded-full px-4 py-2 text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
+                      className="flex-1 bg-[#121212] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
                     />
                     <button
                       onClick={() => handleSendComment(activeCommentTxId)}
-                      className="btn-primary-crimson text-xs py-2 px-4"
+                      className="btn-primary-crimson min-h-[44px] min-w-[44px] px-4"
                     >
-                      <Send className="w-3.5 h-3.5" />
+                      <Send className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -714,7 +726,7 @@ export default function WorkspacePage() {
           {/* TAB 3: MULTI-POCKET CASHFLOW */}
           {/* ========================================================================= */}
           {activeTab === "pockets" && (
-            <div className="space-y-8 animate-fade-in">
+            <div className="space-y-6 sm:space-y-8 animate-fade-in">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <h2 className="text-xl font-medium text-[#fdfdfd]">Hierarchical Cash Pockets</h2>
@@ -724,7 +736,7 @@ export default function WorkspacePage() {
                 </div>
                 <button
                   onClick={() => setIsTransferModalOpen(true)}
-                  className="btn-primary-crimson text-xs py-2 px-5"
+                  className="btn-primary-crimson text-xs min-h-[44px] px-5"
                 >
                   <ArrowUpRight className="w-4 h-4" />
                   <span>Transfer Pocket Funds</span>
@@ -732,12 +744,12 @@ export default function WorkspacePage() {
               </div>
 
               {/* Hierarchy Tree Visual */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
                 {store.pockets.map((pocket, idx) => (
-                  <div key={pocket.id} className="surface-panel p-6 relative flex flex-col justify-between">
+                  <div key={pocket.id} className="surface-panel p-5 sm:p-6 relative flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between mb-4">
-                        <span className="text-[10px] font-mono text-[#ff1e42] bg-[#ff1e42]/10 px-2 py-0.5 rounded-full uppercase">
+                        <span className="text-[10px] font-mono text-[#ff1e42] bg-[#ff1e42]/10 px-2.5 py-1 rounded-full uppercase">
                           Tier {idx + 1} • {pocket.type.replace("_", " ")}
                         </span>
                         <WalletCards className="w-4 h-4 text-[#737373]" />
@@ -756,7 +768,7 @@ export default function WorkspacePage() {
 
                     <div className="pt-4 border-t border-white/[0.06] flex items-center justify-between text-xs text-[#737373]">
                       <span>Max Cap: ${pocket.allocated.toLocaleString()}</span>
-                      <span className="text-[#10b981]">Active & Audited</span>
+                      <span className="text-[#10b981] font-medium">Audited & Active</span>
                     </div>
                   </div>
                 ))}
@@ -778,14 +790,14 @@ export default function WorkspacePage() {
                 </div>
                 <button
                   onClick={() => setIsTaskModalOpen(true)}
-                  className="btn-primary-crimson text-xs py-2 px-5"
+                  className="btn-primary-crimson text-xs min-h-[44px] px-5"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="w-4 h-4" />
                   <span>New Department Task</span>
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
                 {/* Column 1: To Do */}
                 <div className="surface-panel p-5 space-y-4">
                   <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
@@ -801,11 +813,11 @@ export default function WorkspacePage() {
                         <div
                           key={task.id}
                           onClick={() => store.toggleTask(task.id)}
-                          className="surface-overlay p-4 cursor-pointer hover:border-white/[0.15] transition-all"
+                          className="surface-overlay p-4 cursor-pointer hover:border-white/[0.15] transition-all min-h-[44px]"
                         >
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-[10px] font-mono text-[#737373]">{task.departmentName}</span>
-                            <span className="text-[10px] font-mono text-[#ff1e42] uppercase">{task.priority}</span>
+                            <span className="text-[10px] font-mono text-[#ff1e42] uppercase font-semibold">{task.priority}</span>
                           </div>
                           <span className="text-xs font-medium text-[#fdfdfd] block mb-2">{task.title}</span>
                           <div className="flex items-center justify-between text-[11px] text-[#737373]">
@@ -832,11 +844,11 @@ export default function WorkspacePage() {
                         <div
                           key={task.id}
                           onClick={() => store.toggleTask(task.id)}
-                          className="surface-overlay p-4 cursor-pointer hover:border-white/[0.15] transition-all"
+                          className="surface-overlay p-4 cursor-pointer hover:border-white/[0.15] transition-all min-h-[44px]"
                         >
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-[10px] font-mono text-[#737373]">{task.departmentName}</span>
-                            <span className="text-[10px] font-mono text-amber-400 uppercase">{task.priority}</span>
+                            <span className="text-[10px] font-mono text-amber-400 uppercase font-semibold">{task.priority}</span>
                           </div>
                           <span className="text-xs font-medium text-[#fdfdfd] block mb-2">{task.title}</span>
                           <div className="flex items-center justify-between text-[11px] text-[#737373]">
@@ -863,11 +875,11 @@ export default function WorkspacePage() {
                         <div
                           key={task.id}
                           onClick={() => store.toggleTask(task.id)}
-                          className="surface-overlay p-4 opacity-60 cursor-pointer hover:opacity-100 transition-all line-through"
+                          className="surface-overlay p-4 opacity-60 cursor-pointer hover:opacity-100 transition-all line-through min-h-[44px]"
                         >
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-[10px] font-mono text-[#737373]">{task.departmentName}</span>
-                            <span className="text-[10px] font-mono text-[#10b981]">Done</span>
+                            <span className="text-[10px] font-mono text-[#10b981] font-semibold">Done</span>
                           </div>
                           <span className="text-xs font-medium text-[#fdfdfd] block mb-2">{task.title}</span>
                           <div className="flex items-center justify-between text-[11px] text-[#737373]">
@@ -887,15 +899,15 @@ export default function WorkspacePage() {
           {/* ========================================================================= */}
           {activeTab === "callsheet" && (
             <div className="space-y-6 max-w-4xl animate-fade-in">
-              <div className="surface-panel p-8">
-                <div className="flex items-center justify-between pb-6 mb-6 border-b border-white/[0.06]">
+              <div className="surface-panel p-6 sm:p-8">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 mb-6 border-b border-white/[0.06] gap-4">
                   <div>
-                    <span className="text-xs font-mono text-[#ff1e42] uppercase tracking-wider block mb-1">
+                    <span className="text-xs font-mono text-[#ff1e42] uppercase tracking-wider block mb-1 font-semibold">
                       Day {store.callSheet.dayNumber} of {store.callSheet.totalDays}
                     </span>
                     <h2 className="text-2xl font-medium text-[#fdfdfd]">{store.callSheet.date}</h2>
                   </div>
-                  <div className="text-right">
+                  <div className="sm:text-right">
                     <span className="text-xs text-[#737373] block">General Crew Call Time</span>
                     <span className="text-2xl font-mono font-medium text-[#ff1e42]">
                       {store.callSheet.callTime}
@@ -903,9 +915,9 @@ export default function WorkspacePage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6 mb-6">
                   <div className="surface-overlay p-4">
-                    <span className="text-xs text-[#737373] flex items-center gap-1.5 mb-1.5">
+                    <span className="text-xs text-[#737373] flex items-center gap-1.5 mb-1.5 font-medium">
                       <MapPin className="w-3.5 h-3.5 text-[#ff1e42]" /> Location Details
                     </span>
                     <span className="text-sm font-medium text-[#fdfdfd] block mb-1">
@@ -915,7 +927,7 @@ export default function WorkspacePage() {
                   </div>
 
                   <div className="surface-overlay p-4">
-                    <span className="text-xs text-[#737373] flex items-center gap-1.5 mb-1.5">
+                    <span className="text-xs text-[#737373] flex items-center gap-1.5 mb-1.5 font-medium">
                       <CloudRain className="w-3.5 h-3.5 text-[#ff1e42]" /> Weather Forecast & Wrap
                     </span>
                     <span className="text-sm font-medium text-[#fdfdfd] block mb-1">
@@ -936,7 +948,7 @@ export default function WorkspacePage() {
                     <p className="text-xs text-[#a3a3a3] leading-relaxed">{store.callSheet.directorNotes}</p>
                   </div>
 
-                  <div className="p-4 rounded-[14px] bg-[#121212] border border-white/[0.06] flex items-center justify-between">
+                  <div className="p-4 rounded-[14px] bg-[#121212] border border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <span className="text-xs text-[#737373] flex items-center gap-2">
                       <Phone className="w-3.5 h-3.5 text-[#ff1e42]" /> Emergency / Set Medic Contacts
                     </span>
@@ -952,26 +964,24 @@ export default function WorkspacePage() {
           {/* ========================================================================= */}
           {activeTab === "equipment" && (
             <div className="space-y-6 animate-fade-in">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-medium text-[#fdfdfd]">Equipment & Rental Tracker</h2>
-                  <p className="text-xs text-[#737373] mt-0.5">
-                    Avoid penalty fees with automatic return countdowns.
-                  </p>
-                </div>
+              <div>
+                <h2 className="text-xl font-medium text-[#fdfdfd]">Equipment & Rental Tracker</h2>
+                <p className="text-xs text-[#737373] mt-0.5">
+                  Avoid penalty fees with automatic return countdowns.
+                </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {store.equipment.map((eq) => (
-                  <div key={eq.id} className="surface-panel p-6 flex flex-col justify-between">
+                  <div key={eq.id} className="surface-panel p-5 sm:p-6 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-[10px] font-mono text-[#737373] uppercase">{eq.department}</span>
                         <span
-                          className={`text-[10px] font-mono px-2 py-0.5 rounded-full uppercase ${
+                          className={`text-[10px] font-mono px-2.5 py-1 rounded-full uppercase ${
                             eq.daysRemaining <= 2
-                              ? "bg-[#ff1e42]/10 text-[#ff1e42] font-bold"
-                              : "bg-[#10b981]/10 text-[#10b981]"
+                              ? "bg-[#ff1e42]/15 text-[#ff1e42] font-bold"
+                              : "bg-[#10b981]/15 text-[#10b981] font-semibold"
                           }`}
                         >
                           {eq.daysRemaining} Days Left
@@ -1029,13 +1039,13 @@ export default function WorkspacePage() {
                         {!alert.isResolved ? (
                           <button
                             onClick={() => store.resolveAlert(alert.id)}
-                            className="btn-ghost-pill text-xs py-1 px-3 text-[#ff1e42] border-[#ff1e42]/30"
+                            className="btn-ghost-pill text-xs min-h-[38px] px-3.5 text-[#ff1e42] border-[#ff1e42]/30"
                           >
                             Acknowledge & Resolve
                           </button>
                         ) : (
-                          <span className="text-xs text-[#10b981] flex items-center gap-1 font-mono">
-                            <CheckCircle2 className="w-3.5 h-3.5" /> Resolved
+                          <span className="text-xs text-[#10b981] flex items-center gap-1.5 font-mono font-medium">
+                            <CheckCircle2 className="w-4 h-4" /> Resolved
                           </span>
                         )}
                       </div>
@@ -1058,14 +1068,14 @@ export default function WorkspacePage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="surface-panel p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <HardDrive className="w-4 h-4 text-[#ff1e42]" />
                     <h3 className="text-sm font-medium text-[#fdfdfd]">Google Drive Folder Tree</h3>
                   </div>
-                  <div className="surface-overlay p-3 font-mono text-xs text-[#a3a3a3] space-y-1.5">
-                    <div className="text-white">📁 SetFlow_Closebook_TheQuietHorizon/</div>
+                  <div className="surface-overlay p-3.5 font-mono text-xs text-[#a3a3a3] space-y-1.5">
+                    <div className="text-white font-medium">📁 SetFlow_Closebook_TheQuietHorizon/</div>
                     <div className="pl-4">📁 01_Petty_Cash_Receipts/ ({store.transactions.length} files)</div>
                     <div className="pl-4">📁 02_Daily_Call_Sheets/ (Day 1-4)</div>
                     <div className="pl-4">📁 03_Deal_Memos_Talent/ (28 signed)</div>
@@ -1078,11 +1088,11 @@ export default function WorkspacePage() {
                     <FileSpreadsheet className="w-4 h-4 text-[#ff1e42]" />
                     <h3 className="text-sm font-medium text-[#fdfdfd]">Google Sheet Ledger Status</h3>
                   </div>
-                  <div className="surface-overlay p-3 font-mono text-xs text-[#a3a3a3] space-y-1.5">
-                    <div className="text-white">📊 Master_Shooting_Ledger.xlsx</div>
+                  <div className="surface-overlay p-3.5 font-mono text-xs text-[#a3a3a3] space-y-1.5">
+                    <div className="text-white font-medium">📊 Master_Shooting_Ledger.xlsx</div>
                     <div>Sheet: &apos;Cashflow_Day_4&apos;</div>
                     <div>Row Count: {store.transactions.length + 1} rows</div>
-                    <div className="text-[#10b981]">Status: Dual-Stream Synced</div>
+                    <div className="text-[#10b981] font-semibold">Status: Dual-Stream Synced</div>
                   </div>
                 </div>
               </div>
@@ -1092,37 +1102,94 @@ export default function WorkspacePage() {
       </div>
 
       {/* ========================================================================= */}
-      {/* MODAL 1: LOG PETTY CASH */}
+      {/* MOBILE STICKY BOTTOM NAVIGATION BAR (Thumb Zone on Smartphones) */}
+      {/* ========================================================================= */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#070707]/95 backdrop-blur-xl border-t border-white/[0.08] px-2 py-1.5 flex items-center justify-around">
+        <button
+          onClick={() => setActiveTab("overview")}
+          className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] rounded-lg transition-colors ${
+            activeTab === "overview" ? "text-[#ff1e42]" : "text-[#737373]"
+          }`}
+        >
+          <LayoutDashboard className="w-5 h-5" />
+          <span className="text-[10px] mt-1 font-medium">Overview</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("transactions")}
+          className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] rounded-lg transition-colors ${
+            activeTab === "transactions" ? "text-[#ff1e42]" : "text-[#737373]"
+          }`}
+        >
+          <Receipt className="w-5 h-5" />
+          <span className="text-[10px] mt-1 font-medium">Ledger</span>
+        </button>
+
+        {/* Mobile Central Quick Log Floating Action Button (FAB) */}
+        <button
+          onClick={() => setIsLogModalOpen(true)}
+          className="w-12 h-12 rounded-full bg-[#ff1e42] text-white flex items-center justify-center shadow-[0_0_20px_rgba(255,30,66,0.4)] -mt-4 shrink-0 transition-transform active:scale-95"
+          title="Quick Log Petty Cash"
+        >
+          <Plus className="w-6 h-6" />
+        </button>
+
+        <button
+          onClick={() => setActiveTab("tasks")}
+          className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] rounded-lg transition-colors ${
+            activeTab === "tasks" ? "text-[#ff1e42]" : "text-[#737373]"
+          }`}
+        >
+          <CheckSquare className="w-5 h-5" />
+          <span className="text-[10px] mt-1 font-medium">Tasks</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("callsheet")}
+          className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] rounded-lg transition-colors ${
+            activeTab === "callsheet" ? "text-[#ff1e42]" : "text-[#737373]"
+          }`}
+        >
+          <Film className="w-5 h-5" />
+          <span className="text-[10px] mt-1 font-medium">Call Sheet</span>
+        </button>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* MODAL 1: LOG PETTY CASH (Bottom Sheet on Mobile, Centered on Desktop) */}
       {/* ========================================================================= */}
       {isLogModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4">
-          <div className="surface-panel max-w-lg w-full p-6 relative animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/85 backdrop-blur-sm p-0 sm:p-4">
+          <div className="surface-panel w-full sm:max-w-lg rounded-t-[20px] sm:rounded-[14px] p-6 relative max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.06]">
               <div className="flex items-center gap-2">
-                <Receipt className="w-4 h-4 text-[#ff1e42]" />
+                <Receipt className="w-5 h-5 text-[#ff1e42]" />
                 <h3 className="text-sm font-medium text-[#fdfdfd]">Log Petty Cash Expense</h3>
               </div>
-              <button onClick={() => setIsLogModalOpen(false)} className="text-[#737373] hover:text-[#fdfdfd]">
-                <X className="w-4 h-4" />
+              <button
+                onClick={() => setIsLogModalOpen(false)}
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[#737373] hover:text-[#fdfdfd]"
+              >
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleCreateTransaction} className="space-y-4">
               <div>
-                <label className="block text-xs text-[#737373] mb-1">Expense Description</label>
+                <label className="block text-xs text-[#737373] mb-1.5">Expense Description</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Extra Generator Diesel (100L)"
                   value={newDesc}
                   onChange={(e) => setNewDesc(e.target.value)}
-                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 py-2 text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
+                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-[#737373] mb-1">Amount ($ USD)</label>
+                  <label className="block text-xs text-[#737373] mb-1.5">Amount ($ USD)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -1130,29 +1197,29 @@ export default function WorkspacePage() {
                     placeholder="e.g. 240.00"
                     value={newAmount}
                     onChange={(e) => setNewAmount(e.target.value)}
-                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 py-2 text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
+                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs text-[#737373] mb-1">Vendor Name</label>
+                  <label className="block text-xs text-[#737373] mb-1.5">Vendor Name</label>
                   <input
                     type="text"
                     placeholder="e.g. Marina Gas Station"
                     value={newVendor}
                     onChange={(e) => setNewVendor(e.target.value)}
-                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 py-2 text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
+                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-[#737373] mb-1">Department</label>
+                  <label className="block text-xs text-[#737373] mb-1.5">Department</label>
                   <select
                     value={newDept}
                     onChange={(e) => setNewDept(e.target.value)}
-                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-3 py-2 text-xs text-[#fdfdfd] focus:outline-none"
+                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-3.5 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none"
                   >
                     {store.departments.map((d) => (
                       <option key={d.id} value={d.id}>
@@ -1163,11 +1230,11 @@ export default function WorkspacePage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs text-[#737373] mb-1">Deduct from Pocket</label>
+                  <label className="block text-xs text-[#737373] mb-1.5">Deduct from Pocket</label>
                   <select
                     value={newPocket}
                     onChange={(e) => setNewPocket(e.target.value)}
-                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-3 py-2 text-xs text-[#fdfdfd] focus:outline-none"
+                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-3.5 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none"
                   >
                     {store.pockets.map((p) => (
                       <option key={p.id} value={p.id}>
@@ -1179,23 +1246,23 @@ export default function WorkspacePage() {
               </div>
 
               {/* Receipt Capture Simulator */}
-              <div className="p-3.5 rounded-[14px] bg-[#181818] border border-white/[0.06] flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Camera className="w-4 h-4 text-[#ff1e42]" />
-                  <span className="text-xs text-[#d4d4d4]">Auto-compress receipt to 300KB</span>
+              <div className="p-4 rounded-[14px] bg-[#181818] border border-white/[0.06] flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <Camera className="w-5 h-5 text-[#ff1e42]" />
+                  <span className="text-xs text-[#d4d4d4]">Auto-compress to 300KB</span>
                 </div>
-                <label className="flex items-center gap-2 text-xs text-[#737373] cursor-pointer">
+                <label className="flex items-center gap-2 text-xs text-[#a3a3a3] cursor-pointer min-h-[40px]">
                   <input
                     type="checkbox"
                     checked={missingReceiptCheck}
                     onChange={(e) => setMissingReceiptCheck(e.target.checked)}
-                    className="accent-[#ff1e42]"
+                    className="w-4 h-4 accent-[#ff1e42]"
                   />
-                  <span>Flag as Missing Receipt</span>
+                  <span>Missing Receipt</span>
                 </label>
               </div>
 
-              <button type="submit" className="w-full btn-primary-crimson text-xs py-3">
+              <button type="submit" className="w-full btn-primary-crimson text-xs min-h-[48px] font-medium">
                 Save & Stream to Google Workspace
               </button>
             </form>
@@ -1207,25 +1274,28 @@ export default function WorkspacePage() {
       {/* MODAL 2: TRANSFER POCKET FUNDS */}
       {/* ========================================================================= */}
       {isTransferModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4">
-          <div className="surface-panel max-w-md w-full p-6 relative animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/85 backdrop-blur-sm p-0 sm:p-4">
+          <div className="surface-panel w-full sm:max-w-md rounded-t-[20px] sm:rounded-[14px] p-6 relative max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.06]">
               <div className="flex items-center gap-2">
-                <WalletCards className="w-4 h-4 text-[#ff1e42]" />
+                <WalletCards className="w-5 h-5 text-[#ff1e42]" />
                 <h3 className="text-sm font-medium text-[#fdfdfd]">Transfer Pocket Funds</h3>
               </div>
-              <button onClick={() => setIsTransferModalOpen(false)} className="text-[#737373] hover:text-[#fdfdfd]">
-                <X className="w-4 h-4" />
+              <button
+                onClick={() => setIsTransferModalOpen(false)}
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[#737373] hover:text-[#fdfdfd]"
+              >
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleTransfer} className="space-y-4">
               <div>
-                <label className="block text-xs text-[#737373] mb-1">Source Pocket (From)</label>
+                <label className="block text-xs text-[#737373] mb-1.5">Source Pocket (From)</label>
                 <select
                   value={transferSource}
                   onChange={(e) => setTransferSource(e.target.value)}
-                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-3 py-2 text-xs text-[#fdfdfd] focus:outline-none"
+                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-3.5 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none"
                 >
                   {store.pockets.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -1236,11 +1306,11 @@ export default function WorkspacePage() {
               </div>
 
               <div>
-                <label className="block text-xs text-[#737373] mb-1">Destination Pocket (To)</label>
+                <label className="block text-xs text-[#737373] mb-1.5">Destination Pocket (To)</label>
                 <select
                   value={transferDest}
                   onChange={(e) => setTransferDest(e.target.value)}
-                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-3 py-2 text-xs text-[#fdfdfd] focus:outline-none"
+                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-3.5 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none"
                 >
                   {store.pockets.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -1251,7 +1321,7 @@ export default function WorkspacePage() {
               </div>
 
               <div>
-                <label className="block text-xs text-[#737373] mb-1">Transfer Amount ($ USD)</label>
+                <label className="block text-xs text-[#737373] mb-1.5">Transfer Amount ($ USD)</label>
                 <input
                   type="number"
                   step="0.01"
@@ -1259,11 +1329,11 @@ export default function WorkspacePage() {
                   placeholder="e.g. 5000.00"
                   value={transferAmount}
                   onChange={(e) => setTransferAmount(e.target.value)}
-                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 py-2 text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
+                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
                 />
               </div>
 
-              <button type="submit" className="w-full btn-primary-crimson text-xs py-3">
+              <button type="submit" className="w-full btn-primary-crimson text-xs min-h-[48px] font-medium">
                 Authorize & Disburse Cash
               </button>
             </form>
@@ -1275,38 +1345,41 @@ export default function WorkspacePage() {
       {/* MODAL 3: CREATE TASK */}
       {/* ========================================================================= */}
       {isTaskModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4">
-          <div className="surface-panel max-w-md w-full p-6 relative animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/85 backdrop-blur-sm p-0 sm:p-4">
+          <div className="surface-panel w-full sm:max-w-md rounded-t-[20px] sm:rounded-[14px] p-6 relative max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.06]">
               <div className="flex items-center gap-2">
-                <CheckSquare className="w-4 h-4 text-[#ff1e42]" />
+                <CheckSquare className="w-5 h-5 text-[#ff1e42]" />
                 <h3 className="text-sm font-medium text-[#fdfdfd]">Create Department Task</h3>
               </div>
-              <button onClick={() => setIsTaskModalOpen(false)} className="text-[#737373] hover:text-[#fdfdfd]">
-                <X className="w-4 h-4" />
+              <button
+                onClick={() => setIsTaskModalOpen(false)}
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[#737373] hover:text-[#fdfdfd]"
+              >
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleCreateTask} className="space-y-4">
               <div>
-                <label className="block text-xs text-[#737373] mb-1">Task Title</label>
+                <label className="block text-xs text-[#737373] mb-1.5">Task Title</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Rig waterproof housing on A-Cam"
                   value={taskTitle}
                   onChange={(e) => setTaskTitle(e.target.value)}
-                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 py-2 text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
+                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-[#737373] mb-1">Department</label>
+                  <label className="block text-xs text-[#737373] mb-1.5">Department</label>
                   <select
                     value={taskDept}
                     onChange={(e) => setTaskDept(e.target.value)}
-                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-3 py-2 text-xs text-[#fdfdfd] focus:outline-none"
+                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-3.5 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none"
                   >
                     {store.departments.map((d) => (
                       <option key={d.id} value={d.id}>
@@ -1317,23 +1390,23 @@ export default function WorkspacePage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs text-[#737373] mb-1">Assignee</label>
+                  <label className="block text-xs text-[#737373] mb-1.5">Assignee</label>
                   <input
                     type="text"
                     placeholder="e.g. Leo Hardi"
                     value={taskAssignee}
                     onChange={(e) => setTaskAssignee(e.target.value)}
-                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 py-2 text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
+                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs text-[#737373] mb-1">Priority</label>
+                <label className="block text-xs text-[#737373] mb-1.5">Priority</label>
                 <select
                   value={taskPriority}
                   onChange={(e) => setTaskPriority(e.target.value as any)}
-                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-3 py-2 text-xs text-[#fdfdfd] focus:outline-none"
+                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-3.5 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none"
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -1342,7 +1415,7 @@ export default function WorkspacePage() {
                 </select>
               </div>
 
-              <button type="submit" className="w-full btn-primary-crimson text-xs py-3">
+              <button type="submit" className="w-full btn-primary-crimson text-xs min-h-[48px] font-medium">
                 Create & Assign Task
               </button>
             </form>

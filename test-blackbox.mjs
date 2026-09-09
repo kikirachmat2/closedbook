@@ -90,7 +90,7 @@ async function runBlackboxTests() {
     // TEST 4: EXECUTIVE DASHBOARD STATS & PROGRESS BARS
     // -------------------------------------------------------------
     console.log("\n--- TEST 4: Executive Dashboard Metrics ---");
-    const overviewContent = await page.$eval("main, div.p-6", (el) => el.textContent);
+    const overviewContent = await page.$eval("div.flex-1", (el) => el.textContent);
     assertTest("Total Budget Displayed ($120,000)", overviewContent.includes("120,000"), "Budget metric verified");
     assertTest("Burn Rate Calculated", overviewContent.includes("burn rate"), "Burn rate percentage present");
 
@@ -159,7 +159,7 @@ async function runBlackboxTests() {
     await new Promise((r) => setTimeout(r, 400));
 
     // Verify pocket cards
-    const pocketContent = await page.$eval("div.p-6", (el) => el.textContent);
+    const pocketContent = await page.$eval("div.flex-1", (el) => el.textContent);
     assertTest("Pocket Hierarchy Loaded", pocketContent.includes("Producer Master Vault"), "Master Vault verified");
     assertTest("UPM Field Cash Pocket Present", pocketContent.includes("UPM Field Cash"), "UPM Cash verified");
 
@@ -180,7 +180,7 @@ async function runBlackboxTests() {
     await disburseBtn.click();
     await new Promise((r) => setTimeout(r, 600));
 
-    const updatedPocketContent = await page.$eval("div.p-6", (el) => el.textContent);
+    const updatedPocketContent = await page.$eval("div.flex-1", (el) => el.textContent);
     assertTest("Pocket Transfer Completed Successfully", !updatedPocketContent.includes("Authorize & Disburse"), "Modal dismissed & state updated");
 
     await page.screenshot({ path: path.join(ARTIFACT_DIR, "blackbox_pockets.png") });
@@ -222,7 +222,7 @@ async function runBlackboxTests() {
     await submitTaskBtn.click();
     await new Promise((r) => setTimeout(r, 500));
 
-    const tasksBoardContent = await page.$eval("div.p-6", (el) => el.textContent);
+    const tasksBoardContent = await page.$eval("div.flex-1", (el) => el.textContent);
     assertTest("New Task Added to Kanban Board", tasksBoardContent.includes("Calibrate optical focus puller"), "Task rendered in board");
 
     await page.screenshot({ path: path.join(ARTIFACT_DIR, "blackbox_tasks.png") });
@@ -238,7 +238,7 @@ async function runBlackboxTests() {
     await callSheetNavBtn.click();
     await new Promise((r) => setTimeout(r, 400));
 
-    const callSheetContent = await page.$eval("div.p-6", (el) => el.textContent);
+    const callSheetContent = await page.$eval("div.flex-1", (el) => el.textContent);
     assertTest("Call Sheet Day 4 Verified", callSheetContent.includes("Day 4 of 16"), "Day count accurate");
     assertTest("Call Time Displayed (06:00 AM)", callSheetContent.includes("06:00 AM"), "Call time accurate");
     assertTest("Emergency Contacts Listed", callSheetContent.includes("Dr. Aris"), "Medic contact rendered");
@@ -261,7 +261,7 @@ async function runBlackboxTests() {
     if (resolveBtn) {
       await resolveBtn.click();
       await new Promise((r) => setTimeout(r, 400));
-      const alertsContent = await page.$eval("div.p-6", (el) => el.textContent);
+      const alertsContent = await page.$eval("div.flex-1", (el) => el.textContent);
       assertTest("Alert Status Changed to Resolved", alertsContent.includes("Resolved"), "Checked resolved indicator");
     }
 
