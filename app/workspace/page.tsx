@@ -6,6 +6,8 @@ import Link from "next/link";
 import {
   useClosebookStore,
 } from "@/lib/store";
+import { usePreferences } from "@/lib/preferences";
+import PreferencesControls from "@/components/PreferencesControls";
 import {
   LayoutDashboard,
   Receipt,
@@ -31,6 +33,7 @@ import {
   ArrowLeft,
   X,
   Layers,
+  Settings,
 } from "lucide-react";
 
 type TabId =
@@ -45,6 +48,15 @@ type TabId =
 
 export default function WorkspacePage() {
   const store = useClosebookStore();
+  const {
+    currency,
+    language,
+    theme,
+    formatMoney,
+    t,
+    setIsSettingsOpen,
+    currencies,
+  } = usePreferences();
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDeptFilter, setSelectedDeptFilter] = useState("all");
@@ -91,9 +103,12 @@ export default function WorkspacePage() {
     e.preventDefault();
     if (!newDesc || !newAmount) return;
 
+    const rate = currencies[currency]?.rate || 1;
+    const amountInUSD = parseFloat(newAmount) / rate;
+
     store.addTransaction({
       description: newDesc,
-      amount: parseFloat(newAmount),
+      amount: amountInUSD,
       departmentId: newDept,
       pocketId: newPocket,
       vendor: newVendor || "Local Vendor",
@@ -110,7 +125,8 @@ export default function WorkspacePage() {
   const handleTransfer = (e: React.FormEvent) => {
     e.preventDefault();
     if (!transferAmount) return;
-    store.transferFunds(transferSource, transferDest, parseFloat(transferAmount));
+    const rate = currencies[currency]?.rate || 1;
+    store.transferFunds(transferSource, transferDest, parseFloat(transferAmount) / rate);
     setTransferAmount("");
     setIsTransferModalOpen(false);
   };
@@ -144,7 +160,7 @@ export default function WorkspacePage() {
   const activeAlertsCount = store.alerts.filter((a) => !a.isResolved).length;
 
   return (
-    <div className="min-h-screen bg-[#050505] text-[#fdfdfd] selection:bg-[#ff1e42] selection:text-[#ffffff] flex flex-col md:flex-row pb-20 md:pb-0">
+    <div className="min-h-screen bg-[var(--surface-canvas,#050505)] text-[var(--color-paper,#fdfdfd)] selection:bg-[var(--color-primary,#ff1e42)] selection:text-[#ffffff] flex flex-col md:flex-row pb-20 md:pb-0">
       {/* 1. Desktop & Tablet Sidebar (Hidden on Mobile) */}
       <aside className="hidden md:flex w-64 lg:w-72 bg-[#090909] border-r border-white/[0.06] flex-col justify-between shrink-0 p-5">
         <div>
@@ -297,7 +313,15 @@ export default function WorkspacePage() {
         </div>
 
         {/* Bottom Sidebar Controls */}
-        <div className="pt-6 border-t border-white/[0.06] space-y-3">
+        <div className="pt-6 border-t border-white/[0.06] space-y-2.5">
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="w-full btn-ghost-pill text-xs min-h-[44px] flex items-center justify-center gap-2 text-[#a3a3a3] hover:text-[#fdfdfd]"
+          >
+            <Settings className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
+            <span>Preferences ({currency} • {language.toUpperCase()})</span>
+          </button>
+
           <button
             onClick={() => setIsLogModalOpen(true)}
             className="w-full btn-primary-crimson text-xs min-h-[44px]"
@@ -319,7 +343,7 @@ export default function WorkspacePage() {
       {/* 2. Main Workspace Body */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* Top Header Bar (Adaptive Mobile/Desktop) */}
-        <header className="h-16 border-b border-white/[0.06] bg-[#050505]/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between shrink-0 sticky top-0 z-30">
+        <header className="h-16 border-b border-white/[0.06] bg-[var(--surface-canvas,#050505)]/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between shrink-0 sticky top-0 z-30">
           <div className="flex items-center gap-3">
             {/* Mobile Brand Logo */}
             <Link href="/" className="md:hidden flex items-center gap-2 min-h-[44px]">
@@ -345,10 +369,19 @@ export default function WorkspacePage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#121212] border border-white/[0.06] text-xs text-[#a3a3a3] min-h-[36px]">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Preferences quick switcher */}
+            <div className="hidden sm:flex items-center">
+              <PreferencesControls />
+            </div>
+
+            <div className="flex sm:hidden items-center">
+              <PreferencesControls compact={true} />
+            </div>
+
+            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#121212] border border-white/[0.06] text-xs text-[#a3a3a3] min-h-[36px]">
               <span className="w-2 h-2 rounded-full bg-[#ff1e42] animate-pulse" />
-              <span className="hidden sm:inline">Drive Vault:</span>
+              <span>Drive Vault:</span>
               <span className="font-mono text-[#fdfdfd] text-[11px]">Synced</span>
             </div>
 
@@ -374,7 +407,7 @@ export default function WorkspacePage() {
                 <div className="surface-panel p-5">
                   <span className="text-xs text-[#737373] block mb-1">Total Production Budget</span>
                   <span className="text-2xl font-mono font-medium text-[#fdfdfd]">
-                    ${store.project.totalBudget.toLocaleString()}
+                    {formatMoney(store.project.totalBudget)}
                   </span>
                   <span className="text-[11px] text-[#a3a3a3] mt-2 block">100% committed</span>
                 </div>
@@ -382,7 +415,7 @@ export default function WorkspacePage() {
                 <div className="surface-panel p-5">
                   <span className="text-xs text-[#737373] block mb-1">Disbursed to Departments</span>
                   <span className="text-2xl font-mono font-medium text-[#fdfdfd]">
-                    ${totalSpent.toLocaleString()}
+                    {formatMoney(totalSpent)}
                   </span>
                   <span className="text-[11px] text-[#ff1e42] mt-2 block font-medium">
                     {((totalSpent / totalAllocated) * 100).toFixed(1)}% burn rate
@@ -392,7 +425,7 @@ export default function WorkspacePage() {
                 <div className="surface-panel p-5">
                   <span className="text-xs text-[#737373] block mb-1">UPM Field Cash on Hand</span>
                   <span className="text-2xl font-mono font-medium text-[#10b981]">
-                    ${store.pockets.find((p) => p.id === "pkt-upm")?.balance.toLocaleString()}
+                    {formatMoney(store.pockets.find((p) => p.id === "pkt-upm")?.balance || 8420)}
                   </span>
                   <span className="text-[11px] text-[#a3a3a3] mt-2 block">Sufficient for Day 4</span>
                 </div>
@@ -430,7 +463,7 @@ export default function WorkspacePage() {
                             {dept.name}
                           </span>
                           <span className="font-mono text-[#a3a3a3]">
-                            ${dept.spentAmount.toLocaleString()} / ${dept.allocatedBudget.toLocaleString()}
+                            {formatMoney(dept.spentAmount)} / {formatMoney(dept.allocatedBudget)}
                             <span className={`ml-2 font-bold ${isHigh ? "text-[#ff1e42]" : "text-[#737373]"}`}>
                               ({pct}%)
                             </span>
@@ -481,7 +514,7 @@ export default function WorkspacePage() {
 
                         <div className="text-right">
                           <span className="font-mono font-medium text-sm text-[#fdfdfd] block">
-                            ${tx.amount.toFixed(2)}
+                            {formatMoney(tx.amount)}
                           </span>
                           <span
                             className={`text-[10px] font-medium capitalize ${
@@ -618,7 +651,7 @@ export default function WorkspacePage() {
                           <td className="p-4 font-mono text-[11px] text-[#737373]">{tx.pocketName}</td>
                           <td className="p-4 text-[#a3a3a3]">{tx.vendor}</td>
                           <td className="p-4 font-mono font-medium text-[#fdfdfd]">
-                            ${tx.amount.toFixed(2)}
+                            {formatMoney(tx.amount)}
                           </td>
                           <td className="p-4">
                             <span
@@ -761,13 +794,13 @@ export default function WorkspacePage() {
                       <div className="surface-overlay p-4 mb-4">
                         <span className="text-xs text-[#737373] block mb-1">Current Liquid Balance</span>
                         <span className="text-2xl font-mono font-medium text-[#fdfdfd]">
-                          ${pocket.balance.toLocaleString()}
+                          {formatMoney(pocket.balance)}
                         </span>
                       </div>
                     </div>
 
                     <div className="pt-4 border-t border-white/[0.06] flex items-center justify-between text-xs text-[#737373]">
-                      <span>Max Cap: ${pocket.allocated.toLocaleString()}</span>
+                      <span>Max Cap: {formatMoney(pocket.allocated)}</span>
                       <span className="text-[#10b981] font-medium">Audited & Active</span>
                     </div>
                   </div>
@@ -993,7 +1026,7 @@ export default function WorkspacePage() {
 
                     <div className="pt-4 border-t border-white/[0.06] flex items-center justify-between text-xs">
                       <span className="text-[#737373]">Due: {eq.returnDate}</span>
-                      <span className="font-mono font-medium text-[#fdfdfd]">${eq.dailyRate}/day</span>
+                      <span className="font-mono font-medium text-[#fdfdfd]">{formatMoney(eq.dailyRate)}/day</span>
                     </div>
                   </div>
                 ))}
@@ -1189,12 +1222,14 @@ export default function WorkspacePage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-[#737373] mb-1.5">Amount ($ USD)</label>
+                  <label className="block text-xs text-[#737373] mb-1.5">
+                    Amount ({currencies[currency].symbol} {currencies[currency].code})
+                  </label>
                   <input
                     type="number"
                     step="0.01"
                     required
-                    placeholder="e.g. 240.00"
+                    placeholder={currency === "IDR" ? "e.g. 3500000" : currency === "JPY" ? "e.g. 50000" : "e.g. 240.00"}
                     value={newAmount}
                     onChange={(e) => setNewAmount(e.target.value)}
                     className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
@@ -1238,7 +1273,7 @@ export default function WorkspacePage() {
                   >
                     {store.pockets.map((p) => (
                       <option key={p.id} value={p.id}>
-                        {p.name} (${p.balance.toLocaleString()})
+                        {p.name} ({formatMoney(p.balance)})
                       </option>
                     ))}
                   </select>
@@ -1321,12 +1356,14 @@ export default function WorkspacePage() {
               </div>
 
               <div>
-                <label className="block text-xs text-[#737373] mb-1.5">Transfer Amount ($ USD)</label>
+                <label className="block text-xs text-[#737373] mb-1.5">
+                  Transfer Amount ({currencies[currency].symbol} {currencies[currency].code})
+                </label>
                 <input
                   type="number"
                   step="0.01"
                   required
-                  placeholder="e.g. 5000.00"
+                  placeholder={currency === "IDR" ? "e.g. 50000000" : currency === "JPY" ? "e.g. 450000" : "e.g. 5000.00"}
                   value={transferAmount}
                   onChange={(e) => setTransferAmount(e.target.value)}
                   className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"

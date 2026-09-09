@@ -18,22 +18,88 @@
   --radius-full: 9999px;
 }
 
-:root {
-  --color-crimson: #ff1e42;
-  --color-obsidian: #050505;
-  --color-charcoal: #121212;
-  --color-graphite: #181818;
-  --color-surface-hover: #1f1f1f;
-  --color-paper: #fdfdfd;
-  --color-silver: #e5e5e5;
-  --color-pearl: #d4d4d4;
-  --color-slate: #2a2a2a;
-  --color-ash: #a3a3a3;
-  --color-stone: #737373;
-
+:root, [data-theme="obsidian"] {
+  --color-primary: #ff1e42;
+  --color-primary-hover: #ff3355;
   --surface-canvas: #050505;
   --surface-elevated: #121212;
   --surface-deep: #181818;
+  --surface-hover: #1f1f1f;
+  --color-paper: #fdfdfd;
+  --color-pearl: #d4d4d4;
+  --color-ash: #a3a3a3;
+  --color-stone: #737373;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-active: rgba(255, 255, 255, 0.16);
+  --accent-badge-bg: rgba(255, 30, 66, 0.12);
+}
+
+/* Cyber Indigo (Savee Classic Cobalt Reference) */
+[data-theme="indigo"] {
+  --color-primary: #3b82f6;
+  --color-primary-hover: #60a5fa;
+  --surface-canvas: #04050a;
+  --surface-elevated: #0d111d;
+  --surface-deep: #14192b;
+  --surface-hover: #1a2238;
+  --color-paper: #f8fafc;
+  --color-pearl: #cbd5e1;
+  --color-ash: #94a3b8;
+  --color-stone: #64748b;
+  --border-subtle: rgba(59, 130, 246, 0.12);
+  --border-active: rgba(59, 130, 246, 0.28);
+  --accent-badge-bg: rgba(59, 130, 246, 0.14);
+}
+
+/* Emerald Terminal (Matrix Mint Dark) */
+[data-theme="emerald"] {
+  --color-primary: #10b981;
+  --color-primary-hover: #34d399;
+  --surface-canvas: #030805;
+  --surface-elevated: #0a140f;
+  --surface-deep: #102119;
+  --surface-hover: #172e23;
+  --color-paper: #f0fdf4;
+  --color-pearl: #bbf7d0;
+  --color-ash: #86efac;
+  --color-stone: #4ade80;
+  --border-subtle: rgba(16, 185, 129, 0.12);
+  --border-active: rgba(16, 185, 129, 0.28);
+  --accent-badge-bg: rgba(16, 185, 129, 0.14);
+}
+
+/* Solar Amber (Cinematic Golden Hour) */
+[data-theme="amber"] {
+  --color-primary: #f59e0b;
+  --color-primary-hover: #fbbf24;
+  --surface-canvas: #090704;
+  --surface-elevated: #16120a;
+  --surface-deep: #221c10;
+  --surface-hover: #2e2617;
+  --color-paper: #fffbeb;
+  --color-pearl: #fde68a;
+  --color-ash: #fcd34d;
+  --color-stone: #d97706;
+  --border-subtle: rgba(245, 158, 11, 0.12);
+  --border-active: rgba(245, 158, 11, 0.28);
+  --accent-badge-bg: rgba(245, 158, 11, 0.14);
+}
+
+/* Architectural Paper (Swiss Minimalist Light Mode) */
+[data-theme="paper"] {
+  --color-primary: #e11d48;
+  --color-primary-hover: #be123c;
+  --surface-canvas: #f8f9fa;
+  --surface-elevated: #ffffff;
+  --surface-deep: #f1f3f5;
+  --surface-hover: #e9ecef;
+  --color-paper: #0f172a;
+  --color-pearl: #334155;
+  --color-ash: #475569;
+  --color-stone: #64748b;
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-active: rgba(0, 0, 0, 0.2);
+  --accent-badge-bg: rgba(225, 29, 72, 0.08);
 }
 
 * {
@@ -75,9 +141,9 @@ html, body {
   letter-spacing: -0.01em;
 }
 
-/* Primary Crimson Pill Button: Sole chromatic action in the system */
+/* Primary Dynamic Pill Button */
 .btn-primary-crimson {
-  background-color: var(--color-crimson);
+  background-color: var(--color-primary, #ff1e42);
   color: #ffffff;
   border-radius: 9999px;
   padding: 13px 28px;
@@ -95,7 +161,7 @@ html, body {
 }
 
 .btn-primary-crimson:hover {
-  background-color: #ff3355;
+  background-color: var(--color-primary-hover, #ff3355);
   transform: translateY(-1px);
 }
 
@@ -103,7 +169,7 @@ html, body {
 .btn-ghost-pill {
   background-color: transparent;
   color: var(--color-paper);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid var(--border-active, rgba(255, 255, 255, 0.16));
   border-radius: 9999px;
   padding: 12px 24px;
   font-size: 14px;
@@ -119,8 +185,8 @@ html, body {
 }
 
 .btn-ghost-pill:hover {
-  border-color: rgba(255, 255, 255, 0.5);
-  background-color: rgba(255, 255, 255, 0.04);
+  border-color: var(--color-primary, #ff1e42);
+  background-color: var(--accent-badge-bg, rgba(255, 255, 255, 0.04));
   transform: translateY(-1px);
 }
 
@@ -128,13 +194,13 @@ html, body {
 .surface-panel {
   background-color: var(--surface-elevated);
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
 }
 
 .surface-overlay {
   background-color: var(--surface-deep);
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.05));
 }
 
 /* Scanline micro-animation */

@@ -25,6 +25,8 @@ import {
   RefreshCw,
   Plus,
 } from "lucide-react";
+import { usePreferences } from "@/lib/preferences";
+import PreferencesControls from "@/components/PreferencesControls";
 
 type WorkflowId = "film" | "agency" | "events" | "student" | "solo";
 
@@ -172,10 +174,10 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-[#fdfdfd] selection:bg-[#ff1e42] selection:text-[#ffffff]">
+    <div className="min-h-screen bg-[var(--surface-canvas,#050505)] text-[var(--color-paper,#fdfdfd)] selection:bg-[var(--color-primary,#ff1e42)] selection:text-[#ffffff]">
       {/* 1. Header Navigation */}
-      <header className="sticky top-0 z-50 w-full bg-[#050505]/90 backdrop-blur-md border-b border-white/[0.06]">
-        <div className="max-w-[1200px] mx-auto px-6 h-20 flex items-center justify-between">
+      <header className="sticky top-0 z-50 w-full bg-[var(--surface-canvas,#050505)]/90 backdrop-blur-md border-b border-white/[0.06]">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full overflow-hidden bg-[#121212] border border-white/[0.08] flex items-center justify-center">
               <Image
@@ -213,10 +215,13 @@ export default function HomePage() {
             </a>
           </nav>
 
-          <Link href="/workspace" className="btn-primary-crimson text-xs md:text-sm py-2 px-5">
-            Open Workspace
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <PreferencesControls />
+            <Link href="/workspace" className="btn-primary-crimson text-xs md:text-sm py-2 px-4 sm:px-5">
+              <span>Open Workspace</span>
+              <ArrowRight className="w-4 h-4 hidden sm:inline" />
+            </Link>
+          </div>
         </div>
       </header>
 

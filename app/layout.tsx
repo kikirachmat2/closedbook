@@ -34,6 +34,9 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
+import { PreferencesProvider } from "@/lib/preferences";
+import PreferencesModal from "@/components/PreferencesModal";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -41,8 +44,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="bg-[#050505] text-[#fdfdfd] antialiased selection:bg-[#ff1744] selection:text-[#ffffff]">
-        {children}
+      <body className="bg-[var(--surface-canvas,#050505)] text-[var(--color-paper,#fdfdfd)] antialiased selection:bg-[var(--color-primary,#ff1e42)] selection:text-[#ffffff]">
+        <PreferencesProvider>
+          {children}
+          <PreferencesModal />
+        </PreferencesProvider>
       </body>
     </html>
   );
