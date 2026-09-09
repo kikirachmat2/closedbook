@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Clapperboard,
   Building2,
@@ -192,9 +193,9 @@ export default function HomePage() {
           </div>
 
           <nav className="hidden md:flex items-center gap-8 text-[14px] text-[#d4d4d4]">
-            <a href="#preview" className="hover:text-[#fdfdfd] transition-colors">
-              Interface
-            </a>
+            <Link href="/workspace" className="text-[#ff1e42] hover:text-[#ffffff] transition-colors font-medium">
+              Live Workspace App
+            </Link>
             <a href="#how-it-works" className="hover:text-[#fdfdfd] transition-colors">
               How It Works
             </a>
@@ -212,10 +213,10 @@ export default function HomePage() {
             </a>
           </nav>
 
-          <a href="#how-it-works" className="btn-primary-crimson text-xs md:text-sm py-2 px-5">
-            Connect Workspace
+          <Link href="/workspace" className="btn-primary-crimson text-xs md:text-sm py-2 px-5">
+            Open Workspace
             <ArrowRight className="w-4 h-4" />
-          </a>
+          </Link>
         </div>
       </header>
 
@@ -241,10 +242,10 @@ export default function HomePage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="#how-it-works" className="btn-primary-crimson text-sm px-8 py-3.5">
-              Connect Google Workspace
+            <Link href="/workspace" className="btn-primary-crimson text-sm px-8 py-3.5">
+              Launch Production Workspace
               <ArrowRight className="w-4 h-4" />
-            </a>
+            </Link>
             <a href="#security" className="btn-ghost-pill text-sm px-6 py-3.5">
               Review Security Model
               <ShieldCheck className="w-4 h-4 text-[#ff1e42]" />
@@ -292,9 +293,17 @@ export default function HomePage() {
                 </span>
               </div>
 
-              <div className="flex items-center gap-2 text-xs text-[#a3a3a3]">
-                <span className="w-2 h-2 rounded-full bg-[#ff1e42]" />
-                Direct Sync: <code className="text-[#fdfdfd] font-mono">{current.sheetName}</code>
+              <div className="flex items-center gap-3 text-xs text-[#a3a3a3]">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#ff1e42]" />
+                  Direct Sync: <code className="text-[#fdfdfd] font-mono">{current.sheetName}</code>
+                </span>
+                <Link
+                  href="/workspace"
+                  className="text-xs text-[#ff1e42] hover:underline flex items-center gap-1"
+                >
+                  Open Full Workspace <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
               </div>
             </div>
 
@@ -440,7 +449,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 4. SECTION: HOW IT WORKS (THE 4-STEP PIPELINE) */}
+        {/* 4. SECTION: HOW IT WORKS */}
         <section id="how-it-works" className="mb-28">
           <div className="max-w-2xl mb-14">
             <span className="text-xs uppercase tracking-wider text-[#ff1e42] font-semibold block mb-2">
@@ -610,7 +619,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 6. Editorial Prose Statement (36px Savee Style) */}
+        {/* 6. Editorial Prose Statement */}
         <section className="mb-28 max-w-3xl">
           <span className="text-xs uppercase tracking-wider text-[#737373] font-semibold block mb-4">
             The Free-Tier Manifesto
@@ -634,10 +643,10 @@ export default function HomePage() {
             Connect your Google account and deploy your production ledger in less than 60 seconds.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="#how-it-works" className="btn-primary-crimson text-sm px-8 py-3.5">
-              Launch Closebook
+            <Link href="/workspace" className="btn-primary-crimson text-sm px-8 py-3.5">
+              Launch Production Workspace
               <ArrowRight className="w-4 h-4" />
-            </a>
+            </Link>
             <a
               href="https://github.com/kikirachmat2/CloseBook"
               target="_blank"
