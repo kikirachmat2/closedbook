@@ -10,8 +10,10 @@ import {
   TaskStatus,
   DailyCallSheet,
   EquipmentRental,
+  EquipmentStatus,
   SystemAlert,
   ContextComment,
+  PocketTransfer,
 } from "./types";
 
 const INITIAL_PROJECT: Project = {
@@ -119,6 +121,31 @@ const INITIAL_TRANSACTIONS: Transaction[] = [
   },
 ];
 
+const INITIAL_TRANSFERS: PocketTransfer[] = [
+  {
+    id: "TR-101",
+    sourcePocketId: "pkt-master",
+    sourcePocketName: "Producer Master Vault",
+    destPocketId: "pkt-lp",
+    destPocketName: "Line Producer Reserve",
+    amount: 30000,
+    authorizedBy: "Markus Vance (Lead Producer)",
+    timestamp: "3 days ago",
+    notes: "Week 1 operational line budget release",
+  },
+  {
+    id: "TR-102",
+    sourcePocketId: "pkt-lp",
+    sourcePocketName: "Line Producer Reserve",
+    destPocketId: "pkt-upm",
+    destPocketName: "UPM Field Cash",
+    amount: 15000,
+    authorizedBy: "Elena Rostova (LP)",
+    timestamp: "2 days ago",
+    notes: "Field operations cash disbursement for harbour filming",
+  },
+];
+
 const INITIAL_TASKS: Task[] = [
   { id: "tsk-1", departmentId: "dept-unt", departmentName: "Unit & Logistics", title: "Confirm police escort for convoy to coastal cliff", assignee: "Rizal Pratama", priority: "high", status: "completed", dueDate: "Day 4" },
   { id: "tsk-2", departmentId: "dept-art", departmentName: "Art & Production Design", title: "Complete distressing on hero boat cabin props", assignee: "Dina Kartika", priority: "urgent", status: "in_progress", dueDate: "Day 4" },
@@ -165,6 +192,7 @@ export function useClosebookStore() {
   const [departments, setDepartments] = useState<Department[]>(INITIAL_DEPARTMENTS);
   const [pockets, setPockets] = useState<Pocket[]>(INITIAL_POCKETS);
   const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
+  const [transfers, setTransfers] = useState<PocketTransfer[]>(INITIAL_TRANSFERS);
   const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
   const [callSheet, setCallSheet] = useState<DailyCallSheet>(INITIAL_CALLSHEET);
   const [equipment, setEquipment] = useState<EquipmentRental[]>(INITIAL_EQUIPMENT);
@@ -179,16 +207,22 @@ export function useClosebookStore() {
       if (savedTx) setTransactions(JSON.parse(savedTx));
       const savedPockets = localStorage.getItem("closebook_pockets");
       if (savedPockets) setPockets(JSON.parse(savedPockets));
+      const savedTransfers = localStorage.getItem("closebook_transfers");
+      if (savedTransfers) setTransfers(JSON.parse(savedTransfers));
       const savedTasks = localStorage.getItem("closebook_tasks");
       if (savedTasks) setTasks(JSON.parse(savedTasks));
       const savedDepts = localStorage.getItem("closebook_depts");
       if (savedDepts) setDepartments(JSON.parse(savedDepts));
+      const savedCallSheet = localStorage.getItem("closebook_callsheet");
+      if (savedCallSheet) setCallSheet(JSON.parse(savedCallSheet));
+      const savedEquipment = localStorage.getItem("closebook_equipment");
+      if (savedEquipment) setEquipment(JSON.parse(savedEquipment));
       const savedAlerts = localStorage.getItem("closebook_alerts");
       if (savedAlerts) setAlerts(JSON.parse(savedAlerts));
       const savedComments = localStorage.getItem("closebook_comments");
       if (savedComments) setComments(JSON.parse(savedComments));
     } catch {
-      // ignore parsing error, fallback to initial
+      // fallback to initial
     }
     setIsLoaded(true);
   }, []);
@@ -208,6 +242,13 @@ export function useClosebookStore() {
     } catch {}
   };
 
+  const persistTransfers = (newTransfers: PocketTransfer[]) => {
+    setTransfers(newTransfers);
+    try {
+      localStorage.setItem("closebook_transfers", JSON.stringify(newTransfers));
+    } catch {}
+  };
+
   const persistTasks = (newTasks: Task[]) => {
     setTasks(newTasks);
     try {
@@ -219,6 +260,20 @@ export function useClosebookStore() {
     setDepartments(newDepts);
     try {
       localStorage.setItem("closebook_depts", JSON.stringify(newDepts));
+    } catch {}
+  };
+
+  const persistCallSheet = (newCallSheet: DailyCallSheet) => {
+    setCallSheet(newCallSheet);
+    try {
+      localStorage.setItem("closebook_callsheet", JSON.stringify(newCallSheet));
+    } catch {}
+  };
+
+  const persistEquipment = (newEquipment: EquipmentRental[]) => {
+    setEquipment(newEquipment);
+    try {
+      localStorage.setItem("closebook_equipment", JSON.stringify(newEquipment));
     } catch {}
   };
 
@@ -245,12 +300,19 @@ export function useClosebookStore() {
     vendor: string;
     receiptUrl?: string;
     isMissingReceipt?: boolean;
+    notes?: string;
   }) => {
+    if (data.amount <= 0 || isNaN(data.amount)) {
+      return null;
+    }
+
     const targetDept = departments.find((d) => d.id === data.departmentId);
     const targetPocket = pockets.find((p) => p.id === data.pocketId);
 
+    const initialStatus = data.isMissingReceipt ? "pending" : "approved";
+
     const newTx: Transaction = {
-      id: `TX-${Math.floor(106 + Math.random() * 800)}`,
+      id: `TX-${Math.floor(106 + Math.random() * 893)}`,
       pocketId: data.pocketId,
       pocketName: targetPocket ? targetPocket.name : "Field Cash",
       departmentId: data.departmentId,
@@ -258,11 +320,12 @@ export function useClosebookStore() {
       amount: data.amount,
       description: data.description,
       vendor: data.vendor || "Direct Vendor",
-      status: "approved",
+      status: initialStatus,
       loggedBy: "Field Unit PWA",
       loggedAt: "Just now",
       receiptUrl: data.receiptUrl || "/icon.png",
       isMissingReceipt: data.isMissingReceipt || false,
+      notes: data.notes || (data.isMissingReceipt ? "Auto-flagged: Missing physical receipt slip." : undefined),
     };
 
     // Deduct from pocket
@@ -281,6 +344,40 @@ export function useClosebookStore() {
       return d;
     });
 
+    // Dynamic alert trigger 1: Missing Receipt
+    let updatedAlerts = [...alerts];
+    if (data.isMissingReceipt) {
+      const missingAlert: SystemAlert = {
+        id: `alt-rec-${Date.now()}`,
+        type: "missing_receipt",
+        severity: "critical",
+        title: `Missing Receipt on ${newTx.id}`,
+        message: `Expense '${newTx.description}' ($${data.amount.toFixed(2)}) was recorded without receipt image. Auditor verification required.`,
+        timestamp: "Just now",
+        isResolved: false,
+      };
+      updatedAlerts = [missingAlert, ...updatedAlerts];
+    }
+
+    // Dynamic alert trigger 2: Department budget ceiling >= 90%
+    if (targetDept) {
+      const newSpent = targetDept.spentAmount + data.amount;
+      const pct = (newSpent / targetDept.allocatedBudget) * 100;
+      if (pct >= 90) {
+        const overAlert: SystemAlert = {
+          id: `alt-over-${Date.now()}`,
+          type: "overspend",
+          severity: pct >= 100 ? "critical" : "warning",
+          title: `${targetDept.name} Approaching Budget Cap`,
+          message: `${targetDept.name} has reached ${pct.toFixed(1)}% of its allocated budget ($${newSpent.toLocaleString()} / $${targetDept.allocatedBudget.toLocaleString()}).`,
+          timestamp: "Just now",
+          isResolved: false,
+        };
+        updatedAlerts = [overAlert, ...updatedAlerts];
+      }
+    }
+
+    persistAlerts(updatedAlerts);
     persistDepartments(updatedDepts);
     persistPockets(updatedPockets);
     persistTransactions([newTx, ...transactions]);
@@ -288,15 +385,103 @@ export function useClosebookStore() {
     return newTx;
   };
 
-  // 2. Approve/Reject Transaction
-  const updateTransactionStatus = (id: string, status: "approved" | "rejected") => {
-    const updated = transactions.map((t) => (t.id === id ? { ...t, status } : t));
-    persistTransactions(updated);
+  // 2. Approve/Reject Transaction with Financial Balancing & Refund
+  const updateTransactionStatus = (id: string, newStatus: "approved" | "rejected") => {
+    const tx = transactions.find((t) => t.id === id);
+    if (!tx || tx.status === newStatus) return;
+
+    let updatedPockets = [...pockets];
+    let updatedDepts = [...departments];
+
+    // If changing TO rejected from an active expense (approved or pending), refund pocket & department
+    if (newStatus === "rejected" && tx.status !== "rejected") {
+      updatedPockets = updatedPockets.map((p) => {
+        if (p.id === tx.pocketId) {
+          return { ...p, balance: p.balance + tx.amount };
+        }
+        return p;
+      });
+
+      updatedDepts = updatedDepts.map((d) => {
+        if (d.id === tx.departmentId) {
+          return { ...d, spentAmount: Math.max(0, d.spentAmount - tx.amount) };
+        }
+        return d;
+      });
+    }
+
+    // If changing FROM rejected back to approved, re-deduct
+    if (tx.status === "rejected" && newStatus === "approved") {
+      updatedPockets = updatedPockets.map((p) => {
+        if (p.id === tx.pocketId) {
+          return { ...p, balance: Math.max(0, p.balance - tx.amount) };
+        }
+        return p;
+      });
+
+      updatedDepts = updatedDepts.map((d) => {
+        if (d.id === tx.departmentId) {
+          return { ...d, spentAmount: d.spentAmount + tx.amount };
+        }
+        return d;
+      });
+    }
+
+    persistPockets(updatedPockets);
+    persistDepartments(updatedDepts);
+
+    const updatedTx = transactions.map((t) => (t.id === id ? { ...t, status: newStatus } : t));
+    persistTransactions(updatedTx);
   };
 
-  // 3. Transfer Pocket Funds (e.g. Master Vault -> UPM Cash)
-  const transferFunds = (sourcePocketId: string, destPocketId: string, amount: number) => {
-    const updated = pockets.map((p) => {
+  // 3. Delete Transaction with Refund
+  const deleteTransaction = (id: string) => {
+    const tx = transactions.find((t) => t.id === id);
+    if (!tx) return;
+
+    if (tx.status !== "rejected") {
+      const updatedPockets = pockets.map((p) => (p.id === tx.pocketId ? { ...p, balance: p.balance + tx.amount } : p));
+      const updatedDepts = departments.map((d) =>
+        d.id === tx.departmentId ? { ...d, spentAmount: Math.max(0, d.spentAmount - tx.amount) } : d
+      );
+      persistPockets(updatedPockets);
+      persistDepartments(updatedDepts);
+    }
+
+    persistTransactions(transactions.filter((t) => t.id !== id));
+  };
+
+  // 4. Transfer Pocket Funds with Strict Overdraft Guard & Transfer Log
+  const transferFunds = (
+    sourcePocketId: string,
+    destPocketId: string,
+    amount: number,
+    notes?: string
+  ): { success: boolean; error?: string } => {
+    if (sourcePocketId === destPocketId) {
+      return { success: false, error: "Source and destination pockets cannot be identical." };
+    }
+
+    if (amount <= 0 || isNaN(amount)) {
+      return { success: false, error: "Transfer amount must be a positive numeric value." };
+    }
+
+    const sourcePocket = pockets.find((p) => p.id === sourcePocketId);
+    const destPocket = pockets.find((p) => p.id === destPocketId);
+
+    if (!sourcePocket || !destPocket) {
+      return { success: false, error: "Invalid pocket selection." };
+    }
+
+    if (sourcePocket.balance < amount) {
+      return {
+        success: false,
+        error: `Insufficient liquid balance in ${sourcePocket.name}. Available: $${sourcePocket.balance.toLocaleString()}, Requested: $${amount.toLocaleString()}`,
+      };
+    }
+
+    // Execute transfer
+    const updatedPockets = pockets.map((p) => {
       if (p.id === sourcePocketId) {
         return { ...p, balance: p.balance - amount };
       }
@@ -305,10 +490,41 @@ export function useClosebookStore() {
       }
       return p;
     });
-    persistPockets(updated);
+
+    const newTransfer: PocketTransfer = {
+      id: `TR-${Math.floor(100 + Math.random() * 899)}`,
+      sourcePocketId,
+      sourcePocketName: sourcePocket.name,
+      destPocketId,
+      destPocketName: destPocket.name,
+      amount,
+      authorizedBy: "Elena Rostova (LP)",
+      timestamp: "Just now",
+      notes: notes || "Operational fund disbursement",
+    };
+
+    // Alert if source pocket balance is low (<15% of allocation)
+    const remainingSource = sourcePocket.balance - amount;
+    if (remainingSource / sourcePocket.allocated < 0.15) {
+      const lowBalAlert: SystemAlert = {
+        id: `alt-bal-${Date.now()}`,
+        type: "low_balance",
+        severity: "warning",
+        title: `Low Balance Warning on ${sourcePocket.name}`,
+        message: `${sourcePocket.name} liquid balance is now down to $${remainingSource.toLocaleString()} (<15% allocation).`,
+        timestamp: "Just now",
+        isResolved: false,
+      };
+      persistAlerts([lowBalAlert, ...alerts]);
+    }
+
+    persistPockets(updatedPockets);
+    persistTransfers([newTransfer, ...transfers]);
+
+    return { success: true };
   };
 
-  // 4. Toggle Task status
+  // 5. Toggle Task status
   const toggleTask = (taskId: string) => {
     const updated = tasks.map((t) => {
       if (t.id === taskId) {
@@ -320,7 +536,7 @@ export function useClosebookStore() {
     persistTasks(updated);
   };
 
-  // 5. Add new Task
+  // 6. Add new Task
   const addTask = (task: Omit<Task, "id">) => {
     const newTask: Task = {
       id: `tsk-${Date.now()}`,
@@ -329,13 +545,55 @@ export function useClosebookStore() {
     persistTasks([...tasks, newTask]);
   };
 
-  // 6. Dismiss Alert
+  // 7. Delete Task
+  const deleteTask = (taskId: string) => {
+    persistTasks(tasks.filter((t) => t.id !== taskId));
+  };
+
+  // 8. Call Sheet Operations
+  const updateCallSheet = (updates: Partial<DailyCallSheet>) => {
+    const updated = { ...callSheet, ...updates };
+    persistCallSheet(updated);
+  };
+
+  const advanceShootDay = () => {
+    if (callSheet.dayNumber < callSheet.totalDays) {
+      const nextDay = callSheet.dayNumber + 1;
+      const updated: DailyCallSheet = {
+        ...callSheet,
+        dayNumber: nextDay,
+        date: `Production Day ${nextDay} of ${callSheet.totalDays}`,
+        scenesScheduled: `Scene ${nextDay * 3} & Scene ${nextDay * 3 + 1} (Scheduled for Day ${nextDay})`,
+      };
+      persistCallSheet(updated);
+    }
+  };
+
+  // 9. Equipment Operations
+  const addEquipment = (item: Omit<EquipmentRental, "id">) => {
+    const newItem: EquipmentRental = {
+      id: `eq-${Date.now().toString().slice(-4)}`,
+      ...item,
+    };
+    persistEquipment([...equipment, newItem]);
+  };
+
+  const updateEquipmentStatus = (id: string, status: EquipmentStatus) => {
+    const updated = equipment.map((e) => (e.id === id ? { ...e, status } : e));
+    persistEquipment(updated);
+  };
+
+  const deleteEquipment = (id: string) => {
+    persistEquipment(equipment.filter((e) => e.id !== id));
+  };
+
+  // 10. Dismiss / Resolve Alert
   const resolveAlert = (alertId: string) => {
     const updated = alerts.map((a) => (a.id === alertId ? { ...a, isResolved: true } : a));
     persistAlerts(updated);
   };
 
-  // 7. Add Context Comment
+  // 11. Add Context Comment
   const addComment = (entityId: string, author: string, message: string) => {
     const newComment: ContextComment = {
       id: `c-${Date.now()}`,
@@ -348,11 +606,63 @@ export function useClosebookStore() {
     persistComments([...comments, newComment]);
   };
 
+  // 12. Data Sovereignty & BYOS Exports
+  const exportLedgerCSV = () => {
+    const headers = ["Transaction ID", "Description", "Department", "Pocket", "Vendor", "Amount", "Status", "Date Logged", "Missing Receipt", "Notes"];
+    const rows = transactions.map((t) => [
+      `"${t.id}"`,
+      `"${t.description.replace(/"/g, '""')}"`,
+      `"${t.departmentName}"`,
+      `"${t.pocketName}"`,
+      `"${t.vendor.replace(/"/g, '""')}"`,
+      t.amount,
+      `"${t.status}"`,
+      `"${t.loggedAt}"`,
+      t.isMissingReceipt ? "YES" : "NO",
+      `"${(t.notes || "").replace(/"/g, '""')}"`,
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `closebook_ledger_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportProductionVaultJSON = () => {
+    const vaultData = {
+      system: "Closebook Zero-Budget OS",
+      exportedAt: new Date().toISOString(),
+      project,
+      departments,
+      pockets,
+      transfers,
+      transactions,
+      tasks,
+      callSheet,
+      equipment,
+      alerts,
+      comments,
+    };
+
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(vaultData, null, 2));
+    const link = document.createElement("a");
+    link.setAttribute("href", dataStr);
+    link.setAttribute("download", `closebook_vault_backup_${new Date().toISOString().split("T")[0]}.json`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return {
     isLoaded,
     project,
     departments,
     pockets,
+    transfers,
     transactions,
     tasks,
     callSheet,
@@ -361,10 +671,19 @@ export function useClosebookStore() {
     comments,
     addTransaction,
     updateTransactionStatus,
+    deleteTransaction,
     transferFunds,
     toggleTask,
     addTask,
+    deleteTask,
+    updateCallSheet,
+    advanceShootDay,
+    addEquipment,
+    updateEquipmentStatus,
+    deleteEquipment,
     resolveAlert,
     addComment,
+    exportLedgerCSV,
+    exportProductionVaultJSON,
   };
 }

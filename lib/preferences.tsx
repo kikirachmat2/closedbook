@@ -214,6 +214,25 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     landingLaunchBtn: "Launch Production Workspace",
     landingExploreBtn: "Explore Interactive Demo",
     landingAuditReport: "View System & Design Audit Report",
+
+    // Upgraded Features
+    exportCSV: "Export to CSV",
+    downloadVault: "Download Production Vault (JSON)",
+    advanceDay: "Advance Shoot Day",
+    editCallSheet: "Edit Call Sheet",
+    addEquipment: "Add Rental Gear",
+    totalEquipmentBurn: "Daily Equipment Burn",
+    transferHistory: "Transfer Audit Log",
+    receiptPreview: "Receipt Inspector",
+    dropOrCaptureReceipt: "Upload or capture receipt photo (<300KB auto-compressed)",
+    overdraftAlert: "Overdraft prevented: Transfer exceeds source liquid balance",
+    statusOnSet: "On Set",
+    statusRented: "Rented",
+    statusReturned: "Returned",
+    statusDamaged: "Damaged",
+    markReturned: "Mark Returned",
+    markDamaged: "Mark Damaged",
+    deleteItem: "Delete",
   },
   id: {
     // Brand & System
@@ -337,6 +356,25 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     landingLaunchBtn: "Buka Workspace Produksi",
     landingExploreBtn: "Eksplorasi Simulator Lapangan",
     landingAuditReport: "Lihat Laporan Audit Desain & Ergonomi",
+
+    // Upgraded Features
+    exportCSV: "Ekspor ke CSV",
+    downloadVault: "Unduh Cadangan Vault (JSON)",
+    advanceDay: "Maju ke Hari Syuting Berikutnya",
+    editCallSheet: "Edit Call Sheet",
+    addEquipment: "Tambah Inventaris Rental",
+    totalEquipmentBurn: "Pengeluaran Harian Alat",
+    transferHistory: "Riwayat Transfer Dana",
+    receiptPreview: "Inspeksi Nota",
+    dropOrCaptureReceipt: "Unggah atau potret nota (kompresi otomatis <300KB)",
+    overdraftAlert: "Overdraft dicegah: Transfer melebihi saldo kas tersedia",
+    statusOnSet: "Di Lokasi",
+    statusRented: "Disewa",
+    statusReturned: "Dikembalikan",
+    statusDamaged: "Rusak",
+    markReturned: "Tandai Kembali",
+    markDamaged: "Tandai Rusak",
+    deleteItem: "Hapus",
   },
   es: {
     // Brand & System
@@ -460,6 +498,25 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     landingLaunchBtn: "Abrir Workspace de Producción",
     landingExploreBtn: "Explorar Demostración",
     landingAuditReport: "Ver Informe de Auditoría",
+
+    // Upgraded Features
+    exportCSV: "Exportar a CSV",
+    downloadVault: "Descargar Copia de Seguridad (JSON)",
+    advanceDay: "Avanzar Día de Rodaje",
+    editCallSheet: "Editar Orden de Rodaje",
+    addEquipment: "Añadir Equipo de Alquiler",
+    totalEquipmentBurn: "Gasto Diario de Equipo",
+    transferHistory: "Registro de Transferencias",
+    receiptPreview: "Inspección de Recibo",
+    dropOrCaptureReceipt: "Subir o capturar foto del recibo (<300KB comprimido)",
+    overdraftAlert: "Sobregiro evitado: La transferencia supera el saldo disponible",
+    statusOnSet: "En Rodaje",
+    statusRented: "Alquilado",
+    statusReturned: "Devuelto",
+    statusDamaged: "Dañado",
+    markReturned: "Marcar Devuelto",
+    markDamaged: "Marcar Dañado",
+    deleteItem: "Eliminar",
   },
   ja: {
     // Brand & System
@@ -583,6 +640,25 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     landingLaunchBtn: "ワークスペースを起動",
     landingExploreBtn: "インタラクティブ体験",
     landingAuditReport: "監査レポートを確認",
+
+    // Upgraded Features
+    exportCSV: "CSV出力",
+    downloadVault: "保管庫バックアップ(JSON)をダウンロード",
+    advanceDay: "撮影日を進める",
+    editCallSheet: "コールシート編集",
+    addEquipment: "レンタル機材を追加",
+    totalEquipmentBurn: "機材の日次消費額",
+    transferHistory: "送金監査ログ",
+    receiptPreview: "レシート検証",
+    dropOrCaptureReceipt: "レシート写真を撮影またはアップロード (<300KB自動圧縮)",
+    overdraftAlert: "残高不足防止: 送金額が手許残高を超えています",
+    statusOnSet: "現場稼働中",
+    statusRented: "レンタル中",
+    statusReturned: "返却済み",
+    statusDamaged: "破損・故障",
+    markReturned: "返却完了にする",
+    markDamaged: "故障報告にする",
+    deleteItem: "削除",
   },
 };
 

@@ -3,11 +3,10 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  useClosebookStore,
-} from "@/lib/store";
+import { useClosebookStore } from "@/lib/store";
 import { usePreferences } from "@/lib/preferences";
 import PreferencesControls from "@/components/PreferencesControls";
+import { Transaction, EquipmentStatus } from "@/lib/types";
 import {
   LayoutDashboard,
   Receipt,
@@ -32,8 +31,14 @@ import {
   Phone,
   ArrowLeft,
   X,
-  Layers,
   Settings,
+  Download,
+  Trash2,
+  Edit3,
+  Calendar,
+  Maximize2,
+  UploadCloud,
+  FileDown,
 } from "lucide-react";
 
 type TabId =
@@ -51,7 +56,6 @@ export default function WorkspacePage() {
   const {
     currency,
     language,
-    theme,
     formatMoney,
     t,
     setIsSettingsOpen,
@@ -60,34 +64,101 @@ export default function WorkspacePage() {
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDeptFilter, setSelectedDeptFilter] = useState("all");
+  const [taskDeptFilter, setTaskDeptFilter] = useState("all");
 
   // Modals
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [isCallSheetModalOpen, setIsCallSheetModalOpen] = useState(false);
+  const [isEquipmentModalOpen, setIsEquipmentModalOpen] = useState(false);
   const [activeCommentTxId, setActiveCommentTxId] = useState<string | null>(null);
+  const [previewReceiptTx, setPreviewReceiptTx] = useState<Transaction | null>(null);
 
-  // Form states
+  // Form states - Expense
   const [newDesc, setNewDesc] = useState("");
   const [newAmount, setNewAmount] = useState("");
   const [newDept, setNewDept] = useState("dept-unt");
   const [newPocket, setNewPocket] = useState("pkt-upm");
   const [newVendor, setNewVendor] = useState("");
   const [missingReceiptCheck, setMissingReceiptCheck] = useState(false);
+  const [receiptDataUrl, setReceiptDataUrl] = useState<string | null>(null);
+  const [receiptSizeKb, setReceiptSizeKb] = useState<number | null>(null);
+  const [isCompressing, setIsCompressing] = useState(false);
 
-  // Transfer form
+  // Form states - Transfer
   const [transferSource, setTransferSource] = useState("pkt-master");
   const [transferDest, setTransferDest] = useState("pkt-upm");
   const [transferAmount, setTransferAmount] = useState("");
+  const [transferNotes, setTransferNotes] = useState("");
+  const [transferError, setTransferError] = useState<string | null>(null);
 
-  // Task form
+  // Form states - Task
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDept, setTaskDept] = useState("dept-art");
   const [taskAssignee, setTaskAssignee] = useState("");
   const [taskPriority, setTaskPriority] = useState<"low" | "medium" | "high" | "urgent">("medium");
 
+  // Form states - Call Sheet Edit
+  const [csCallTime, setCsCallTime] = useState(store.callSheet.callTime);
+  const [csWrapTime, setCsWrapTime] = useState(store.callSheet.estimatedWrap);
+  const [csLocation, setCsLocation] = useState(store.callSheet.locationName);
+  const [csAddress, setCsAddress] = useState(store.callSheet.locationAddress);
+  const [csWeather, setCsWeather] = useState(store.callSheet.weather);
+  const [csScenes, setCsScenes] = useState(store.callSheet.scenesScheduled);
+  const [csNotes, setCsNotes] = useState(store.callSheet.directorNotes);
+  const [csEmergency, setCsEmergency] = useState(store.callSheet.emergencyContact);
+
+  // Form states - Equipment Add
+  const [eqItemName, setEqItemName] = useState("");
+  const [eqVendor, setEqVendor] = useState("");
+  const [eqDept, setEqDept] = useState("Camera");
+  const [eqDailyRate, setEqDailyRate] = useState("");
+  const [eqReturnDate, setEqReturnDate] = useState("Oct 28");
+
   // Comment state
   const [commentText, setCommentText] = useState("");
+
+  // Client-Side Photo Compression & EXIF Stripping
+  const handleReceiptFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsCompressing(true);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = document.createElement("img");
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const maxDim = 1200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height && width > maxDim) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else if (height > maxDim) {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          // Drawing to canvas natively strips GPS/EXIF metadata
+          const compressed = canvas.toDataURL("image/jpeg", 0.75);
+          setReceiptDataUrl(compressed);
+          setReceiptSizeKb(Math.round((compressed.length * 0.75) / 1024));
+          setMissingReceiptCheck(false);
+        }
+        setIsCompressing(false);
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Filtered transactions
   const filteredTransactions = store.transactions.filter((tx) => {
@@ -97,6 +168,11 @@ export default function WorkspacePage() {
       tx.id.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesDept = selectedDeptFilter === "all" || tx.departmentId === selectedDeptFilter;
     return matchesSearch && matchesDept;
+  });
+
+  // Filtered tasks
+  const filteredTasks = store.tasks.filter((task) => {
+    return taskDeptFilter === "all" || task.departmentId === taskDeptFilter;
   });
 
   const handleCreateTransaction = (e: React.FormEvent) => {
@@ -113,21 +189,34 @@ export default function WorkspacePage() {
       pocketId: newPocket,
       vendor: newVendor || "Local Vendor",
       isMissingReceipt: missingReceiptCheck,
+      receiptUrl: receiptDataUrl || (missingReceiptCheck ? undefined : "/icon.png"),
     });
 
     setNewDesc("");
     setNewAmount("");
     setNewVendor("");
     setMissingReceiptCheck(false);
+    setReceiptDataUrl(null);
+    setReceiptSizeKb(null);
     setIsLogModalOpen(false);
   };
 
   const handleTransfer = (e: React.FormEvent) => {
     e.preventDefault();
+    setTransferError(null);
     if (!transferAmount) return;
+
     const rate = currencies[currency]?.rate || 1;
-    store.transferFunds(transferSource, transferDest, parseFloat(transferAmount) / rate);
+    const amountInUSD = parseFloat(transferAmount) / rate;
+
+    const result = store.transferFunds(transferSource, transferDest, amountInUSD, transferNotes);
+    if (!result.success) {
+      setTransferError(result.error || "Transfer failed");
+      return;
+    }
+
     setTransferAmount("");
+    setTransferNotes("");
     setIsTransferModalOpen(false);
   };
 
@@ -142,11 +231,49 @@ export default function WorkspacePage() {
       assignee: taskAssignee || "Unassigned",
       priority: taskPriority,
       status: "todo",
-      dueDate: "Day 4",
+      dueDate: `Day ${store.callSheet.dayNumber}`,
     });
     setTaskTitle("");
     setTaskAssignee("");
     setIsTaskModalOpen(false);
+  };
+
+  const handleSaveCallSheet = (e: React.FormEvent) => {
+    e.preventDefault();
+    store.updateCallSheet({
+      callTime: csCallTime,
+      estimatedWrap: csWrapTime,
+      locationName: csLocation,
+      locationAddress: csAddress,
+      weather: csWeather,
+      scenesScheduled: csScenes,
+      directorNotes: csNotes,
+      emergencyContact: csEmergency,
+    });
+    setIsCallSheetModalOpen(false);
+  };
+
+  const handleAddEquipment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!eqItemName || !eqDailyRate) return;
+
+    const rate = currencies[currency]?.rate || 1;
+    const dailyInUSD = parseFloat(eqDailyRate) / rate;
+
+    store.addEquipment({
+      itemName: eqItemName,
+      vendor: eqVendor || "General Rental House",
+      department: eqDept,
+      dailyRate: dailyInUSD,
+      returnDate: eqReturnDate,
+      daysRemaining: 14,
+      status: "on_set",
+    });
+
+    setEqItemName("");
+    setEqVendor("");
+    setEqDailyRate("");
+    setIsEquipmentModalOpen(false);
   };
 
   const handleSendComment = (entityId: string) => {
@@ -159,9 +286,13 @@ export default function WorkspacePage() {
   const totalAllocated = store.departments.reduce((acc, d) => acc + d.allocatedBudget, 0);
   const activeAlertsCount = store.alerts.filter((a) => !a.isResolved).length;
 
+  const totalDailyEquipmentBurn = store.equipment
+    .filter((e) => e.status === "on_set" || e.status === "rented")
+    .reduce((acc, e) => acc + e.dailyRate, 0);
+
   return (
     <div className="min-h-screen bg-[var(--surface-canvas,#050505)] text-[var(--color-paper,#fdfdfd)] selection:bg-[var(--color-primary,#ff1e42)] selection:text-[#ffffff] flex flex-col md:flex-row pb-20 md:pb-0">
-      {/* 1. Desktop & Tablet Sidebar (Hidden on Mobile) */}
+      {/* 1. Desktop & Tablet Sidebar */}
       <aside className="hidden md:flex w-64 lg:w-72 bg-[#090909] border-r border-white/[0.06] flex-col justify-between shrink-0 p-5">
         <div>
           {/* Brand Header */}
@@ -171,31 +302,35 @@ export default function WorkspacePage() {
                 <Image src="/icon.png" alt="Closebook" width={32} height={32} className="object-cover" />
               </div>
               <span className="text-base font-medium tracking-tight text-[#fdfdfd]">
-                closebook<span className="text-[#ff1e42]">.</span>
+                closebook<span className="text-[var(--color-primary,#ff1e42)]">.</span>
               </span>
             </Link>
             <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-[#181818] text-[#a3a3a3] border border-white/[0.06]">
-              OS v1.0
+              OS v1.1
             </span>
           </div>
 
           {/* Project Switcher Info Card */}
           <div className="surface-overlay p-3.5 mb-6">
             <span className="text-[10px] uppercase tracking-wider text-[#737373] block mb-1 font-medium">
-              Active Production
+              {t("activeProduction")}
             </span>
             <span className="text-xs font-medium text-[#fdfdfd] block truncate">
               {store.project.name}
             </span>
             <div className="flex items-center gap-2 mt-2 text-[11px] text-[#a3a3a3]">
-              <span className="w-2 h-2 rounded-full bg-[#ff1e42] animate-pulse" />
-              <span>Day 4 of 16</span>
+              <span className="w-2 h-2 rounded-full bg-[var(--color-primary,#ff1e42)] animate-pulse" />
+              <span>
+                {t("dayCount")
+                  .replace("{day}", store.callSheet.dayNumber.toString())
+                  .replace("{total}", store.callSheet.totalDays.toString())}
+              </span>
               <span>•</span>
-              <span className="text-[#10b981] font-medium">Sync Active</span>
+              <span className="text-[#10b981] font-medium">{t("syncActive")}</span>
             </div>
           </div>
 
-          {/* Nav Items (Ergonomic min-h-[44px] touch target) */}
+          {/* Nav Items */}
           <nav className="space-y-1.5">
             <button
               onClick={() => setActiveTab("overview")}
@@ -205,8 +340,8 @@ export default function WorkspacePage() {
                   : "text-[#a3a3a3] hover:text-[#fdfdfd] hover:bg-[#121212]"
               }`}
             >
-              <LayoutDashboard className="w-4 h-4 text-[#ff1e42] shrink-0" />
-              <span>Executive Overview</span>
+              <LayoutDashboard className="w-4 h-4 text-[var(--color-primary,#ff1e42)] shrink-0" />
+              <span>{t("tabOverview")}</span>
             </button>
 
             <button
@@ -218,8 +353,8 @@ export default function WorkspacePage() {
               }`}
             >
               <div className="flex items-center gap-3">
-                <Receipt className="w-4 h-4 text-[#ff1e42] shrink-0" />
-                <span>Petty Cash Ledger</span>
+                <Receipt className="w-4 h-4 text-[var(--color-primary,#ff1e42)] shrink-0" />
+                <span>{t("tabLedger")}</span>
               </div>
               <span className="text-[10px] font-mono text-[#737373] bg-[#121212] px-2 py-0.5 rounded-full">
                 {store.transactions.length}
@@ -234,8 +369,8 @@ export default function WorkspacePage() {
                   : "text-[#a3a3a3] hover:text-[#fdfdfd] hover:bg-[#121212]"
               }`}
             >
-              <WalletCards className="w-4 h-4 text-[#ff1e42] shrink-0" />
-              <span>Multi-Pocket Cashflow</span>
+              <WalletCards className="w-4 h-4 text-[var(--color-primary,#ff1e42)] shrink-0" />
+              <span>{t("tabPockets")}</span>
             </button>
 
             <button
@@ -247,8 +382,8 @@ export default function WorkspacePage() {
               }`}
             >
               <div className="flex items-center gap-3">
-                <CheckSquare className="w-4 h-4 text-[#ff1e42] shrink-0" />
-                <span>Department Tasks</span>
+                <CheckSquare className="w-4 h-4 text-[var(--color-primary,#ff1e42)] shrink-0" />
+                <span>{t("tabTasks")}</span>
               </div>
               <span className="text-[10px] font-mono text-[#737373] bg-[#121212] px-2 py-0.5 rounded-full">
                 {store.tasks.filter((t) => t.status !== "completed").length}
@@ -263,8 +398,8 @@ export default function WorkspacePage() {
                   : "text-[#a3a3a3] hover:text-[#fdfdfd] hover:bg-[#121212]"
               }`}
             >
-              <Film className="w-4 h-4 text-[#ff1e42] shrink-0" />
-              <span>Digital Call Sheet</span>
+              <Film className="w-4 h-4 text-[var(--color-primary,#ff1e42)] shrink-0" />
+              <span>{t("tabCallSheet")}</span>
             </button>
 
             <button
@@ -275,8 +410,8 @@ export default function WorkspacePage() {
                   : "text-[#a3a3a3] hover:text-[#fdfdfd] hover:bg-[#121212]"
               }`}
             >
-              <Package className="w-4 h-4 text-[#ff1e42] shrink-0" />
-              <span>Equipment Rental</span>
+              <Package className="w-4 h-4 text-[var(--color-primary,#ff1e42)] shrink-0" />
+              <span>{t("tabEquipment")}</span>
             </button>
 
             <button
@@ -288,11 +423,11 @@ export default function WorkspacePage() {
               }`}
             >
               <div className="flex items-center gap-3">
-                <Bell className="w-4 h-4 text-[#ff1e42] shrink-0" />
-                <span>Automated Alerts</span>
+                <Bell className="w-4 h-4 text-[var(--color-primary,#ff1e42)] shrink-0" />
+                <span>{t("tabAlerts")}</span>
               </div>
               {activeAlertsCount > 0 && (
-                <span className="text-[10px] font-mono font-bold text-white bg-[#ff1e42] px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-mono font-bold text-white bg-[var(--color-primary,#ff1e42)] px-2 py-0.5 rounded-full">
                   {activeAlertsCount}
                 </span>
               )}
@@ -306,8 +441,8 @@ export default function WorkspacePage() {
                   : "text-[#a3a3a3] hover:text-[#fdfdfd] hover:bg-[#121212]"
               }`}
             >
-              <FileSpreadsheet className="w-4 h-4 text-[#ff1e42] shrink-0" />
-              <span>Google Sheet Mirror</span>
+              <FileSpreadsheet className="w-4 h-4 text-[var(--color-primary,#ff1e42)] shrink-0" />
+              <span>{t("tabSheet")}</span>
             </button>
           </nav>
         </div>
@@ -319,7 +454,7 @@ export default function WorkspacePage() {
             className="w-full btn-ghost-pill text-xs min-h-[44px] flex items-center justify-center gap-2 text-[#a3a3a3] hover:text-[#fdfdfd]"
           >
             <Settings className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
-            <span>Preferences ({currency} • {language.toUpperCase()})</span>
+            <span>{t("preferences")} ({currency} • {language.toUpperCase()})</span>
           </button>
 
           <button
@@ -327,7 +462,7 @@ export default function WorkspacePage() {
             className="w-full btn-primary-crimson text-xs min-h-[44px]"
           >
             <Plus className="w-4 h-4" />
-            <span>Log Petty Cash</span>
+            <span>{t("logExpense")}</span>
           </button>
 
           <Link
@@ -342,7 +477,7 @@ export default function WorkspacePage() {
 
       {/* 2. Main Workspace Body */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        {/* Top Header Bar (Adaptive Mobile/Desktop) */}
+        {/* Top Header Bar */}
         <header className="h-16 border-b border-white/[0.06] bg-[var(--surface-canvas,#050505)]/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between shrink-0 sticky top-0 z-30">
           <div className="flex items-center gap-3">
             {/* Mobile Brand Logo */}
@@ -351,26 +486,26 @@ export default function WorkspacePage() {
                 <Image src="/icon.png" alt="Closebook" width={28} height={28} className="object-cover" />
               </div>
               <span className="text-sm font-medium tracking-tight text-[#fdfdfd]">
-                closebook<span className="text-[#ff1e42]">.</span>
+                closebook<span className="text-[var(--color-primary,#ff1e42)]">.</span>
               </span>
             </Link>
 
             <div className="hidden md:block">
               <h1 className="text-sm font-medium text-[#fdfdfd] capitalize">
-                {activeTab === "overview" && "Executive Dashboard"}
-                {activeTab === "transactions" && "Petty Cash Transactions Ledger"}
-                {activeTab === "pockets" && "Multi-Pocket Cashflow Hierarchy"}
-                {activeTab === "tasks" && "Department Workflows & Tasks"}
-                {activeTab === "callsheet" && "Today's Call Sheet & Schedule"}
-                {activeTab === "equipment" && "Rental Gear & Vendor Tracker"}
-                {activeTab === "alerts" && "Automated Warnings & Reminders"}
-                {activeTab === "sync" && "Google Workspace Sync Engine"}
+                {activeTab === "overview" && t("tabOverview")}
+                {activeTab === "transactions" && t("tabLedger")}
+                {activeTab === "pockets" && t("tabPockets")}
+                {activeTab === "tasks" && t("tabTasks")}
+                {activeTab === "callsheet" && t("tabCallSheet")}
+                {activeTab === "equipment" && t("tabEquipment")}
+                {activeTab === "alerts" && t("tabAlerts")}
+                {activeTab === "sync" && t("tabSheet")}
               </h1>
             </div>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Preferences quick switcher */}
+            {/* Preferences switcher */}
             <div className="hidden sm:flex items-center">
               <PreferencesControls />
             </div>
@@ -380,9 +515,9 @@ export default function WorkspacePage() {
             </div>
 
             <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#121212] border border-white/[0.06] text-xs text-[#a3a3a3] min-h-[36px]">
-              <span className="w-2 h-2 rounded-full bg-[#ff1e42] animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-[var(--color-primary,#ff1e42)] animate-pulse" />
               <span>Drive Vault:</span>
-              <span className="font-mono text-[#fdfdfd] text-[11px]">Synced</span>
+              <span className="font-mono text-[#fdfdfd] text-[11px]">{t("synced")}</span>
             </div>
 
             <button
@@ -390,7 +525,7 @@ export default function WorkspacePage() {
               className="btn-primary-crimson text-xs min-h-[40px] px-3.5 hidden sm:inline-flex"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Log Expense</span>
+              <span>{t("logExpense")}</span>
             </button>
           </div>
         </header>
@@ -405,37 +540,37 @@ export default function WorkspacePage() {
               {/* Stat Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="surface-panel p-5">
-                  <span className="text-xs text-[#737373] block mb-1">Total Production Budget</span>
+                  <span className="text-xs text-[#737373] block mb-1">{t("totalBudget")}</span>
                   <span className="text-2xl font-mono font-medium text-[#fdfdfd]">
                     {formatMoney(store.project.totalBudget)}
                   </span>
-                  <span className="text-[11px] text-[#a3a3a3] mt-2 block">100% committed</span>
+                  <span className="text-[11px] text-[#a3a3a3] mt-2 block">{t("budgetCommitted")}</span>
                 </div>
 
                 <div className="surface-panel p-5">
-                  <span className="text-xs text-[#737373] block mb-1">Disbursed to Departments</span>
+                  <span className="text-xs text-[#737373] block mb-1">{t("disbursedToDepts")}</span>
                   <span className="text-2xl font-mono font-medium text-[#fdfdfd]">
                     {formatMoney(totalSpent)}
                   </span>
-                  <span className="text-[11px] text-[#ff1e42] mt-2 block font-medium">
-                    {((totalSpent / totalAllocated) * 100).toFixed(1)}% burn rate
+                  <span className="text-[11px] text-[var(--color-primary,#ff1e42)] mt-2 block font-medium">
+                    {((totalSpent / (totalAllocated || 1)) * 100).toFixed(1)}% {t("burnRate")}
                   </span>
                 </div>
 
                 <div className="surface-panel p-5">
-                  <span className="text-xs text-[#737373] block mb-1">UPM Field Cash on Hand</span>
+                  <span className="text-xs text-[#737373] block mb-1">{t("fieldCashOnHand")}</span>
                   <span className="text-2xl font-mono font-medium text-[#10b981]">
                     {formatMoney(store.pockets.find((p) => p.id === "pkt-upm")?.balance || 8420)}
                   </span>
-                  <span className="text-[11px] text-[#a3a3a3] mt-2 block">Sufficient for Day 4</span>
+                  <span className="text-[11px] text-[#a3a3a3] mt-2 block">{t("cashSufficient")}</span>
                 </div>
 
                 <div className="surface-panel p-5">
-                  <span className="text-xs text-[#737373] block mb-1">Active Automated Alerts</span>
-                  <span className="text-2xl font-mono font-medium text-[#ff1e42]">
+                  <span className="text-xs text-[#737373] block mb-1">{t("activeAlerts")}</span>
+                  <span className="text-2xl font-mono font-medium text-[var(--color-primary,#ff1e42)]">
                     {activeAlertsCount} Flags
                   </span>
-                  <span className="text-[11px] text-[#a3a3a3] mt-2 block">Audit required</span>
+                  <span className="text-[11px] text-[#a3a3a3] mt-2 block">{t("auditRequired")}</span>
                 </div>
               </div>
 
@@ -443,8 +578,8 @@ export default function WorkspacePage() {
               <div className="surface-panel p-5 sm:p-6">
                 <div className="flex items-center justify-between pb-4 mb-6 border-b border-white/[0.06]">
                   <div>
-                    <h3 className="text-sm font-medium text-[#fdfdfd]">Department Budget Realization</h3>
-                    <p className="text-xs text-[#737373] mt-0.5">Real-time spend tracking against departmental ceiling</p>
+                    <h3 className="text-sm font-medium text-[#fdfdfd]">{t("deptBudgetRealization")}</h3>
+                    <p className="text-xs text-[#737373] mt-0.5">{t("deptBudgetSub")}</p>
                   </div>
                   <span className="text-xs text-[#a3a3a3] font-mono hidden sm:inline">
                     {store.departments.length} Departments
@@ -453,7 +588,7 @@ export default function WorkspacePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
                   {store.departments.map((dept) => {
-                    const pct = Math.min(100, Math.round((dept.spentAmount / dept.allocatedBudget) * 100));
+                    const pct = Math.min(100, Math.round((dept.spentAmount / (dept.allocatedBudget || 1)) * 100));
                     const isHigh = pct >= 80;
                     return (
                       <div key={dept.id} className="space-y-2">
@@ -464,18 +599,17 @@ export default function WorkspacePage() {
                           </span>
                           <span className="font-mono text-[#a3a3a3]">
                             {formatMoney(dept.spentAmount)} / {formatMoney(dept.allocatedBudget)}
-                            <span className={`ml-2 font-bold ${isHigh ? "text-[#ff1e42]" : "text-[#737373]"}`}>
+                            <span className={`ml-2 font-bold ${isHigh ? "text-[var(--color-primary,#ff1e42)]" : "text-[#737373]"}`}>
                               ({pct}%)
                             </span>
                           </span>
                         </div>
-                        {/* Progress track */}
                         <div className="h-2 w-full bg-[#181818] rounded-full overflow-hidden">
                           <div
                             className="h-full rounded-full transition-all duration-500"
                             style={{
                               width: `${pct}%`,
-                              backgroundColor: isHigh ? "#ff1e42" : dept.color,
+                              backgroundColor: isHigh ? "var(--color-primary, #ff1e42)" : dept.color,
                             }}
                           />
                         </div>
@@ -490,12 +624,12 @@ export default function WorkspacePage() {
                 {/* Recent Transactions */}
                 <div className="lg:col-span-7 surface-panel p-5 sm:p-6">
                   <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.06]">
-                    <h3 className="text-sm font-medium text-[#fdfdfd]">Recent Petty Cash Entries</h3>
+                    <h3 className="text-sm font-medium text-[#fdfdfd]">{t("recentEntries")}</h3>
                     <button
                       onClick={() => setActiveTab("transactions")}
-                      className="text-xs text-[#ff1e42] hover:underline min-h-[36px] flex items-center"
+                      className="text-xs text-[var(--color-primary,#ff1e42)] hover:underline min-h-[36px] flex items-center"
                     >
-                      View All Ledger
+                      {t("viewAllLedger")}
                     </button>
                   </div>
 
@@ -521,7 +655,7 @@ export default function WorkspacePage() {
                               tx.status === "approved"
                                 ? "text-[#10b981]"
                                 : tx.status === "rejected"
-                                ? "text-[#ff1e42]"
+                                ? "text-[var(--color-primary,#ff1e42)]"
                                 : "text-amber-400"
                             }`}
                           >
@@ -536,8 +670,8 @@ export default function WorkspacePage() {
                 {/* Live System Alerts */}
                 <div className="lg:col-span-5 surface-panel p-5 sm:p-6">
                   <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.06]">
-                    <h3 className="text-sm font-medium text-[#fdfdfd]">Active Production Flags</h3>
-                    <span className="text-xs text-[#737373]">Cron Guardrails</span>
+                    <h3 className="text-sm font-medium text-[#fdfdfd]">{t("activeFlags")}</h3>
+                    <span className="text-xs text-[#737373]">Autonomous Guardrails</span>
                   </div>
 
                   <div className="space-y-3">
@@ -548,7 +682,7 @@ export default function WorkspacePage() {
                       >
                         <AlertTriangle
                           className={`w-4 h-4 shrink-0 mt-0.5 ${
-                            alert.severity === "critical" ? "text-[#ff1e42]" : "text-amber-400"
+                            alert.severity === "critical" ? "text-[var(--color-primary,#ff1e42)]" : "text-amber-400"
                           }`}
                         />
                         <div className="flex-1">
@@ -562,9 +696,9 @@ export default function WorkspacePage() {
                             <span className="text-[10px] text-[#737373]">{alert.timestamp}</span>
                             <button
                               onClick={() => store.resolveAlert(alert.id)}
-                              className="text-[11px] font-medium text-[#ff1e42] hover:underline min-h-[36px] flex items-center"
+                              className="text-[11px] font-medium text-[var(--color-primary,#ff1e42)] hover:underline min-h-[36px] flex items-center"
                             >
-                              Resolve
+                              {t("resolve")}
                             </button>
                           </div>
                         </div>
@@ -583,15 +717,15 @@ export default function WorkspacePage() {
             <div className="space-y-6 animate-fade-in">
               {/* Action Bar & Filters */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1 max-w-xl">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1 max-w-2xl">
                   <div className="relative flex-1">
                     <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#737373]" />
                     <input
                       type="text"
-                      placeholder="Search description, vendor, or ID..."
+                      placeholder={t("searchPlaceholder")}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-[#121212] border border-white/[0.08] rounded-full pl-10 pr-4 min-h-[44px] text-xs text-[#fdfdfd] placeholder-[#737373] focus:outline-none focus:border-[#ff1e42]"
+                      className="w-full bg-[#121212] border border-white/[0.08] rounded-full pl-10 pr-4 min-h-[44px] text-xs text-[#fdfdfd] placeholder-[#737373] focus:outline-none focus:border-[var(--color-primary,#ff1e42)]"
                     />
                   </div>
 
@@ -600,7 +734,7 @@ export default function WorkspacePage() {
                     onChange={(e) => setSelectedDeptFilter(e.target.value)}
                     className="bg-[#121212] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none"
                   >
-                    <option value="all">All Departments</option>
+                    <option value="all">{t("filterAll")}</option>
                     {store.departments.map((d) => (
                       <option key={d.id} value={d.id}>
                         {d.name}
@@ -609,13 +743,24 @@ export default function WorkspacePage() {
                   </select>
                 </div>
 
-                <button
-                  onClick={() => setIsLogModalOpen(true)}
-                  className="btn-primary-crimson text-xs min-h-[44px] px-5"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Log Petty Cash</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={store.exportLedgerCSV}
+                    className="btn-ghost-pill text-xs min-h-[44px] px-4 flex items-center gap-2 text-[#a3a3a3] hover:text-white"
+                    title="Export to CSV (Excel / Sheets)"
+                  >
+                    <FileDown className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
+                    <span>{t("exportCSV")}</span>
+                  </button>
+
+                  <button
+                    onClick={() => setIsLogModalOpen(true)}
+                    className="btn-primary-crimson text-xs min-h-[44px] px-5"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>{t("logExpense")}</span>
+                  </button>
+                </div>
               </div>
 
               {/* Transactions Table */}
@@ -624,14 +769,14 @@ export default function WorkspacePage() {
                   <table className="w-full text-left text-xs">
                     <thead>
                       <tr className="border-b border-white/[0.06] text-[#737373] uppercase tracking-wider text-[10px]">
-                        <th className="p-4">ID</th>
-                        <th className="p-4">Description</th>
-                        <th className="p-4">Department</th>
-                        <th className="p-4">Pocket</th>
-                        <th className="p-4">Vendor</th>
-                        <th className="p-4">Amount</th>
-                        <th className="p-4">Status</th>
-                        <th className="p-4 text-right">Actions</th>
+                        <th className="p-4">{t("colTx")}</th>
+                        <th className="p-4">{t("colVendor")}</th>
+                        <th className="p-4">{t("colDept")}</th>
+                        <th className="p-4">{t("colPocket")}</th>
+                        <th className="p-4">{t("colAmount")}</th>
+                        <th className="p-4">{t("colReceipt")}</th>
+                        <th className="p-4">{t("colStatus")}</th>
+                        <th className="p-4 text-right">{t("colActions")}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/[0.04]">
@@ -640,18 +785,31 @@ export default function WorkspacePage() {
                           <td className="p-4 font-mono text-[#737373]">{tx.id}</td>
                           <td className="p-4">
                             <div className="font-medium text-[#fdfdfd]">{tx.description}</div>
-                            <div className="text-[11px] text-[#737373] mt-0.5">{tx.loggedAt}</div>
+                            <div className="text-[11px] text-[#737373] mt-0.5">{tx.vendor} • {tx.loggedAt}</div>
                             {tx.isMissingReceipt && (
-                              <span className="inline-flex items-center gap-1 text-[10px] text-[#ff1e42] font-semibold mt-1">
+                              <span className="inline-flex items-center gap-1 text-[10px] text-[var(--color-primary,#ff1e42)] font-semibold mt-1">
                                 <AlertTriangle className="w-3 h-3" /> Missing Receipt Photo
                               </span>
                             )}
                           </td>
                           <td className="p-4 text-[#a3a3a3]">{tx.departmentName}</td>
                           <td className="p-4 font-mono text-[11px] text-[#737373]">{tx.pocketName}</td>
-                          <td className="p-4 text-[#a3a3a3]">{tx.vendor}</td>
                           <td className="p-4 font-mono font-medium text-[#fdfdfd]">
                             {formatMoney(tx.amount)}
+                          </td>
+                          <td className="p-4">
+                            {tx.receiptUrl && !tx.isMissingReceipt ? (
+                              <button
+                                onClick={() => setPreviewReceiptTx(tx)}
+                                className="group flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#181818] border border-white/[0.08] hover:border-[var(--color-primary,#ff1e42)] transition-all text-[10px] text-[#d4d4d4]"
+                                title="Click to view receipt in lightbox"
+                              >
+                                <Camera className="w-3 h-3 text-[var(--color-primary,#ff1e42)] group-hover:scale-110 transition-transform" />
+                                <span>View Photo</span>
+                              </button>
+                            ) : (
+                              <span className="text-[10px] text-[#737373] font-mono italic">No Attachment</span>
+                            )}
                           </td>
                           <td className="p-4">
                             <span
@@ -659,7 +817,7 @@ export default function WorkspacePage() {
                                 tx.status === "approved"
                                   ? "bg-[#10b981]/15 text-[#10b981] font-semibold"
                                   : tx.status === "rejected"
-                                  ? "bg-[#ff1e42]/15 text-[#ff1e42] font-semibold"
+                                  ? "bg-[var(--color-primary,#ff1e42)]/15 text-[var(--color-primary,#ff1e42)] font-semibold"
                                   : "bg-amber-400/15 text-amber-400 font-semibold"
                               }`}
                             >
@@ -679,8 +837,8 @@ export default function WorkspacePage() {
                                   </button>
                                   <button
                                     onClick={() => store.updateTransactionStatus(tx.id, "rejected")}
-                                    className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[#ff1e42] hover:bg-white/[0.05] rounded-full"
-                                    title="Reject Transaction"
+                                    className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[var(--color-primary,#ff1e42)] hover:bg-white/[0.05] rounded-full"
+                                    title="Reject Transaction (Refunds Pocket)"
                                   >
                                     <XCircle className="w-5 h-5" />
                                   </button>
@@ -693,6 +851,13 @@ export default function WorkspacePage() {
                               >
                                 <MessageSquare className="w-5 h-5" />
                               </button>
+                              <button
+                                onClick={() => store.deleteTransaction(tx.id)}
+                                className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[#737373] hover:text-[var(--color-primary,#ff1e42)] hover:bg-white/[0.05] rounded-full"
+                                title="Delete Expense"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -704,10 +869,10 @@ export default function WorkspacePage() {
 
               {/* Contextual Discussion Drawer */}
               {activeCommentTxId && (
-                <div className="surface-panel p-5 sm:p-6 border border-[#ff1e42]/30 animate-fade-in">
+                <div className="surface-panel p-5 sm:p-6 border border-[var(--color-primary,#ff1e42)]/30 animate-fade-in">
                   <div className="flex items-center justify-between pb-3 mb-4 border-b border-white/[0.06]">
                     <div className="flex items-center gap-2">
-                      <MessageSquare className="w-4 h-4 text-[#ff1e42]" />
+                      <MessageSquare className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
                       <span className="text-xs font-medium text-[#fdfdfd]">
                         Context Discussion on {activeCommentTxId}
                       </span>
@@ -741,7 +906,7 @@ export default function WorkspacePage() {
                       value={commentText}
                       onChange={(e) => setCommentText(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleSendComment(activeCommentTxId)}
-                      className="flex-1 bg-[#121212] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
+                      className="flex-1 bg-[#121212] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-[var(--color-primary,#ff1e42)]"
                     />
                     <button
                       onClick={() => handleSendComment(activeCommentTxId)}
@@ -762,17 +927,18 @@ export default function WorkspacePage() {
             <div className="space-y-6 sm:space-y-8 animate-fade-in">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-medium text-[#fdfdfd]">Hierarchical Cash Pockets</h2>
-                  <p className="text-xs text-[#737373] mt-0.5">
-                    Track cash movement from Executive Producer to Field Coordinators without co-mingling funds.
-                  </p>
+                  <h2 className="text-xl font-medium text-[#fdfdfd]">{t("pocketsTitle")}</h2>
+                  <p className="text-xs text-[#737373] mt-0.5">{t("pocketsSub")}</p>
                 </div>
                 <button
-                  onClick={() => setIsTransferModalOpen(true)}
+                  onClick={() => {
+                    setTransferError(null);
+                    setIsTransferModalOpen(true);
+                  }}
                   className="btn-primary-crimson text-xs min-h-[44px] px-5"
                 >
                   <ArrowUpRight className="w-4 h-4" />
-                  <span>Transfer Pocket Funds</span>
+                  <span>{t("transferFunds")}</span>
                 </button>
               </div>
 
@@ -782,17 +948,19 @@ export default function WorkspacePage() {
                   <div key={pocket.id} className="surface-panel p-5 sm:p-6 relative flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between mb-4">
-                        <span className="text-[10px] font-mono text-[#ff1e42] bg-[#ff1e42]/10 px-2.5 py-1 rounded-full uppercase">
+                        <span className="text-[10px] font-mono text-[var(--color-primary,#ff1e42)] bg-[var(--color-primary,#ff1e42)]/10 px-2.5 py-1 rounded-full uppercase">
                           Tier {idx + 1} • {pocket.type.replace("_", " ")}
                         </span>
                         <WalletCards className="w-4 h-4 text-[#737373]" />
                       </div>
 
                       <h3 className="text-base font-medium text-[#fdfdfd] mb-1">{pocket.name}</h3>
-                      <span className="text-xs text-[#a3a3a3] block mb-4">Custodian: {pocket.custodian}</span>
+                      <span className="text-xs text-[#a3a3a3] block mb-4">
+                        {t("custodian")}: {pocket.custodian}
+                      </span>
 
                       <div className="surface-overlay p-4 mb-4">
-                        <span className="text-xs text-[#737373] block mb-1">Current Liquid Balance</span>
+                        <span className="text-xs text-[#737373] block mb-1">{t("remainingBalance")}</span>
                         <span className="text-2xl font-mono font-medium text-[#fdfdfd]">
                           {formatMoney(pocket.balance)}
                         </span>
@@ -800,11 +968,50 @@ export default function WorkspacePage() {
                     </div>
 
                     <div className="pt-4 border-t border-white/[0.06] flex items-center justify-between text-xs text-[#737373]">
-                      <span>Max Cap: {formatMoney(pocket.allocated)}</span>
+                      <span>{t("totalAllocated")}: {formatMoney(pocket.allocated)}</span>
                       <span className="text-[#10b981] font-medium">Audited & Active</span>
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* Transfer Audit Log Table */}
+              <div className="surface-panel p-5 sm:p-6">
+                <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.06]">
+                  <h3 className="text-sm font-medium text-[#fdfdfd]">{t("transferHistory")}</h3>
+                  <span className="text-xs text-[#737373] font-mono">{store.transfers.length} Transactions</span>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-white/[0.06] text-[#737373] uppercase tracking-wider text-[10px]">
+                        <th className="p-3">Ref</th>
+                        <th className="p-3">From Source</th>
+                        <th className="p-3">To Destination</th>
+                        <th className="p-3">Amount</th>
+                        <th className="p-3">Authorized By</th>
+                        <th className="p-3">Time</th>
+                        <th className="p-3">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/[0.04]">
+                      {store.transfers.map((tr) => (
+                        <tr key={tr.id} className="hover:bg-white/[0.01]">
+                          <td className="p-3 font-mono text-[#737373]">{tr.id}</td>
+                          <td className="p-3 text-[#fdfdfd] font-medium">{tr.sourcePocketName}</td>
+                          <td className="p-3 text-[#10b981] font-medium">{tr.destPocketName}</td>
+                          <td className="p-3 font-mono font-semibold text-[#fdfdfd]">
+                            {formatMoney(tr.amount)}
+                          </td>
+                          <td className="p-3 text-[#a3a3a3]">{tr.authorizedBy}</td>
+                          <td className="p-3 text-[#737373]">{tr.timestamp}</td>
+                          <td className="p-3 text-[#737373] italic">{tr.notes}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
@@ -816,46 +1023,74 @@ export default function WorkspacePage() {
             <div className="space-y-6 animate-fade-in">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-medium text-[#fdfdfd]">Department Coordination & To-Do</h2>
-                  <p className="text-xs text-[#737373] mt-0.5">
-                    Noise-free task tracking isolated by production department.
-                  </p>
+                  <h2 className="text-xl font-medium text-[#fdfdfd]">{t("tasksTitle")}</h2>
+                  <p className="text-xs text-[#737373] mt-0.5">{t("tasksSub")}</p>
                 </div>
-                <button
-                  onClick={() => setIsTaskModalOpen(true)}
-                  className="btn-primary-crimson text-xs min-h-[44px] px-5"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>New Department Task</span>
-                </button>
+                <div className="flex items-center gap-3">
+                  <select
+                    value={taskDeptFilter}
+                    onChange={(e) => setTaskDeptFilter(e.target.value)}
+                    className="bg-[#121212] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none"
+                  >
+                    <option value="all">All Departments</option>
+                    {store.departments.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <button
+                    onClick={() => setIsTaskModalOpen(true)}
+                    className="btn-primary-crimson text-xs min-h-[44px] px-5"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>{t("newTask")}</span>
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
                 {/* Column 1: To Do */}
                 <div className="surface-panel p-5 space-y-4">
                   <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
-                    <span className="text-xs uppercase tracking-wider text-[#737373] font-medium">To-Do</span>
+                    <span className="text-xs uppercase tracking-wider text-[#737373] font-medium">{t("todo")}</span>
                     <span className="text-xs font-mono text-[#a3a3a3]">
-                      {store.tasks.filter((t) => t.status === "todo").length}
+                      {filteredTasks.filter((t) => t.status === "todo").length}
                     </span>
                   </div>
                   <div className="space-y-3">
-                    {store.tasks
+                    {filteredTasks
                       .filter((t) => t.status === "todo")
                       .map((task) => (
                         <div
                           key={task.id}
-                          onClick={() => store.toggleTask(task.id)}
-                          className="surface-overlay p-4 cursor-pointer hover:border-white/[0.15] transition-all min-h-[44px]"
+                          className="surface-overlay p-4 hover:border-white/[0.15] transition-all relative group"
                         >
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-[10px] font-mono text-[#737373]">{task.departmentName}</span>
-                            <span className="text-[10px] font-mono text-[#ff1e42] uppercase font-semibold">{task.priority}</span>
+                            <span className="text-[10px] font-mono text-[var(--color-primary,#ff1e42)] uppercase font-semibold">
+                              {task.priority}
+                            </span>
                           </div>
-                          <span className="text-xs font-medium text-[#fdfdfd] block mb-2">{task.title}</span>
+                          <span
+                            onClick={() => store.toggleTask(task.id)}
+                            className="text-xs font-medium text-[#fdfdfd] block mb-2 cursor-pointer hover:underline"
+                          >
+                            {task.title}
+                          </span>
                           <div className="flex items-center justify-between text-[11px] text-[#737373]">
                             <span>{task.assignee}</span>
-                            <span>{task.dueDate}</span>
+                            <div className="flex items-center gap-2">
+                              <span>{task.dueDate}</span>
+                              <button
+                                onClick={() => store.deleteTask(task.id)}
+                                className="opacity-0 group-hover:opacity-100 text-[#737373] hover:text-[var(--color-primary,#ff1e42)] transition-opacity"
+                                title="Delete task"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -865,28 +1100,43 @@ export default function WorkspacePage() {
                 {/* Column 2: In Progress */}
                 <div className="surface-panel p-5 space-y-4">
                   <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
-                    <span className="text-xs uppercase tracking-wider text-amber-400 font-medium">In Progress</span>
+                    <span className="text-xs uppercase tracking-wider text-amber-400 font-medium">{t("inProgress")}</span>
                     <span className="text-xs font-mono text-[#a3a3a3]">
-                      {store.tasks.filter((t) => t.status === "in_progress").length}
+                      {filteredTasks.filter((t) => t.status === "in_progress").length}
                     </span>
                   </div>
                   <div className="space-y-3">
-                    {store.tasks
+                    {filteredTasks
                       .filter((t) => t.status === "in_progress")
                       .map((task) => (
                         <div
                           key={task.id}
-                          onClick={() => store.toggleTask(task.id)}
-                          className="surface-overlay p-4 cursor-pointer hover:border-white/[0.15] transition-all min-h-[44px]"
+                          className="surface-overlay p-4 hover:border-white/[0.15] transition-all relative group"
                         >
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-[10px] font-mono text-[#737373]">{task.departmentName}</span>
-                            <span className="text-[10px] font-mono text-amber-400 uppercase font-semibold">{task.priority}</span>
+                            <span className="text-[10px] font-mono text-amber-400 uppercase font-semibold">
+                              {task.priority}
+                            </span>
                           </div>
-                          <span className="text-xs font-medium text-[#fdfdfd] block mb-2">{task.title}</span>
+                          <span
+                            onClick={() => store.toggleTask(task.id)}
+                            className="text-xs font-medium text-[#fdfdfd] block mb-2 cursor-pointer hover:underline"
+                          >
+                            {task.title}
+                          </span>
                           <div className="flex items-center justify-between text-[11px] text-[#737373]">
                             <span>{task.assignee}</span>
-                            <span>{task.dueDate}</span>
+                            <div className="flex items-center gap-2">
+                              <span>{task.dueDate}</span>
+                              <button
+                                onClick={() => store.deleteTask(task.id)}
+                                className="opacity-0 group-hover:opacity-100 text-[#737373] hover:text-[var(--color-primary,#ff1e42)] transition-opacity"
+                                title="Delete task"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -896,28 +1146,41 @@ export default function WorkspacePage() {
                 {/* Column 3: Completed */}
                 <div className="surface-panel p-5 space-y-4">
                   <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
-                    <span className="text-xs uppercase tracking-wider text-[#10b981] font-medium">Completed</span>
+                    <span className="text-xs uppercase tracking-wider text-[#10b981] font-medium">{t("completed")}</span>
                     <span className="text-xs font-mono text-[#a3a3a3]">
-                      {store.tasks.filter((t) => t.status === "completed").length}
+                      {filteredTasks.filter((t) => t.status === "completed").length}
                     </span>
                   </div>
                   <div className="space-y-3">
-                    {store.tasks
+                    {filteredTasks
                       .filter((t) => t.status === "completed")
                       .map((task) => (
                         <div
                           key={task.id}
-                          onClick={() => store.toggleTask(task.id)}
-                          className="surface-overlay p-4 opacity-60 cursor-pointer hover:opacity-100 transition-all line-through min-h-[44px]"
+                          className="surface-overlay p-4 opacity-60 hover:opacity-100 transition-all relative group"
                         >
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-[10px] font-mono text-[#737373]">{task.departmentName}</span>
                             <span className="text-[10px] font-mono text-[#10b981] font-semibold">Done</span>
                           </div>
-                          <span className="text-xs font-medium text-[#fdfdfd] block mb-2">{task.title}</span>
+                          <span
+                            onClick={() => store.toggleTask(task.id)}
+                            className="text-xs font-medium text-[#fdfdfd] block mb-2 line-through cursor-pointer"
+                          >
+                            {task.title}
+                          </span>
                           <div className="flex items-center justify-between text-[11px] text-[#737373]">
                             <span>{task.assignee}</span>
-                            <span>{task.dueDate}</span>
+                            <div className="flex items-center gap-2">
+                              <span>{task.dueDate}</span>
+                              <button
+                                onClick={() => store.deleteTask(task.id)}
+                                className="opacity-0 group-hover:opacity-100 text-[#737373] hover:text-[var(--color-primary,#ff1e42)] transition-opacity"
+                                title="Delete task"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -932,17 +1195,41 @@ export default function WorkspacePage() {
           {/* ========================================================================= */}
           {activeTab === "callsheet" && (
             <div className="space-y-6 max-w-4xl animate-fade-in">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-medium text-[#fdfdfd]">{t("callSheetTitle")}</h2>
+                  <p className="text-xs text-[#737373] mt-0.5">{t("callSheetSub")}</p>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <button
+                    onClick={() => setIsCallSheetModalOpen(true)}
+                    className="btn-ghost-pill text-xs min-h-[44px] px-4 flex items-center gap-2 text-[#d4d4d4]"
+                  >
+                    <Edit3 className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
+                    <span>{t("editCallSheet")}</span>
+                  </button>
+
+                  <button
+                    onClick={store.advanceShootDay}
+                    className="btn-primary-crimson text-xs min-h-[44px] px-4 flex items-center gap-2"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    <span>{t("advanceDay")}</span>
+                  </button>
+                </div>
+              </div>
+
               <div className="surface-panel p-6 sm:p-8">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 mb-6 border-b border-white/[0.06] gap-4">
                   <div>
-                    <span className="text-xs font-mono text-[#ff1e42] uppercase tracking-wider block mb-1 font-semibold">
+                    <span className="text-xs font-mono text-[var(--color-primary,#ff1e42)] uppercase tracking-wider block mb-1 font-semibold">
                       Day {store.callSheet.dayNumber} of {store.callSheet.totalDays}
                     </span>
                     <h2 className="text-2xl font-medium text-[#fdfdfd]">{store.callSheet.date}</h2>
                   </div>
                   <div className="sm:text-right">
-                    <span className="text-xs text-[#737373] block">General Crew Call Time</span>
-                    <span className="text-2xl font-mono font-medium text-[#ff1e42]">
+                    <span className="text-xs text-[#737373] block">{t("callTime")}</span>
+                    <span className="text-2xl font-mono font-medium text-[var(--color-primary,#ff1e42)]">
                       {store.callSheet.callTime}
                     </span>
                   </div>
@@ -951,7 +1238,7 @@ export default function WorkspacePage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6 mb-6">
                   <div className="surface-overlay p-4">
                     <span className="text-xs text-[#737373] flex items-center gap-1.5 mb-1.5 font-medium">
-                      <MapPin className="w-3.5 h-3.5 text-[#ff1e42]" /> Location Details
+                      <MapPin className="w-3.5 h-3.5 text-[var(--color-primary,#ff1e42)]" /> {t("location")}
                     </span>
                     <span className="text-sm font-medium text-[#fdfdfd] block mb-1">
                       {store.callSheet.locationName}
@@ -961,10 +1248,10 @@ export default function WorkspacePage() {
 
                   <div className="surface-overlay p-4">
                     <span className="text-xs text-[#737373] flex items-center gap-1.5 mb-1.5 font-medium">
-                      <CloudRain className="w-3.5 h-3.5 text-[#ff1e42]" /> Weather Forecast & Wrap
+                      <CloudRain className="w-3.5 h-3.5 text-[var(--color-primary,#ff1e42)]" /> {t("weather")} & {t("estimatedWrap")}
                     </span>
                     <span className="text-sm font-medium text-[#fdfdfd] block mb-1">
-                      Est. Wrap: {store.callSheet.estimatedWrap}
+                      {t("estimatedWrap")}: {store.callSheet.estimatedWrap}
                     </span>
                     <span className="text-xs text-[#a3a3a3]">{store.callSheet.weather}</span>
                   </div>
@@ -977,13 +1264,13 @@ export default function WorkspacePage() {
                   </div>
 
                   <div className="p-4 rounded-[14px] bg-[#121212] border border-white/[0.06]">
-                    <span className="text-xs text-[#737373] block mb-1 font-medium">Director & HOD Notes</span>
+                    <span className="text-xs text-[#737373] block mb-1 font-medium">{t("directorNotes")}</span>
                     <p className="text-xs text-[#a3a3a3] leading-relaxed">{store.callSheet.directorNotes}</p>
                   </div>
 
                   <div className="p-4 rounded-[14px] bg-[#121212] border border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <span className="text-xs text-[#737373] flex items-center gap-2">
-                      <Phone className="w-3.5 h-3.5 text-[#ff1e42]" /> Emergency / Set Medic Contacts
+                      <Phone className="w-3.5 h-3.5 text-[var(--color-primary,#ff1e42)]" /> {t("emergencyContact")}
                     </span>
                     <span className="text-xs font-mono text-[#fdfdfd]">{store.callSheet.emergencyContact}</span>
                   </div>
@@ -997,36 +1284,108 @@ export default function WorkspacePage() {
           {/* ========================================================================= */}
           {activeTab === "equipment" && (
             <div className="space-y-6 animate-fade-in">
-              <div>
-                <h2 className="text-xl font-medium text-[#fdfdfd]">Equipment & Rental Tracker</h2>
-                <p className="text-xs text-[#737373] mt-0.5">
-                  Avoid penalty fees with automatic return countdowns.
-                </p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-medium text-[#fdfdfd]">{t("tabEquipment")}</h2>
+                  <p className="text-xs text-[#737373] mt-0.5">
+                    Prevent penalty fees with automatic return countdowns and gear status logs.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="px-4 py-2 rounded-full surface-overlay border border-white/[0.08] text-xs">
+                    <span className="text-[#737373] mr-1.5">{t("totalEquipmentBurn")}:</span>
+                    <span className="font-mono font-medium text-[var(--color-primary,#ff1e42)]">
+                      {formatMoney(totalDailyEquipmentBurn)}/day
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => setIsEquipmentModalOpen(true)}
+                    className="btn-primary-crimson text-xs min-h-[44px] px-5"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>{t("addEquipment")}</span>
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {store.equipment.map((eq) => (
-                  <div key={eq.id} className="surface-panel p-5 sm:p-6 flex flex-col justify-between">
+                  <div key={eq.id} className="surface-panel p-5 sm:p-6 flex flex-col justify-between group">
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-[10px] font-mono text-[#737373] uppercase">{eq.department}</span>
-                        <span
-                          className={`text-[10px] font-mono px-2.5 py-1 rounded-full uppercase ${
-                            eq.daysRemaining <= 2
-                              ? "bg-[#ff1e42]/15 text-[#ff1e42] font-bold"
-                              : "bg-[#10b981]/15 text-[#10b981] font-semibold"
-                          }`}
-                        >
-                          {eq.daysRemaining} Days Left
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`text-[10px] font-mono px-2.5 py-1 rounded-full uppercase ${
+                              eq.status === "returned"
+                                ? "bg-[#10b981]/15 text-[#10b981]"
+                                : eq.status === "damaged"
+                                ? "bg-red-600/20 text-red-400 font-bold"
+                                : eq.daysRemaining <= 2
+                                ? "bg-[var(--color-primary,#ff1e42)]/15 text-[var(--color-primary,#ff1e42)] font-bold"
+                                : "bg-[#10b981]/15 text-[#10b981] font-semibold"
+                            }`}
+                          >
+                            {eq.status === "returned"
+                              ? t("statusReturned")
+                              : eq.status === "damaged"
+                              ? t("statusDamaged")
+                              : `${eq.daysRemaining} Days Left`}
+                          </span>
+
+                          <button
+                            onClick={() => store.deleteEquipment(eq.id)}
+                            className="opacity-0 group-hover:opacity-100 text-[#737373] hover:text-[var(--color-primary,#ff1e42)] transition-opacity"
+                            title="Delete equipment"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                       <h3 className="text-sm font-medium text-[#fdfdfd] mb-1">{eq.itemName}</h3>
                       <span className="text-xs text-[#a3a3a3] block mb-4">Vendor: {eq.vendor}</span>
                     </div>
 
-                    <div className="pt-4 border-t border-white/[0.06] flex items-center justify-between text-xs">
-                      <span className="text-[#737373]">Due: {eq.returnDate}</span>
-                      <span className="font-mono font-medium text-[#fdfdfd]">{formatMoney(eq.dailyRate)}/day</span>
+                    <div className="pt-4 border-t border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[#737373]">Due: {eq.returnDate}</span>
+                        <span>•</span>
+                        <span className="font-mono font-medium text-[#fdfdfd]">{formatMoney(eq.dailyRate)}/day</span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() =>
+                            store.updateEquipmentStatus(
+                              eq.id,
+                              eq.status === "returned" ? "on_set" : "returned"
+                            )
+                          }
+                          className={`text-[11px] px-2.5 py-1 rounded-full border transition-all ${
+                            eq.status === "returned"
+                              ? "border-[#10b981] text-[#10b981]"
+                              : "border-white/[0.08] text-[#a3a3a3] hover:text-white"
+                          }`}
+                        >
+                          {eq.status === "returned" ? "Mark On-Set" : t("markReturned")}
+                        </button>
+                        <button
+                          onClick={() =>
+                            store.updateEquipmentStatus(
+                              eq.id,
+                              eq.status === "damaged" ? "on_set" : "damaged"
+                            )
+                          }
+                          className={`text-[11px] px-2.5 py-1 rounded-full border transition-all ${
+                            eq.status === "damaged"
+                              ? "border-red-500 text-red-400 font-bold"
+                              : "border-white/[0.08] text-[#a3a3a3] hover:text-red-400"
+                          }`}
+                        >
+                          {eq.status === "damaged" ? "Repaired" : t("markDamaged")}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1040,7 +1399,7 @@ export default function WorkspacePage() {
           {activeTab === "alerts" && (
             <div className="space-y-6 max-w-3xl animate-fade-in">
               <div>
-                <h2 className="text-xl font-medium text-[#fdfdfd]">Automated Production Guardrails</h2>
+                <h2 className="text-xl font-medium text-[#fdfdfd]">{t("tabAlerts")}</h2>
                 <p className="text-xs text-[#737373] mt-0.5">
                   Scheduled cron alerts detecting anomalies, missing receipts, and budget overruns.
                 </p>
@@ -1056,7 +1415,7 @@ export default function WorkspacePage() {
                   >
                     <AlertTriangle
                       className={`w-5 h-5 shrink-0 mt-0.5 ${
-                        alert.severity === "critical" ? "text-[#ff1e42]" : "text-amber-400"
+                        alert.severity === "critical" ? "text-[var(--color-primary,#ff1e42)]" : "text-amber-400"
                       }`}
                     />
                     <div className="flex-1">
@@ -1067,18 +1426,18 @@ export default function WorkspacePage() {
                       <p className="text-xs text-[#a3a3a3] leading-relaxed mb-3">{alert.message}</p>
                       <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
                         <span className="text-[10px] font-mono uppercase text-[#737373]">
-                          Trigger: System Cron Job
+                          Trigger: Autonomous Engine
                         </span>
                         {!alert.isResolved ? (
                           <button
                             onClick={() => store.resolveAlert(alert.id)}
-                            className="btn-ghost-pill text-xs min-h-[38px] px-3.5 text-[#ff1e42] border-[#ff1e42]/30"
+                            className="btn-ghost-pill text-xs min-h-[38px] px-3.5 text-[var(--color-primary,#ff1e42)] border-[var(--color-primary,#ff1e42)]/30"
                           >
-                            Acknowledge & Resolve
+                            {t("acknowledgeResolve")}
                           </button>
                         ) : (
                           <span className="text-xs text-[#10b981] flex items-center gap-1.5 font-mono font-medium">
-                            <CheckCircle2 className="w-4 h-4" /> Resolved
+                            <CheckCircle2 className="w-4 h-4" /> {t("resolved")}
                           </span>
                         )}
                       </div>
@@ -1090,43 +1449,80 @@ export default function WorkspacePage() {
           )}
 
           {/* ========================================================================= */}
-          {/* TAB 8: GOOGLE SHEET MIRROR & SYNC */}
+          {/* TAB 8: GOOGLE SHEET MIRROR & DATA SOVEREIGNTY */}
           {/* ========================================================================= */}
           {activeTab === "sync" && (
             <div className="space-y-6 animate-fade-in max-w-4xl">
-              <div>
-                <h2 className="text-xl font-medium text-[#fdfdfd]">Google Workspace Live Mirror</h2>
-                <p className="text-xs text-[#737373] mt-0.5">
-                  Direct audit proof: Data streaming straight to the Producer&apos;s personal Google Drive and Sheets.
-                </p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-medium text-[#fdfdfd]">{t("tabSheet")}</h2>
+                  <p className="text-xs text-[#737373] mt-0.5">
+                    Data Sovereignty Guarantee: Direct BYOS mirroring to your personal Google Drive & Sheets with offline JSON backup.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={store.exportLedgerCSV}
+                    className="btn-ghost-pill text-xs min-h-[44px] px-4 flex items-center gap-2 text-[#d4d4d4]"
+                  >
+                    <Download className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
+                    <span>{t("exportCSV")}</span>
+                  </button>
+
+                  <button
+                    onClick={store.exportProductionVaultJSON}
+                    className="btn-primary-crimson text-xs min-h-[44px] px-4 flex items-center gap-2"
+                  >
+                    <UploadCloud className="w-4 h-4" />
+                    <span>{t("downloadVault")}</span>
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="surface-panel p-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <HardDrive className="w-4 h-4 text-[#ff1e42]" />
+                    <HardDrive className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
                     <h3 className="text-sm font-medium text-[#fdfdfd]">Google Drive Folder Tree</h3>
                   </div>
                   <div className="surface-overlay p-3.5 font-mono text-xs text-[#a3a3a3] space-y-1.5">
                     <div className="text-white font-medium">📁 SetFlow_Closebook_TheQuietHorizon/</div>
                     <div className="pl-4">📁 01_Petty_Cash_Receipts/ ({store.transactions.length} files)</div>
-                    <div className="pl-4">📁 02_Daily_Call_Sheets/ (Day 1-4)</div>
+                    <div className="pl-4">📁 02_Daily_Call_Sheets/ (Day 1-{store.callSheet.dayNumber})</div>
                     <div className="pl-4">📁 03_Deal_Memos_Talent/ (28 signed)</div>
-                    <div className="pl-4">📁 04_Rental_Equipment_POs/</div>
+                    <div className="pl-4">📁 04_Rental_Equipment_POs/ ({store.equipment.length} items)</div>
                   </div>
                 </div>
 
                 <div className="surface-panel p-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <FileSpreadsheet className="w-4 h-4 text-[#ff1e42]" />
+                    <FileSpreadsheet className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
                     <h3 className="text-sm font-medium text-[#fdfdfd]">Google Sheet Ledger Status</h3>
                   </div>
                   <div className="surface-overlay p-3.5 font-mono text-xs text-[#a3a3a3] space-y-1.5">
                     <div className="text-white font-medium">📊 Master_Shooting_Ledger.xlsx</div>
-                    <div>Sheet: &apos;Cashflow_Day_4&apos;</div>
+                    <div>Sheet: &apos;Cashflow_Day_{store.callSheet.dayNumber}&apos;</div>
                     <div>Row Count: {store.transactions.length + 1} rows</div>
                     <div className="text-[#10b981] font-semibold">Status: Dual-Stream Synced</div>
                   </div>
+                </div>
+              </div>
+
+              {/* Data Backup Card */}
+              <div className="surface-panel p-6 border border-white/[0.08]">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-sm font-semibold text-white mb-1">Zero-Vendor-Lock-in Guarantee</h3>
+                    <p className="text-xs text-[#a3a3a3] leading-relaxed max-w-xl">
+                      Your production records never depend on Closebook remaining online. Download your complete encrypted JSON database package or raw CSV ledger anytime for offline accounting and archival.
+                    </p>
+                  </div>
+                  <button
+                    onClick={store.exportProductionVaultJSON}
+                    className="btn-ghost-pill text-xs min-h-[44px] px-5 text-white border-white/[0.15] hover:border-[var(--color-primary,#ff1e42)] shrink-0"
+                  >
+                    Export Offline Vault
+                  </button>
                 </div>
               </div>
             </div>
@@ -1135,13 +1531,13 @@ export default function WorkspacePage() {
       </div>
 
       {/* ========================================================================= */}
-      {/* MOBILE STICKY BOTTOM NAVIGATION BAR (Thumb Zone on Smartphones) */}
+      {/* MOBILE STICKY BOTTOM NAVIGATION BAR */}
       {/* ========================================================================= */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#070707]/95 backdrop-blur-xl border-t border-white/[0.08] px-2 py-1.5 flex items-center justify-around">
         <button
           onClick={() => setActiveTab("overview")}
           className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] rounded-lg transition-colors ${
-            activeTab === "overview" ? "text-[#ff1e42]" : "text-[#737373]"
+            activeTab === "overview" ? "text-[var(--color-primary,#ff1e42)]" : "text-[#737373]"
           }`}
         >
           <LayoutDashboard className="w-5 h-5" />
@@ -1151,17 +1547,17 @@ export default function WorkspacePage() {
         <button
           onClick={() => setActiveTab("transactions")}
           className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] rounded-lg transition-colors ${
-            activeTab === "transactions" ? "text-[#ff1e42]" : "text-[#737373]"
+            activeTab === "transactions" ? "text-[var(--color-primary,#ff1e42)]" : "text-[#737373]"
           }`}
         >
           <Receipt className="w-5 h-5" />
           <span className="text-[10px] mt-1 font-medium">Ledger</span>
         </button>
 
-        {/* Mobile Central Quick Log Floating Action Button (FAB) */}
+        {/* Mobile Quick Log FAB */}
         <button
           onClick={() => setIsLogModalOpen(true)}
-          className="w-12 h-12 rounded-full bg-[#ff1e42] text-white flex items-center justify-center shadow-[0_0_20px_rgba(255,30,66,0.4)] -mt-4 shrink-0 transition-transform active:scale-95"
+          className="w-12 h-12 rounded-full bg-[var(--color-primary,#ff1e42)] text-white flex items-center justify-center shadow-[0_0_20px_rgba(255,30,66,0.4)] -mt-4 shrink-0 transition-transform active:scale-95"
           title="Quick Log Petty Cash"
         >
           <Plus className="w-6 h-6" />
@@ -1170,7 +1566,7 @@ export default function WorkspacePage() {
         <button
           onClick={() => setActiveTab("tasks")}
           className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] rounded-lg transition-colors ${
-            activeTab === "tasks" ? "text-[#ff1e42]" : "text-[#737373]"
+            activeTab === "tasks" ? "text-[var(--color-primary,#ff1e42)]" : "text-[#737373]"
           }`}
         >
           <CheckSquare className="w-5 h-5" />
@@ -1180,7 +1576,7 @@ export default function WorkspacePage() {
         <button
           onClick={() => setActiveTab("callsheet")}
           className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] rounded-lg transition-colors ${
-            activeTab === "callsheet" ? "text-[#ff1e42]" : "text-[#737373]"
+            activeTab === "callsheet" ? "text-[var(--color-primary,#ff1e42)]" : "text-[#737373]"
           }`}
         >
           <Film className="w-5 h-5" />
@@ -1189,15 +1585,15 @@ export default function WorkspacePage() {
       </div>
 
       {/* ========================================================================= */}
-      {/* MODAL 1: LOG PETTY CASH (Bottom Sheet on Mobile, Centered on Desktop) */}
+      {/* MODAL 1: LOG PETTY CASH (With Client-Side Photo Compression & EXIF Strip) */}
       {/* ========================================================================= */}
       {isLogModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/85 backdrop-blur-sm p-0 sm:p-4">
           <div className="surface-panel w-full sm:max-w-lg rounded-t-[20px] sm:rounded-[14px] p-6 relative max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.06]">
               <div className="flex items-center gap-2">
-                <Receipt className="w-5 h-5 text-[#ff1e42]" />
-                <h3 className="text-sm font-medium text-[#fdfdfd]">Log Petty Cash Expense</h3>
+                <Receipt className="w-5 h-5 text-[var(--color-primary,#ff1e42)]" />
+                <h3 className="text-sm font-medium text-[#fdfdfd]">{t("modalExpenseTitle")}</h3>
               </div>
               <button
                 onClick={() => setIsLogModalOpen(false)}
@@ -1209,21 +1605,21 @@ export default function WorkspacePage() {
 
             <form onSubmit={handleCreateTransaction} className="space-y-4">
               <div>
-                <label className="block text-xs text-[#737373] mb-1.5">Expense Description</label>
+                <label className="block text-xs text-[#737373] mb-1.5">{t("formDesc")}</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Extra Generator Diesel (100L)"
                   value={newDesc}
                   onChange={(e) => setNewDesc(e.target.value)}
-                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
+                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-[var(--color-primary,#ff1e42)]"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs text-[#737373] mb-1.5">
-                    Amount ({currencies[currency].symbol} {currencies[currency].code})
+                    {t("formAmount")} ({currencies[currency].symbol} {currencies[currency].code})
                   </label>
                   <input
                     type="number"
@@ -1232,25 +1628,25 @@ export default function WorkspacePage() {
                     placeholder={currency === "IDR" ? "e.g. 3500000" : currency === "JPY" ? "e.g. 50000" : "e.g. 240.00"}
                     value={newAmount}
                     onChange={(e) => setNewAmount(e.target.value)}
-                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
+                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-[var(--color-primary,#ff1e42)]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs text-[#737373] mb-1.5">Vendor Name</label>
+                  <label className="block text-xs text-[#737373] mb-1.5">{t("formVendor")}</label>
                   <input
                     type="text"
                     placeholder="e.g. Marina Gas Station"
                     value={newVendor}
                     onChange={(e) => setNewVendor(e.target.value)}
-                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
+                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-[var(--color-primary,#ff1e42)]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-[#737373] mb-1.5">Department</label>
+                  <label className="block text-xs text-[#737373] mb-1.5">{t("formDept")}</label>
                   <select
                     value={newDept}
                     onChange={(e) => setNewDept(e.target.value)}
@@ -1265,7 +1661,7 @@ export default function WorkspacePage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs text-[#737373] mb-1.5">Deduct from Pocket</label>
+                  <label className="block text-xs text-[#737373] mb-1.5">{t("formPocket")}</label>
                   <select
                     value={newPocket}
                     onChange={(e) => setNewPocket(e.target.value)}
@@ -1280,25 +1676,76 @@ export default function WorkspacePage() {
                 </div>
               </div>
 
-              {/* Receipt Capture Simulator */}
-              <div className="p-4 rounded-[14px] bg-[#181818] border border-white/[0.06] flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <Camera className="w-5 h-5 text-[#ff1e42]" />
-                  <span className="text-xs text-[#d4d4d4]">Auto-compress to 300KB</span>
+              {/* Client-side Receipt Photo Uploader & Compressor */}
+              <div className="p-4 rounded-[14px] bg-[#181818] border border-white/[0.06] space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Camera className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
+                    <span className="text-xs text-[#fdfdfd] font-medium">{t("formAttachReceipt")}</span>
+                  </div>
+                  <label className="flex items-center gap-2 text-xs text-[#a3a3a3] cursor-pointer min-h-[36px]">
+                    <input
+                      type="checkbox"
+                      checked={missingReceiptCheck}
+                      onChange={(e) => {
+                        setMissingReceiptCheck(e.target.checked);
+                        if (e.target.checked) {
+                          setReceiptDataUrl(null);
+                          setReceiptSizeKb(null);
+                        }
+                      }}
+                      className="w-4 h-4 accent-[var(--color-primary,#ff1e42)]"
+                    />
+                    <span>{t("filterMissing")}</span>
+                  </label>
                 </div>
-                <label className="flex items-center gap-2 text-xs text-[#a3a3a3] cursor-pointer min-h-[40px]">
-                  <input
-                    type="checkbox"
-                    checked={missingReceiptCheck}
-                    onChange={(e) => setMissingReceiptCheck(e.target.checked)}
-                    className="w-4 h-4 accent-[#ff1e42]"
-                  />
-                  <span>Missing Receipt</span>
-                </label>
+
+                {!missingReceiptCheck && (
+                  <div className="space-y-2">
+                    <label className="flex flex-col items-center justify-center border border-dashed border-white/[0.15] hover:border-[var(--color-primary,#ff1e42)] rounded-[12px] p-3 text-center cursor-pointer transition-colors bg-white/[0.01]">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={handleReceiptFileChange}
+                        className="hidden"
+                      />
+                      <UploadCloud className="w-5 h-5 text-[#737373] mb-1" />
+                      <span className="text-[11px] text-[#d4d4d4] font-medium">
+                        {isCompressing ? "Compressing & stripping EXIF..." : t("dropOrCaptureReceipt")}
+                      </span>
+                    </label>
+
+                    {receiptDataUrl && (
+                      <div className="flex items-center justify-between p-2 rounded-lg bg-[#121212] border border-white/[0.06] text-xs">
+                        <div className="flex items-center gap-2">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={receiptDataUrl} alt="Thumbnail" className="w-8 h-8 rounded object-cover border border-white/[0.1]" />
+                          <div>
+                            <span className="text-[11px] text-[#fdfdfd] block font-medium">Compressed JPEG</span>
+                            <span className="text-[10px] text-[#10b981] font-mono font-medium">
+                              ~{receiptSizeKb} KB • EXIF Stripped
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReceiptDataUrl(null);
+                            setReceiptSizeKb(null);
+                          }}
+                          className="text-xs text-[#737373] hover:text-[var(--color-primary,#ff1e42)]"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <button type="submit" className="w-full btn-primary-crimson text-xs min-h-[48px] font-medium">
-                Save & Stream to Google Workspace
+                {t("formSubmitExpense")}
               </button>
             </form>
           </div>
@@ -1306,15 +1753,15 @@ export default function WorkspacePage() {
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 2: TRANSFER POCKET FUNDS */}
+      {/* MODAL 2: TRANSFER POCKET FUNDS (With Strict Overdraft Guard) */}
       {/* ========================================================================= */}
       {isTransferModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/85 backdrop-blur-sm p-0 sm:p-4">
           <div className="surface-panel w-full sm:max-w-md rounded-t-[20px] sm:rounded-[14px] p-6 relative max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.06]">
               <div className="flex items-center gap-2">
-                <WalletCards className="w-5 h-5 text-[#ff1e42]" />
-                <h3 className="text-sm font-medium text-[#fdfdfd]">Transfer Pocket Funds</h3>
+                <WalletCards className="w-5 h-5 text-[var(--color-primary,#ff1e42)]" />
+                <h3 className="text-sm font-medium text-[#fdfdfd]">{t("modalTransferTitle")}</h3>
               </div>
               <button
                 onClick={() => setIsTransferModalOpen(false)}
@@ -1324,9 +1771,16 @@ export default function WorkspacePage() {
               </button>
             </div>
 
+            {transferError && (
+              <div className="mb-4 p-3 rounded-lg bg-[var(--color-primary,#ff1e42)]/15 border border-[var(--color-primary,#ff1e42)]/30 text-xs text-[var(--color-primary,#ff1e42)] flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>{transferError}</span>
+              </div>
+            )}
+
             <form onSubmit={handleTransfer} className="space-y-4">
               <div>
-                <label className="block text-xs text-[#737373] mb-1.5">Source Pocket (From)</label>
+                <label className="block text-xs text-[#737373] mb-1.5">{t("selectSourcePocket")}</label>
                 <select
                   value={transferSource}
                   onChange={(e) => setTransferSource(e.target.value)}
@@ -1334,14 +1788,14 @@ export default function WorkspacePage() {
                 >
                   {store.pockets.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name} (Balance: ${p.balance.toLocaleString()})
+                      {p.name} (Balance: {formatMoney(p.balance)})
                     </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs text-[#737373] mb-1.5">Destination Pocket (To)</label>
+                <label className="block text-xs text-[#737373] mb-1.5">{t("selectDestPocket")}</label>
                 <select
                   value={transferDest}
                   onChange={(e) => setTransferDest(e.target.value)}
@@ -1349,7 +1803,7 @@ export default function WorkspacePage() {
                 >
                   {store.pockets.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name} (Balance: ${p.balance.toLocaleString()})
+                      {p.name} (Balance: {formatMoney(p.balance)})
                     </option>
                   ))}
                 </select>
@@ -1366,12 +1820,23 @@ export default function WorkspacePage() {
                   placeholder={currency === "IDR" ? "e.g. 50000000" : currency === "JPY" ? "e.g. 450000" : "e.g. 5000.00"}
                   value={transferAmount}
                   onChange={(e) => setTransferAmount(e.target.value)}
-                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
+                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-[var(--color-primary,#ff1e42)]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-[#737373] mb-1.5">Authorization Notes</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Location transport reserve advance"
+                  value={transferNotes}
+                  onChange={(e) => setTransferNotes(e.target.value)}
+                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none"
                 />
               </div>
 
               <button type="submit" className="w-full btn-primary-crimson text-xs min-h-[48px] font-medium">
-                Authorize & Disburse Cash
+                {t("formSubmitTransfer")}
               </button>
             </form>
           </div>
@@ -1386,8 +1851,8 @@ export default function WorkspacePage() {
           <div className="surface-panel w-full sm:max-w-md rounded-t-[20px] sm:rounded-[14px] p-6 relative max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.06]">
               <div className="flex items-center gap-2">
-                <CheckSquare className="w-5 h-5 text-[#ff1e42]" />
-                <h3 className="text-sm font-medium text-[#fdfdfd]">Create Department Task</h3>
+                <CheckSquare className="w-5 h-5 text-[var(--color-primary,#ff1e42)]" />
+                <h3 className="text-sm font-medium text-[#fdfdfd]">{t("modalTaskTitle")}</h3>
               </div>
               <button
                 onClick={() => setIsTaskModalOpen(false)}
@@ -1399,20 +1864,20 @@ export default function WorkspacePage() {
 
             <form onSubmit={handleCreateTask} className="space-y-4">
               <div>
-                <label className="block text-xs text-[#737373] mb-1.5">Task Title</label>
+                <label className="block text-xs text-[#737373] mb-1.5">{t("taskTitle")}</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Rig waterproof housing on A-Cam"
                   value={taskTitle}
                   onChange={(e) => setTaskTitle(e.target.value)}
-                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
+                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-[var(--color-primary,#ff1e42)]"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-[#737373] mb-1.5">Department</label>
+                  <label className="block text-xs text-[#737373] mb-1.5">{t("formDept")}</label>
                   <select
                     value={taskDept}
                     onChange={(e) => setTaskDept(e.target.value)}
@@ -1427,35 +1892,305 @@ export default function WorkspacePage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs text-[#737373] mb-1.5">Assignee</label>
+                  <label className="block text-xs text-[#737373] mb-1.5">{t("taskAssignee")}</label>
                   <input
                     type="text"
                     placeholder="e.g. Leo Hardi"
                     value={taskAssignee}
                     onChange={(e) => setTaskAssignee(e.target.value)}
-                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
+                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-[var(--color-primary,#ff1e42)]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs text-[#737373] mb-1.5">Priority</label>
+                <label className="block text-xs text-[#737373] mb-1.5">{t("taskPriority")}</label>
                 <select
                   value={taskPriority}
                   onChange={(e) => setTaskPriority(e.target.value as any)}
                   className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-3.5 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none"
                 >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                  <option value="urgent">Urgent</option>
+                  <option value="low">{t("priorityLow")}</option>
+                  <option value="medium">{t("priorityMedium")}</option>
+                  <option value="high">{t("priorityHigh")}</option>
+                  <option value="urgent">{t("priorityUrgent")}</option>
                 </select>
               </div>
 
               <button type="submit" className="w-full btn-primary-crimson text-xs min-h-[48px] font-medium">
-                Create & Assign Task
+                {t("formSubmitTask")}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 4: EDIT CALL SHEET */}
+      {/* ========================================================================= */}
+      {isCallSheetModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/85 backdrop-blur-sm p-0 sm:p-4">
+          <div className="surface-panel w-full sm:max-w-lg rounded-t-[20px] sm:rounded-[14px] p-6 relative max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.06]">
+              <div className="flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-[var(--color-primary,#ff1e42)]" />
+                <h3 className="text-sm font-medium text-[#fdfdfd]">
+                  {t("editCallSheet")} - Day {store.callSheet.dayNumber}
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsCallSheetModalOpen(false)}
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[#737373] hover:text-[#fdfdfd]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCallSheet} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-[#737373] mb-1.5">{t("callTime")}</label>
+                  <input
+                    type="text"
+                    required
+                    value={csCallTime}
+                    onChange={(e) => setCsCallTime(e.target.value)}
+                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-[#737373] mb-1.5">{t("estimatedWrap")}</label>
+                  <input
+                    type="text"
+                    required
+                    value={csWrapTime}
+                    onChange={(e) => setCsWrapTime(e.target.value)}
+                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs text-[#737373] mb-1.5">{t("location")} Name</label>
+                <input
+                  type="text"
+                  required
+                  value={csLocation}
+                  onChange={(e) => setCsLocation(e.target.value)}
+                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-[#737373] mb-1.5">{t("location")} Address</label>
+                <input
+                  type="text"
+                  value={csAddress}
+                  onChange={(e) => setCsAddress(e.target.value)}
+                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-[#737373] mb-1.5">Scheduled Scenes</label>
+                <input
+                  type="text"
+                  value={csScenes}
+                  onChange={(e) => setCsScenes(e.target.value)}
+                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-[#737373] mb-1.5">{t("weather")} Summary</label>
+                <input
+                  type="text"
+                  value={csWeather}
+                  onChange={(e) => setCsWeather(e.target.value)}
+                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-[#737373] mb-1.5">{t("directorNotes")}</label>
+                <textarea
+                  rows={3}
+                  value={csNotes}
+                  onChange={(e) => setCsNotes(e.target.value)}
+                  className="w-full bg-[#181818] border border-white/[0.08] rounded-[12px] p-3 text-xs text-[#fdfdfd] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-[#737373] mb-1.5">{t("emergencyContact")}</label>
+                <input
+                  type="text"
+                  value={csEmergency}
+                  onChange={(e) => setCsEmergency(e.target.value)}
+                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none"
+                />
+              </div>
+
+              <button type="submit" className="w-full btn-primary-crimson text-xs min-h-[48px] font-medium">
+                Save Call Sheet Updates
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 5: ADD EQUIPMENT */}
+      {/* ========================================================================= */}
+      {isEquipmentModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/85 backdrop-blur-sm p-0 sm:p-4">
+          <div className="surface-panel w-full sm:max-w-md rounded-t-[20px] sm:rounded-[14px] p-6 relative max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.06]">
+              <div className="flex items-center gap-2">
+                <Package className="w-5 h-5 text-[var(--color-primary,#ff1e42)]" />
+                <h3 className="text-sm font-medium text-[#fdfdfd]">{t("addEquipment")}</h3>
+              </div>
+              <button
+                onClick={() => setIsEquipmentModalOpen(false)}
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[#737373] hover:text-[#fdfdfd]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddEquipment} className="space-y-4">
+              <div>
+                <label className="block text-xs text-[#737373] mb-1.5">Gear / Item Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Sony FX6 Cinema Camera Package"
+                  value={eqItemName}
+                  onChange={(e) => setEqItemName(e.target.value)}
+                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-[var(--color-primary,#ff1e42)]"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-[#737373] mb-1.5">Vendor / Rental House</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. CamTek Rentals"
+                    value={eqVendor}
+                    onChange={(e) => setEqVendor(e.target.value)}
+                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs text-[#737373] mb-1.5">Department</label>
+                  <input
+                    type="text"
+                    value={eqDept}
+                    onChange={(e) => setEqDept(e.target.value)}
+                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-[#737373] mb-1.5">
+                    Daily Rate ({currencies[currency].symbol} {currencies[currency].code})
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    placeholder={currency === "IDR" ? "e.g. 5000000" : "e.g. 350.00"}
+                    value={eqDailyRate}
+                    onChange={(e) => setEqDailyRate(e.target.value)}
+                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs text-[#737373] mb-1.5">Return Date</label>
+                  <input
+                    type="text"
+                    value={eqReturnDate}
+                    onChange={(e) => setEqReturnDate(e.target.value)}
+                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <button type="submit" className="w-full btn-primary-crimson text-xs min-h-[48px] font-medium">
+                Add Rental Gear
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 6: RECEIPT INSPECTOR LIGHTBOX */}
+      {/* ========================================================================= */}
+      {previewReceiptTx && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="surface-panel w-full max-w-lg rounded-[18px] p-6 relative border border-white/[0.1] shadow-2xl">
+            <div className="flex items-center justify-between pb-3 mb-4 border-b border-white/[0.08]">
+              <div className="flex items-center gap-2">
+                <Camera className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
+                <h3 className="text-sm font-semibold text-white">
+                  {t("receiptPreview")} • {previewReceiptTx.id}
+                </h3>
+              </div>
+              <button
+                onClick={() => setPreviewReceiptTx(null)}
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[#737373] hover:text-white rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="aspect-[4/3] rounded-[12px] overflow-hidden bg-black/50 border border-white/[0.08] flex items-center justify-center relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={previewReceiptTx.receiptUrl || "/icon.png"}
+                  alt={previewReceiptTx.description}
+                  className="max-h-full max-w-full object-contain"
+                />
+              </div>
+
+              <div className="surface-overlay p-3.5 space-y-1.5 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-[#737373]">Description:</span>
+                  <span className="text-white font-medium">{previewReceiptTx.description}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#737373]">Vendor:</span>
+                  <span className="text-white font-medium">{previewReceiptTx.vendor}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#737373]">Amount:</span>
+                  <span className="text-white font-mono font-bold">{formatMoney(previewReceiptTx.amount)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#737373]">Logged At:</span>
+                  <span className="text-[#a3a3a3]">{previewReceiptTx.loggedAt}</span>
+                </div>
+                {previewReceiptTx.notes && (
+                  <div className="pt-2 border-t border-white/[0.06] text-[11px] text-[#737373] italic">
+                    Notes: {previewReceiptTx.notes}
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => setPreviewReceiptTx(null)}
+                className="w-full btn-ghost-pill text-xs min-h-[44px] text-white"
+              >
+                Close Inspector
+              </button>
+            </div>
           </div>
         </div>
       )}

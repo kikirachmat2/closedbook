@@ -109,3 +109,15 @@ export interface ContextComment {
   message: string;
   timestamp: string;
 }
+
+export interface PocketTransfer {
+  id: string;
+  sourcePocketId: string;
+  sourcePocketName: string;
+  destPocketId: string;
+  destPocketName: string;
+  amount: number;
+  authorizedBy: string;
+  timestamp: string;
+  notes?: string;
+}
