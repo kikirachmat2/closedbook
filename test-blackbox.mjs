@@ -154,6 +154,8 @@ async function runBlackboxTests() {
 
     const url = page.url();
     assert("Workspace URL Correct", url.includes("/workspace"), url);
+    const defaultTheme = await page.evaluate(() => document.documentElement.getAttribute("data-theme"));
+    assert("Default Theme Is Signature", defaultTheme === "signature", `Expected signature, got ${defaultTheme}`);
     const bodyText = await page.evaluate(() => document.body.textContent);
     assert("Project Name Displayed", bodyText.includes("Quiet Horizon") || (bodyText.includes("closedbook") || bodyText.includes("closebook")), "Project loaded");
     await page.screenshot({ path: path.join(ARTIFACT_DIR, "audit_02_workspace_overview.png") });
