@@ -229,3 +229,37 @@ html, body {
 ::-webkit-scrollbar-thumb:hover {
   background: #404040;
 }
+
+/* Print Media Styles for Production Wrap Summary & PDF Export */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #111111 !important;
+  }
+  header, nav, .btn-primary-crimson, .btn-ghost-pill, button, input, select, .no-print {
+    display: none !important;
+  }
+  .surface-panel, .surface-overlay {
+    border: 1px solid #e5e5e5 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    color: #111111 !important;
+    break-inside: avoid;
+  }
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+  th, td {
+    border-bottom: 1px solid #e5e5e5 !important;
+    color: #111111 !important;
+    padding: 8px 12px !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}
+
+.print-only {
+  display: none;
+}

@@ -198,6 +198,8 @@ export function useClosebookStore() {
   const [equipment, setEquipment] = useState<EquipmentRental[]>(INITIAL_EQUIPMENT);
   const [alerts, setAlerts] = useState<SystemAlert[]>(INITIAL_ALERTS);
   const [comments, setComments] = useState<ContextComment[]>(INITIAL_COMMENTS);
+  const [webhookUrl, setWebhookUrl] = useState<string>("");
+  const [isWebhookSyncEnabled, setIsWebhookSyncEnabled] = useState<boolean>(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load from LocalStorage
@@ -221,6 +223,10 @@ export function useClosebookStore() {
       if (savedAlerts) setAlerts(JSON.parse(savedAlerts));
       const savedComments = localStorage.getItem("closebook_comments");
       if (savedComments) setComments(JSON.parse(savedComments));
+      const savedWebhook = localStorage.getItem("closebook_webhook_url");
+      if (savedWebhook) setWebhookUrl(savedWebhook);
+      const savedSync = localStorage.getItem("closebook_webhook_sync");
+      if (savedSync) setIsWebhookSyncEnabled(savedSync === "true");
     } catch {
       // fallback to initial
     }
@@ -381,6 +387,23 @@ export function useClosebookStore() {
     persistDepartments(updatedDepts);
     persistPockets(updatedPockets);
     persistTransactions([newTx, ...transactions]);
+
+    // Asynchronous fire-and-forget push to Google Sheets Webhook if configured
+    if (isWebhookSyncEnabled && webhookUrl) {
+      try {
+        fetch(webhookUrl, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            event: "NEW_TRANSACTION",
+            projectName: project.name,
+            transaction: newTx,
+            timestamp: new Date().toISOString(),
+          }),
+        }).catch(() => {});
+      } catch {}
+    }
 
     return newTx;
   };
@@ -657,6 +680,62 @@ export function useClosebookStore() {
     document.body.removeChild(link);
   };
 
+  // 13. Real Google Sheets / Drive Webhook Connector (BYOS)
+  const persistWebhookConfig = (url: string, enabled: boolean) => {
+    setWebhookUrl(url);
+    setIsWebhookSyncEnabled(enabled);
+    try {
+      localStorage.setItem("closebook_webhook_url", url);
+      localStorage.setItem("closebook_webhook_sync", enabled ? "true" : "false");
+    } catch {}
+  };
+
+  const syncTransactionToWebhook = async (tx: Transaction): Promise<{ success: boolean; error?: string }> => {
+    if (!webhookUrl || !webhookUrl.startsWith("http")) {
+      return { success: false, error: "No valid Webhook URL configured." };
+    }
+    try {
+      await fetch(webhookUrl, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event: "NEW_TRANSACTION",
+          projectName: project.name,
+          transaction: tx,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+      return { success: true };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { success: false, error: msg };
+    }
+  };
+
+  const bulkSyncToWebhook = async (): Promise<{ success: boolean; count: number; error?: string }> => {
+    if (!webhookUrl || !webhookUrl.startsWith("http")) {
+      return { success: false, count: 0, error: "No valid Webhook URL configured." };
+    }
+    try {
+      await fetch(webhookUrl, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event: "BULK_SYNC",
+          projectName: project.name,
+          transactions,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+      return { success: true, count: transactions.length };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { success: false, count: 0, error: msg };
+    }
+  };
+
   return {
     isLoaded,
     project,
@@ -669,6 +748,11 @@ export function useClosebookStore() {
     equipment,
     alerts,
     comments,
+    webhookUrl,
+    isWebhookSyncEnabled,
+    persistWebhookConfig,
+    syncTransactionToWebhook,
+    bulkSyncToWebhook,
     addTransaction,
     updateTransactionStatus,
     deleteTransaction,

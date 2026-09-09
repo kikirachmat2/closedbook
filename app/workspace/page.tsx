@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useClosebookStore } from "@/lib/store";
@@ -39,6 +39,12 @@ import {
   Maximize2,
   UploadCloud,
   FileDown,
+  Printer,
+  Copy,
+  Check,
+  Code,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
 
 type TabId =
@@ -50,6 +56,59 @@ type TabId =
   | "equipment"
   | "alerts"
   | "sync";
+
+const APPS_SCRIPT_TEMPLATE = `// =========================================================================
+// CLOSEBOOK PRODUCTION OS — GOOGLE APPS SCRIPT WEBHOOK BRIDGE (BYOS)
+// =========================================================================
+// Instructions:
+// 1. Open your Google Sheet. Go to Extensions > Apps Script.
+// 2. Paste this code and click Deploy > New Deployment.
+// 3. Select type: "Web app". Set Who has access: "Anyone". Execute as: "Me".
+// 4. Copy the Web App URL and paste it into Closebook > Google Sheet Mirror.
+
+function doPost(e) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    var payload = JSON.parse(e.postData.contents);
+    
+    // Auto-create table headers if blank sheet
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow([
+        "Transaction ID", "Date", "Department", "Pocket",
+        "Vendor", "Amount", "Description", "Status", "Notes"
+      ]);
+      sheet.getRange("A1:I1").setFontWeight("bold").setBackground("#121212").setFontColor("#ffffff");
+    }
+
+    if (payload.event === "NEW_TRANSACTION") {
+      var tx = payload.transaction;
+      sheet.appendRow([
+        tx.id, tx.loggedAt, tx.departmentName, tx.pocketName,
+        tx.vendor, tx.amount, tx.description, tx.status, tx.notes || ""
+      ]);
+      return ContentService.createTextOutput(JSON.stringify({ status: "success", id: tx.id }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (payload.event === "BULK_SYNC") {
+      var txs = payload.transactions || [];
+      txs.forEach(function(tx) {
+        sheet.appendRow([
+          tx.id, tx.loggedAt, tx.departmentName, tx.pocketName,
+          tx.vendor, tx.amount, tx.description, tx.status, tx.notes || ""
+        ]);
+      });
+      return ContentService.createTextOutput(JSON.stringify({ status: "success", count: txs.length }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({ status: "ping_received" }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ error: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}`;
 
 export default function WorkspacePage() {
   const store = useClosebookStore();
@@ -65,6 +124,78 @@ export default function WorkspacePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDeptFilter, setSelectedDeptFilter] = useState("all");
   const [taskDeptFilter, setTaskDeptFilter] = useState("all");
+
+  // Network online/offline detection
+  const [isOnline, setIsOnline] = useState(true);
+  useEffect(() => {
+    setIsOnline(typeof navigator !== "undefined" ? navigator.onLine : true);
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  // Webhook states
+  const [tempWebhookUrl, setTempWebhookUrl] = useState(store.webhookUrl || "");
+  const [isCopiedAppsScript, setIsCopiedAppsScript] = useState(false);
+  const [webhookSyncStatus, setWebhookSyncStatus] = useState<string | null>(null);
+  const [isTestingWebhook, setIsTestingWebhook] = useState(false);
+  const [showAppsScriptCode, setShowAppsScriptCode] = useState(false);
+
+  useEffect(() => {
+    if (store.webhookUrl) {
+      setTempWebhookUrl(store.webhookUrl);
+    }
+  }, [store.webhookUrl]);
+
+  const handleTestWebhook = async () => {
+    if (!tempWebhookUrl || !tempWebhookUrl.startsWith("http")) {
+      setWebhookSyncStatus("Please enter a valid Google Apps Script Web App URL.");
+      return;
+    }
+    setIsTestingWebhook(true);
+    setWebhookSyncStatus("Pinging Google Apps Script endpoint...");
+    try {
+      await fetch(tempWebhookUrl, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event: "PING",
+          timestamp: new Date().toISOString(),
+          app: "Closebook",
+        }),
+      });
+      store.persistWebhookConfig(tempWebhookUrl, true);
+      setWebhookSyncStatus("Success: Ping sent to Google Apps Script!");
+    } catch {
+      setWebhookSyncStatus("Error: Could not reach endpoint.");
+    } finally {
+      setIsTestingWebhook(false);
+    }
+  };
+
+  const handleBulkSync = async () => {
+    setIsTestingWebhook(true);
+    setWebhookSyncStatus("Pushing all transactions to Google Sheets...");
+    const res = await store.bulkSyncToWebhook();
+    if (res.success) {
+      setWebhookSyncStatus(`Pushed ${res.count} transactions to Google Sheets!`);
+    } else {
+      setWebhookSyncStatus(res.error || "Sync failed. Check Webhook URL.");
+    }
+    setIsTestingWebhook(false);
+  };
+
+  const copyScriptCode = () => {
+    navigator.clipboard.writeText(APPS_SCRIPT_TEMPLATE);
+    setIsCopiedAppsScript(true);
+    setTimeout(() => setIsCopiedAppsScript(false), 2500);
+  };
 
   // Modals
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
@@ -514,11 +645,30 @@ export default function WorkspacePage() {
               <PreferencesControls compact={true} />
             </div>
 
+            {/* Online / Offline Status Pill */}
             <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#121212] border border-white/[0.06] text-xs text-[#a3a3a3] min-h-[36px]">
-              <span className="w-2 h-2 rounded-full bg-[var(--color-primary,#ff1e42)] animate-pulse" />
-              <span>Drive Vault:</span>
-              <span className="font-mono text-[#fdfdfd] text-[11px]">{t("synced")}</span>
+              {isOnline ? (
+                <>
+                  <Wifi className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="text-emerald-400 font-medium text-[11px]">{t("onlineStatus")}</span>
+                </>
+              ) : (
+                <>
+                  <WifiOff className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="text-amber-400 font-medium text-[11px]">{t("offlineStatus")}</span>
+                </>
+              )}
             </div>
+
+            {/* Print Wrap Report Button */}
+            <button
+              onClick={() => window.print()}
+              className="btn-ghost-pill text-xs min-h-[38px] px-3 hidden md:inline-flex items-center gap-1.5 text-[#a3a3a3] hover:text-white"
+              title={t("printWrapReport")}
+            >
+              <Printer className="w-3.5 h-3.5 text-[var(--color-primary,#ff1e42)]" />
+              <span>Print Wrap</span>
+            </button>
 
             <button
               onClick={() => setIsLogModalOpen(true)}
@@ -1460,10 +1610,19 @@ export default function WorkspacePage() {
                     Data Sovereignty Guarantee: Direct BYOS mirroring to your personal Google Drive & Sheets with offline JSON backup.
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => window.print()}
+                    className="btn-ghost-pill text-xs min-h-[44px] px-3.5 flex items-center gap-2 text-[#d4d4d4]"
+                    title={t("printWrapReport")}
+                  >
+                    <Printer className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
+                    <span>Print Wrap (PDF)</span>
+                  </button>
+
                   <button
                     onClick={store.exportLedgerCSV}
-                    className="btn-ghost-pill text-xs min-h-[44px] px-4 flex items-center gap-2 text-[#d4d4d4]"
+                    className="btn-ghost-pill text-xs min-h-[44px] px-3.5 flex items-center gap-2 text-[#d4d4d4]"
                   >
                     <Download className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
                     <span>{t("exportCSV")}</span>
@@ -1476,6 +1635,116 @@ export default function WorkspacePage() {
                     <UploadCloud className="w-4 h-4" />
                     <span>{t("downloadVault")}</span>
                   </button>
+                </div>
+              </div>
+
+              {/* 1. Real Google Apps Script Webhook Bridge Card */}
+              <div className="surface-panel p-6 border border-white/[0.08] space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-[var(--color-primary,#ff1e42)]/10 border border-[var(--color-primary,#ff1e42)]/20 flex items-center justify-center">
+                      <FileSpreadsheet className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-white">Google Apps Script Webhook Connector</h3>
+                      <p className="text-[11px] text-[#737373]">
+                        Stream ledger records automatically into your Google Sheet with 0 server fees.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-[#a3a3a3] cursor-pointer flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={store.isWebhookSyncEnabled}
+                        onChange={(e) => store.persistWebhookConfig(tempWebhookUrl, e.target.checked)}
+                        className="rounded border-white/[0.2] bg-[#121212] text-[var(--color-primary,#ff1e42)] focus:ring-0"
+                      />
+                      <span className="text-xs font-medium text-white">{t("webhookSyncToggle")}</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  <input
+                    type="url"
+                    placeholder="https://script.google.com/macros/s/.../exec"
+                    value={tempWebhookUrl}
+                    onChange={(e) => setTempWebhookUrl(e.target.value)}
+                    className="flex-1 bg-[#121212] border border-white/[0.08] rounded-xl px-4 min-h-[44px] text-xs text-[#fdfdfd] placeholder-[#737373] focus:outline-none focus:border-[var(--color-primary,#ff1e42)] font-mono"
+                  />
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => store.persistWebhookConfig(tempWebhookUrl, store.isWebhookSyncEnabled)}
+                      className="btn-ghost-pill text-xs min-h-[44px] px-4 text-white"
+                    >
+                      {t("saveWebhook")}
+                    </button>
+
+                    <button
+                      onClick={handleTestWebhook}
+                      disabled={isTestingWebhook}
+                      className="btn-ghost-pill text-xs min-h-[44px] px-4 text-[var(--color-primary,#ff1e42)] border-[var(--color-primary,#ff1e42)]/30 hover:border-[var(--color-primary,#ff1e42)]"
+                    >
+                      {isTestingWebhook ? "Pinging..." : t("testWebhook")}
+                    </button>
+
+                    <button
+                      onClick={handleBulkSync}
+                      disabled={isTestingWebhook}
+                      className="btn-primary-crimson text-xs min-h-[44px] px-4"
+                    >
+                      {t("syncAllToSheets")}
+                    </button>
+                  </div>
+                </div>
+
+                {webhookSyncStatus && (
+                  <div className="surface-overlay px-4 py-2 text-xs font-mono text-[#a3a3a3] flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[var(--color-primary,#ff1e42)]" />
+                    <span>{webhookSyncStatus}</span>
+                  </div>
+                )}
+
+                {/* Apps Script Template Accordion / Box */}
+                <div className="pt-3 border-t border-white/[0.06]">
+                  <div className="flex items-center justify-between mb-2">
+                    <button
+                      onClick={() => setShowAppsScriptCode(!showAppsScriptCode)}
+                      className="text-xs text-[#a3a3a3] hover:text-white flex items-center gap-1.5 font-medium"
+                    >
+                      <Code className="w-3.5 h-3.5 text-[var(--color-primary,#ff1e42)]" />
+                      <span>{showAppsScriptCode ? "Hide Apps Script Setup Guide" : "Show Google Apps Script Setup Code (60s Setup)"}</span>
+                    </button>
+
+                    <button
+                      onClick={copyScriptCode}
+                      className="text-xs px-3 py-1 rounded-full border border-white/[0.1] hover:border-white/[0.3] text-white flex items-center gap-1.5 transition-all"
+                    >
+                      {isCopiedAppsScript ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <span className="text-emerald-400">{t("appsScriptCopied")}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5 text-[#737373]" />
+                          <span>{t("copyAppsScript")}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {showAppsScriptCode && (
+                    <div className="surface-overlay p-4 rounded-xl font-mono text-[11px] text-[#a3a3a3] overflow-x-auto space-y-2 mt-3">
+                      <div className="text-white font-semibold mb-2">
+                        Instructions: Open your Google Sheet &gt; Extensions &gt; Apps Script &gt; Paste code below &gt; Deploy as Web App (Access: Anyone) &gt; Paste URL above.
+                      </div>
+                      <pre className="text-[#e5e5e5] whitespace-pre leading-relaxed">{APPS_SCRIPT_TEMPLATE}</pre>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1503,7 +1772,10 @@ export default function WorkspacePage() {
                     <div className="text-white font-medium">📊 Master_Shooting_Ledger.xlsx</div>
                     <div>Sheet: &apos;Cashflow_Day_{store.callSheet.dayNumber}&apos;</div>
                     <div>Row Count: {store.transactions.length + 1} rows</div>
-                    <div className="text-[#10b981] font-semibold">Status: Dual-Stream Synced</div>
+                    <div className="text-[#10b981] font-semibold flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse" />
+                      Status: {store.isWebhookSyncEnabled && store.webhookUrl ? "Live Webhook Connected" : "Local Vault Stream Synced"}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2194,6 +2466,117 @@ export default function WorkspacePage() {
           </div>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* PRINT-ONLY PRODUCTION WRAP REPORT (AUDIT PDF & PHYSICAL SIGN-OFF) */}
+      {/* ========================================================================= */}
+      <div className="print-only p-8 text-black bg-white">
+        <div className="border-b-2 border-black pb-4 mb-6 flex justify-between items-start">
+          <div>
+            <h1 className="text-2xl font-bold uppercase tracking-tight">{store.project.name}</h1>
+            <p className="text-xs text-neutral-600 mt-1">
+              OFFICIAL PRODUCTION WRAP REPORT • FEATURE FILM • DAY {store.callSheet.dayNumber} OF {store.callSheet.totalDays}
+            </p>
+          </div>
+          <div className="text-right text-xs font-mono">
+            <div className="font-bold">Closebook Accounting Audit</div>
+            <div>Generated: {new Date().toLocaleDateString()}</div>
+          </div>
+        </div>
+
+        {/* Financial Highlights */}
+        <div className="grid grid-cols-4 gap-4 mb-6 border border-neutral-300 p-4 rounded">
+          <div>
+            <div className="text-[10px] uppercase text-neutral-500 font-semibold">Total Budget</div>
+            <div className="text-base font-bold font-mono">{formatMoney(store.project.totalBudget)}</div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase text-neutral-500 font-semibold">Total Disbursed</div>
+            <div className="text-base font-bold font-mono">{formatMoney(totalSpent)}</div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase text-neutral-500 font-semibold">Uncommitted Cash</div>
+            <div className="text-base font-bold font-mono">{formatMoney(store.project.totalBudget - totalSpent)}</div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase text-neutral-500 font-semibold">Budget Burn Rate</div>
+            <div className="text-base font-bold font-mono">{((totalSpent / store.project.totalBudget) * 100).toFixed(1)}%</div>
+          </div>
+        </div>
+
+        {/* Department Breakdown */}
+        <h2 className="text-sm font-bold uppercase mb-2">Department Allocations &amp; Expenditure</h2>
+        <table className="w-full text-xs mb-6 border border-neutral-300">
+          <thead>
+            <tr className="bg-neutral-100 border-b border-neutral-300 text-left">
+              <th className="p-2">Department</th>
+              <th className="p-2">Dept Code</th>
+              <th className="p-2 text-right">Budget</th>
+              <th className="p-2 text-right">Spent</th>
+              <th className="p-2 text-right">Remaining</th>
+            </tr>
+          </thead>
+          <tbody>
+            {store.departments.map((d) => (
+              <tr key={d.id} className="border-b border-neutral-200">
+                <td className="p-2 font-medium">{d.name}</td>
+                <td className="p-2 text-neutral-600 font-mono">{d.code}</td>
+                <td className="p-2 text-right font-mono">{formatMoney(d.allocatedBudget)}</td>
+                <td className="p-2 text-right font-mono">{formatMoney(d.spentAmount)}</td>
+                <td className="p-2 text-right font-mono">{formatMoney(d.allocatedBudget - d.spentAmount)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Petty Cash Transactions */}
+        <h2 className="text-sm font-bold uppercase mb-2">Petty Cash Transactions Log ({store.transactions.length} Records)</h2>
+        <table className="w-full text-[11px] mb-8 border border-neutral-300">
+          <thead>
+            <tr className="bg-neutral-100 border-b border-neutral-300 text-left">
+              <th className="p-2">TX Ref</th>
+              <th className="p-2">Date</th>
+              <th className="p-2">Vendor / Merchant</th>
+              <th className="p-2">Department</th>
+              <th className="p-2">Description</th>
+              <th className="p-2 text-right">Amount</th>
+              <th className="p-2 text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {store.transactions.slice(0, 30).map((t) => (
+              <tr key={t.id} className="border-b border-neutral-200">
+                <td className="p-2 font-mono">{t.id}</td>
+                <td className="p-2">{t.loggedAt}</td>
+                <td className="p-2 font-medium">{t.vendor}</td>
+                <td className="p-2">{t.departmentName}</td>
+                <td className="p-2">{t.description}</td>
+                <td className="p-2 text-right font-mono">{formatMoney(t.amount)}</td>
+                <td className="p-2 text-center uppercase font-mono">{t.status}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Sign-off Signatures */}
+        <div className="grid grid-cols-3 gap-8 pt-8 border-t-2 border-black text-center text-xs">
+          <div>
+            <div className="h-12 border-b border-neutral-400 mb-2"></div>
+            <div className="font-bold">Line Producer (Elena Rostova)</div>
+            <div className="text-[10px] text-neutral-500">Authorization &amp; Wrap Approval</div>
+          </div>
+          <div>
+            <div className="h-12 border-b border-neutral-400 mb-2"></div>
+            <div className="font-bold">Unit Production Manager (UPM)</div>
+            <div className="text-[10px] text-neutral-500">Field Receipts Audit &amp; Verification</div>
+          </div>
+          <div>
+            <div className="h-12 border-b border-neutral-400 mb-2"></div>
+            <div className="font-bold">Production Accountant</div>
+            <div className="text-[10px] text-neutral-500">Google Sheets Ledger Reconciliation</div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
