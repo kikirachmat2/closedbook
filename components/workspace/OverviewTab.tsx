@@ -3,6 +3,7 @@
 import React from "react";
 import { AlertTriangle, TrendingUp, TrendingDown, DollarSign, Zap, BarChart3, Clock } from "lucide-react";
 import { Department } from "@/lib/types";
+import CountUp from "@/components/CountUp";
 
 interface BurnForecast {
   totalSpent: number;
@@ -129,28 +130,28 @@ export default function OverviewTab({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KPICard
           label="Total Budget"
-          value={formatMoney(project.totalBudget)}
+          value={<CountUp end={project.totalBudget} formatter={formatMoney} />}
           sub="Production ceiling"
           icon={<DollarSign className="w-4 h-4" />}
           color="#6366f1"
         />
         <KPICard
           label="Total Spent"
-          value={formatMoney(totalSpent)}
+          value={<CountUp end={totalSpent} formatter={formatMoney} />}
           sub={`${burnPct.toFixed(1)}% utilized`}
           icon={<TrendingDown className="w-4 h-4" />}
           color={burnPct > 80 ? "#ff1e42" : "#f59e0b"}
         />
         <KPICard
           label="Equipment Burn"
-          value={formatMoney(totalDailyEquipmentBurn)}
+          value={<CountUp end={totalDailyEquipmentBurn} formatter={formatMoney} />}
           sub="Daily rental cost"
           icon={<Zap className="w-4 h-4" />}
           color="#06b6d4"
         />
         <KPICard
           label="Active Alerts"
-          value={activeAlertsCount.toString()}
+          value={<CountUp end={activeAlertsCount} formatter={(n) => n.toString()} />}
           sub="Unresolved issues"
           icon={<AlertTriangle className="w-4 h-4" />}
           color={activeAlertsCount > 0 ? "#ff1e42" : "#10b981"}
@@ -252,13 +253,13 @@ function KPICard({
   color,
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
   sub: string;
   icon: React.ReactNode;
   color: string;
 }) {
   return (
-    <div className="bg-[#0d0d0d] border border-white/[0.06] rounded-xl p-4 flex flex-col gap-2">
+    <div className="bg-[#0d0d0d] border border-white/[0.06] rounded-xl p-4 flex flex-col gap-2 surface-panel-hover transition-all">
       <div className="flex items-center justify-between">
         <span className="text-[10px] uppercase tracking-wider text-[#737373] font-medium">{label}</span>
         <span style={{ color }}>{icon}</span>

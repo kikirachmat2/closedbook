@@ -163,7 +163,7 @@ html, body {
 
 /* Primary Dynamic Pill Button */
 .btn-primary-crimson {
-  background-color: var(--color-primary, #ff1e42);
+  background-color: var(--color-primary, #FF2A4D);
   color: #ffffff;
   border-radius: 9999px;
   padding: 13px 28px;
@@ -172,7 +172,7 @@ html, body {
   letter-spacing: -0.01em;
   border: none;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.22s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -181,8 +181,13 @@ html, body {
 }
 
 .btn-primary-crimson:hover {
-  background-color: var(--color-primary-hover, #ff3355);
-  transform: translateY(-1px);
+  background-color: var(--color-primary-hover, #ff4767);
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 4px 20px -2px rgba(255, 42, 77, 0.35);
+}
+
+.btn-primary-crimson:active {
+  transform: translateY(0) scale(0.98);
 }
 
 /* Ghost Pill Button */
@@ -196,7 +201,7 @@ html, body {
   font-weight: 500;
   letter-spacing: -0.01em;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.15s ease, background-color 0.15s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -205,22 +210,39 @@ html, body {
 }
 
 .btn-ghost-pill:hover {
-  border-color: var(--color-primary, #ff1e42);
-  background-color: var(--accent-badge-bg, rgba(255, 255, 255, 0.04));
-  transform: translateY(-1px);
+  border-color: var(--color-primary, #FF2A4D);
+  background-color: var(--accent-badge-bg, rgba(255, 42, 77, 0.08));
+  transform: translateY(-2px);
+}
+
+.btn-ghost-pill:active {
+  transform: translateY(0) scale(0.98);
 }
 
 /* Binary Radii: 14px Surface & 9999px Control */
 .surface-panel {
   background-color: var(--surface-elevated);
   border-radius: 14px;
-  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.07));
+  transition: transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s ease, box-shadow 0.24s ease;
+}
+
+.surface-panel-hover:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.5);
 }
 
 .surface-overlay {
   background-color: var(--surface-deep);
   border-radius: 14px;
   border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.05));
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 /* Scanline micro-animation */

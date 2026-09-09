@@ -9,6 +9,9 @@ import PreferencesControls from "@/components/PreferencesControls";
 import ReconciliationTab from "@/components/workspace/ReconciliationTab";
 import OverviewTab from "@/components/workspace/OverviewTab";
 import { Transaction, EquipmentStatus } from "@/lib/types";
+import { m, AnimatePresence } from "@/components/MotionProvider";
+import CountUp from "@/components/CountUp";
+import { Skeleton, WorkspaceSkeleton } from "@/components/Skeleton";
 import {
   LayoutDashboard,
   Receipt,
@@ -701,16 +704,22 @@ export default function WorkspacePage() {
           </div>
         </header>
 
-        {/* Tab Content Panels */}
+        {/* Tab Content Panels with AnimatePresence Transitions */}
         <div className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8 flex-1">
-          {/* ========================================================================= */}
-          {/* TAB 1: EXECUTIVE OVERVIEW */}
-          {/* ========================================================================= */}
+          <AnimatePresence mode="wait">
+            <m.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              className="w-full space-y-6 sm:space-y-8"
+            >
           {/* =========================================================================
            * RECONCILIATION TAB
            * =========================================================================*/}
           {activeTab === "reconcile" && (
-            <div className="animate-fade-in">
+            <div>
               <ReconciliationTab
                 pockets={store.pockets}
                 reconciliations={store.reconciliations}
@@ -730,36 +739,39 @@ export default function WorkspacePage() {
             <div className="space-y-6 sm:space-y-8 animate-fade-in">
               {/* Stat Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="surface-panel p-5">
+                <div className="surface-panel surface-panel-hover p-5">
                   <span className="text-xs text-[#737373] block mb-1">{t("totalBudget")}</span>
-                  <span className="text-2xl font-mono font-medium text-[#fdfdfd]">
-                    {formatMoney(store.project.totalBudget)}
+                  <span className="text-3xl font-display font-bold text-[#fdfdfd] tracking-wide block">
+                    <CountUp end={store.project.totalBudget} formatter={formatMoney} />
                   </span>
                   <span className="text-[11px] text-[#a3a3a3] mt-2 block">{t("budgetCommitted")}</span>
                 </div>
 
-                <div className="surface-panel p-5">
+                <div className="surface-panel surface-panel-hover p-5">
                   <span className="text-xs text-[#737373] block mb-1">{t("disbursedToDepts")}</span>
-                  <span className="text-2xl font-mono font-medium text-[#fdfdfd]">
-                    {formatMoney(totalSpent)}
+                  <span className="text-3xl font-display font-bold text-[#fdfdfd] tracking-wide block">
+                    <CountUp end={totalSpent} formatter={formatMoney} />
                   </span>
                   <span className="text-[11px] text-[var(--color-primary,#ff1e42)] mt-2 block font-medium">
                     {((totalSpent / (totalAllocated || 1)) * 100).toFixed(1)}% {t("burnRate")}
                   </span>
                 </div>
 
-                <div className="surface-panel p-5">
+                <div className="surface-panel surface-panel-hover p-5">
                   <span className="text-xs text-[#737373] block mb-1">{t("fieldCashOnHand")}</span>
-                  <span className="text-2xl font-mono font-medium text-[#10b981]">
-                    {formatMoney(store.pockets.find((p) => p.id === "pkt-upm")?.balance || 8420)}
+                  <span className="text-3xl font-display font-bold text-[#10b981] tracking-wide block">
+                    <CountUp
+                      end={store.pockets.find((p) => p.id === "pkt-upm")?.balance || 8420}
+                      formatter={formatMoney}
+                    />
                   </span>
                   <span className="text-[11px] text-[#a3a3a3] mt-2 block">{t("cashSufficient")}</span>
                 </div>
 
-                <div className="surface-panel p-5">
+                <div className="surface-panel surface-panel-hover p-5">
                   <span className="text-xs text-[#737373] block mb-1">{t("activeAlerts")}</span>
-                  <span className="text-2xl font-mono font-medium text-[var(--color-primary,#ff1e42)]">
-                    {activeAlertsCount} Flags
+                  <span className="text-3xl font-display font-bold text-[var(--color-primary,#ff1e42)] tracking-wide block">
+                    <CountUp end={activeAlertsCount} formatter={(n) => `${n} Flags`} />
                   </span>
                   <span className="text-[11px] text-[#a3a3a3] mt-2 block">{t("auditRequired")}</span>
                 </div>
@@ -1881,6 +1893,8 @@ export default function WorkspacePage() {
               </div>
             </div>
           )}
+            </m.div>
+          </AnimatePresence>
         </div>
       </div>
 
