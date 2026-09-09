@@ -62,9 +62,9 @@ export default function OverviewTab({
                 Burn Rate Forecast
               </span>
             </div>
-            <p className="text-xl font-bold text-[#fdfdfd] mt-1">
+            <p className="text-2xl font-bold font-display tracking-wide text-[#fdfdfd] mt-1">
               {formatMoney(forecast.dailyBurnRate)}{" "}
-              <span className="text-sm font-normal text-[#737373]">/ day avg</span>
+              <span className="text-sm font-normal text-[#737373] font-sans">/ day avg</span>
             </p>
             <p
               className={`text-xs mt-1 ${
@@ -263,7 +263,7 @@ function KPICard({
         <span className="text-[10px] uppercase tracking-wider text-[#737373] font-medium">{label}</span>
         <span style={{ color }}>{icon}</span>
       </div>
-      <p className="text-lg font-bold text-[#fdfdfd] leading-tight">{value}</p>
+      <p className="text-xl font-bold font-display tracking-wide text-[#fdfdfd] leading-tight">{value}</p>
       <p className="text-[11px] text-[#737373]">{sub}</p>
     </div>
   );

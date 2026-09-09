@@ -18,7 +18,23 @@
   --radius-full: 9999px;
 }
 
-:root, [data-theme="obsidian"] {
+:root, [data-theme="signature"] {
+  --color-primary: #FF2A4D;
+  --color-primary-hover: #ff4767;
+  --surface-canvas: #050505;
+  --surface-elevated: #111111;
+  --surface-deep: #181818;
+  --surface-hover: #1f1f1f;
+  --color-paper: #fdfdfd;
+  --color-pearl: #d4d4d4;
+  --color-ash: #a3a3a3;
+  --color-stone: #737373;
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-active: rgba(255, 255, 255, 0.16);
+  --accent-badge-bg: rgba(255, 42, 77, 0.12);
+}
+
+[data-theme="obsidian"] {
   --color-primary: #ff1e42;
   --color-primary-hover: #ff3355;
   --surface-canvas: #050505;
@@ -115,6 +131,10 @@ html, body {
   padding: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.font-display {
+  font-family: var(--font-instrument-serif), Georgia, serif;
 }
 
 /* Savee Sculptural Display Typography */

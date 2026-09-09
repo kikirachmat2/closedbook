@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 
 export type CurrencyCode = "USD" | "IDR" | "EUR" | "GBP" | "SGD" | "JPY";
 export type LanguageCode = "en" | "id" | "es" | "ja";
-export type ThemeCode = "obsidian" | "indigo" | "emerald" | "amber" | "paper";
+export type ThemeCode = "signature" | "obsidian" | "indigo" | "emerald" | "amber" | "paper";
 
 export interface CurrencyConfig {
   code: CurrencyCode;
@@ -49,6 +49,14 @@ export interface ThemeConfig {
 }
 
 export const THEMES: Record<ThemeCode, ThemeConfig> = {
+  signature: {
+    code: "signature",
+    name: "ClosedBook Signature",
+    description: "Electric Titanium Crimson canvas with ultra-refined tactile borders",
+    accentColor: "#FF2A4D",
+    bgPreview: "#050505",
+    panelPreview: "#111111",
+  },
   obsidian: {
     code: "obsidian",
     name: "Obsidian Crimson",
@@ -723,7 +731,7 @@ const PreferencesContext = createContext<PreferencesContextType | null>(null);
 export function PreferencesProvider({ children }: { children: React.ReactNode }) {
   const [currency, setCurrencyState] = useState<CurrencyCode>("USD");
   const [language, setLanguageState] = useState<LanguageCode>("en");
-  const [theme, setThemeState] = useState<ThemeCode>("obsidian");
+  const [theme, setThemeState] = useState<ThemeCode>("signature");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -744,7 +752,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
         setThemeState(savedTheme);
         document.documentElement.setAttribute("data-theme", savedTheme);
       } else {
-        document.documentElement.setAttribute("data-theme", "obsidian");
+        document.documentElement.setAttribute("data-theme", "signature");
       }
     } catch {}
     setMounted(true);
