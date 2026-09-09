@@ -568,7 +568,7 @@ export default function HomePage() {
                 </h3>
                 <p className="text-sm text-[#a3a3a3] leading-relaxed">
                   Closebook requests only the sandboxed <code className="text-[#fdfdfd]">drive.file</code> scope.
-                  Under Google's technical security policies, Closebook cannot view, access, or modify any existing
+                  Under Google&apos;s technical security policies, Closebook cannot view, access, or modify any existing
                   photos, documents, or folders outside of the exact workspace it provisions for you.
                 </p>
               </div>
@@ -587,7 +587,7 @@ export default function HomePage() {
                   Client-Side EXIF & Location Stripping
                 </h3>
                 <p className="text-sm text-[#a3a3a3] leading-relaxed">
-                  Before a photo leaves a crew member's phone, our WebAssembly compression pipeline strips GPS
+                  Before a photo leaves a crew member&apos;s phone, our WebAssembly compression pipeline strips GPS
                   coordinates, camera serial numbers, and device telemetry directly in browser memory, protecting
                   confidential set locations.
                 </p>

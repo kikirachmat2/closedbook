@@ -1054,7 +1054,7 @@ export default function WorkspacePage() {
               <div>
                 <h2 className="text-xl font-medium text-[#fdfdfd]">Google Workspace Live Mirror</h2>
                 <p className="text-xs text-[#737373] mt-0.5">
-                  Direct audit proof: Data streaming straight to the Producer's personal Google Drive and Sheets.
+                  Direct audit proof: Data streaming straight to the Producer&apos;s personal Google Drive and Sheets.
                 </p>
               </div>
 
@@ -1080,7 +1080,7 @@ export default function WorkspacePage() {
                   </div>
                   <div className="surface-overlay p-3 font-mono text-xs text-[#a3a3a3] space-y-1.5">
                     <div className="text-white">📊 Master_Shooting_Ledger.xlsx</div>
-                    <div>Sheet: 'Cashflow_Day_4'</div>
+                    <div>Sheet: &apos;Cashflow_Day_4&apos;</div>
                     <div>Row Count: {store.transactions.length + 1} rows</div>
                     <div className="text-[#10b981]">Status: Dual-Stream Synced</div>
                   </div>

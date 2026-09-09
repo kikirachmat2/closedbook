@@ -181,6 +181,12 @@ export function useClosebookStore() {
       if (savedPockets) setPockets(JSON.parse(savedPockets));
       const savedTasks = localStorage.getItem("closebook_tasks");
       if (savedTasks) setTasks(JSON.parse(savedTasks));
+      const savedDepts = localStorage.getItem("closebook_depts");
+      if (savedDepts) setDepartments(JSON.parse(savedDepts));
+      const savedAlerts = localStorage.getItem("closebook_alerts");
+      if (savedAlerts) setAlerts(JSON.parse(savedAlerts));
+      const savedComments = localStorage.getItem("closebook_comments");
+      if (savedComments) setComments(JSON.parse(savedComments));
     } catch {
       // ignore parsing error, fallback to initial
     }
@@ -206,6 +212,27 @@ export function useClosebookStore() {
     setTasks(newTasks);
     try {
       localStorage.setItem("closebook_tasks", JSON.stringify(newTasks));
+    } catch {}
+  };
+
+  const persistDepartments = (newDepts: Department[]) => {
+    setDepartments(newDepts);
+    try {
+      localStorage.setItem("closebook_depts", JSON.stringify(newDepts));
+    } catch {}
+  };
+
+  const persistAlerts = (newAlerts: SystemAlert[]) => {
+    setAlerts(newAlerts);
+    try {
+      localStorage.setItem("closebook_alerts", JSON.stringify(newAlerts));
+    } catch {}
+  };
+
+  const persistComments = (newComments: ContextComment[]) => {
+    setComments(newComments);
+    try {
+      localStorage.setItem("closebook_comments", JSON.stringify(newComments));
     } catch {}
   };
 
@@ -254,7 +281,7 @@ export function useClosebookStore() {
       return d;
     });
 
-    setDepartments(updatedDepts);
+    persistDepartments(updatedDepts);
     persistPockets(updatedPockets);
     persistTransactions([newTx, ...transactions]);
 
@@ -304,7 +331,8 @@ export function useClosebookStore() {
 
   // 6. Dismiss Alert
   const resolveAlert = (alertId: string) => {
-    setAlerts(alerts.map((a) => (a.id === alertId ? { ...a, isResolved: true } : a)));
+    const updated = alerts.map((a) => (a.id === alertId ? { ...a, isResolved: true } : a));
+    persistAlerts(updated);
   };
 
   // 7. Add Context Comment
@@ -317,7 +345,7 @@ export function useClosebookStore() {
       message,
       timestamp: "Just now",
     };
-    setComments([...comments, newComment]);
+    persistComments([...comments, newComment]);
   };
 
   return {
