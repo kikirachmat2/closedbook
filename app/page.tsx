@@ -59,7 +59,7 @@ const WORKFLOWS: Record<WorkflowId, WorkflowData> = {
     pocketBalance: "$12,450.00",
     todayBurn: "$2,890.00",
     alertCount: "1 Missing Receipt",
-    driveFolder: "SetFlow_Closebook/01_Petty_Cash_Receipts",
+    driveFolder: "ClosedBook/01_Petty_Cash_Receipts",
     sheetName: "Master_Shooting_Ledger.xlsx",
     ledger: [
       { id: "TX-101", time: "14:20", division: "Transport", description: "Location Generator Fuel & Logistics", amount: "$380.00", status: "approved" },
@@ -76,7 +76,7 @@ const WORKFLOWS: Record<WorkflowId, WorkflowData> = {
     pocketBalance: "$45,000.00",
     todayBurn: "$3,450.00",
     alertCount: "All Matched to PO",
-    driveFolder: "Closebook_Agency/01_Invoices_Vendor_Bills",
+    driveFolder: "ClosedBook_Agency/01_Invoices_Vendor_Bills",
     sheetName: "Client_Retainer_Billing.xlsx",
     ledger: [
       { id: "AG-201", time: "10:30", division: "Design", description: "Commercial Font License & 3D Assets", amount: "$1,200.00", status: "approved" },
@@ -92,7 +92,7 @@ const WORKFLOWS: Record<WorkflowId, WorkflowData> = {
     pocketBalance: "$28,500.00",
     todayBurn: "$8,200.00",
     alertCount: "Permits Verified",
-    driveFolder: "Closebook_Events/01_Vendor_Downpayments",
+    driveFolder: "ClosedBook_Events/01_Vendor_Downpayments",
     sheetName: "Venue_Disbursement_Sheet.xlsx",
     ledger: [
       { id: "EV-301", time: "09:00", division: "Staging", description: "Mainstage Rigging & Truss Advance", amount: "$4,500.00", status: "approved" },
@@ -108,7 +108,7 @@ const WORKFLOWS: Record<WorkflowId, WorkflowData> = {
     pocketBalance: "$6,800.00",
     todayBurn: "$950.00",
     alertCount: "Audited by Treasurer",
-    driveFolder: "Closebook_Campus/01_Original_Receipts_LPJ",
+    driveFolder: "ClosedBook_Campus/01_Original_Receipts_LPJ",
     sheetName: "Treasurer_Master_Report.xlsx",
     ledger: [
       { id: "ST-401", time: "10:00", division: "Media", description: "Main Stage Banner & Lanyards (200 pcs)", amount: "$280.00", status: "approved" },
@@ -124,7 +124,7 @@ const WORKFLOWS: Record<WorkflowId, WorkflowData> = {
     pocketBalance: "$18,200.00",
     todayBurn: "$420.00",
     alertCount: "Tax Deductible",
-    driveFolder: "Closebook_Solo/01_Tax_Deductible_Expenses",
+    driveFolder: "ClosedBook_Solo/01_Tax_Deductible_Expenses",
     sheetName: "Annual_Tax_Deduction_Log.xlsx",
     ledger: [
       { id: "SO-501", time: "09:45", division: "Cloud", description: "Database Cluster & Hosting Tier", amount: "$120.00", status: "approved" },
@@ -182,7 +182,7 @@ export default function HomePage() {
             <div className="w-8 h-8 rounded-full overflow-hidden bg-[#121212] border border-white/[0.08] flex items-center justify-center">
               <Image
                 src="/icon.png"
-                alt="Closebook Icon"
+                alt="ClosedBook Icon"
                 width={32}
                 height={32}
                 className="object-cover"
@@ -190,7 +190,7 @@ export default function HomePage() {
               />
             </div>
             <span className="text-lg font-medium tracking-tight text-[#fdfdfd]">
-              closebook<span className="text-[#ff1e42]">.</span>
+              closedbook<span className="text-[#ff1e42]">.</span>
             </span>
           </div>
 
@@ -205,7 +205,7 @@ export default function HomePage() {
               Data Sovereignty
             </a>
             <a
-              href="https://github.com/kikirachmat2/CloseBook"
+              href="https://github.com/kikirachmat2/closedbook"
               target="_blank"
               rel="noreferrer"
               className="hover:text-[#fdfdfd] transition-colors flex items-center gap-1.5"
@@ -461,7 +461,7 @@ export default function HomePage() {
               System Architecture
             </span>
             <h2 className="text-3xl md:text-5xl font-medium tracking-tight text-[#fdfdfd] mb-4">
-              How Closebook Works
+              How ClosedBook Works
             </h2>
             <p className="text-[#a3a3a3] text-base">
               A 4-step autonomous pipeline converting raw field expenses into structured Google Workspace assets.
@@ -474,7 +474,7 @@ export default function HomePage() {
                 <span className="font-mono text-xs text-[#ff1e42] block mb-4">STEP 01</span>
                 <h3 className="text-base font-medium text-[#fdfdfd] mb-2">Google OAuth 2.0</h3>
                 <p className="text-xs text-[#a3a3a3] leading-relaxed">
-                  Project Owner authorizes Closebook using native Google authentication. Zero proprietary
+                  Project Owner authorizes ClosedBook using native Google authentication. Zero proprietary
                   passwords or database credential silos.
                 </p>
               </div>
@@ -488,7 +488,7 @@ export default function HomePage() {
                 <span className="font-mono text-xs text-[#ff1e42] block mb-4">STEP 02</span>
                 <h3 className="text-base font-medium text-[#fdfdfd] mb-2">Autonomous Vault</h3>
                 <p className="text-xs text-[#a3a3a3] leading-relaxed">
-                  Closebook automatically provisions structured folders inside your Google Drive and creates the
+                  ClosedBook automatically provisions structured folders inside your Google Drive and creates the
                   live Master Ledger spreadsheet.
                 </p>
               </div>
@@ -552,8 +552,8 @@ export default function HomePage() {
                   Zero Server Data Retention
                 </h3>
                 <p className="text-sm text-[#a3a3a3] leading-relaxed">
-                  Closebook does not host, duplicate, or store your project files, invoices, or accounting records.
-                  All physical assets reside strictly in your personal Google Workspace. If Closebook ceases
+                  ClosedBook does not host, duplicate, or store your project files, invoices, or accounting records.
+                  All physical assets reside strictly in your personal Google Workspace. If ClosedBook ceases
                   operations, 100% of your production ledger remains intact in your Drive.
                 </p>
               </div>
@@ -572,8 +572,8 @@ export default function HomePage() {
                   Sandboxed Permissions (<code className="text-[#ff1e42]">drive.file</code>)
                 </h3>
                 <p className="text-sm text-[#a3a3a3] leading-relaxed">
-                  Closebook requests only the sandboxed <code className="text-[#fdfdfd]">drive.file</code> scope.
-                  Under Google&apos;s technical security policies, Closebook cannot view, access, or modify any existing
+                  ClosedBook requests only the sandboxed <code className="text-[#fdfdfd]">drive.file</code> scope.
+                  Under Google&apos;s technical security policies, ClosedBook cannot view, access, or modify any existing
                   photos, documents, or folders outside of the exact workspace it provisions for you.
                 </p>
               </div>
@@ -613,7 +613,7 @@ export default function HomePage() {
                 </h3>
                 <p className="text-sm text-[#a3a3a3] leading-relaxed">
                   All session tokens are exchanged directly with Google Identity using PKCE protocols and
-                  AES-256 encrypted refresh handshakes. Closebook never collects, handles, or stores raw passwords.
+                  AES-256 encrypted refresh handshakes. ClosedBook never collects, handles, or stores raw passwords.
                 </p>
               </div>
               <div className="mt-6 pt-4 border-t border-white/[0.06] flex items-center gap-2 text-xs text-[#ff1e42]">
@@ -631,7 +631,7 @@ export default function HomePage() {
           </span>
           <p className="editorial-copy mb-6">
             Traditional production software charges $20 per crew member per month to rent cloud storage you already
-            own. Closebook eliminates the toll booth.
+            own. ClosedBook eliminates the toll booth.
           </p>
           <p className="text-base text-[#a3a3a3] leading-relaxed">
             By turning your existing Google Workspace quota into a native production operating system, we allow
@@ -653,7 +653,7 @@ export default function HomePage() {
               <ArrowRight className="w-4 h-4" />
             </Link>
             <a
-              href="https://github.com/kikirachmat2/CloseBook"
+              href="https://github.com/kikirachmat2/closedbook"
               target="_blank"
               rel="noreferrer"
               className="btn-ghost-pill text-sm px-6 py-3.5"
@@ -670,9 +670,9 @@ export default function HomePage() {
         <div className="max-w-[1200px] mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
             <div className="w-5 h-5 rounded-full overflow-hidden bg-[#121212] border border-white/[0.08] flex items-center justify-center">
-              <Image src="/icon.png" alt="Closebook Logo" width={20} height={20} className="object-cover" />
+              <Image src="/icon.png" alt="ClosedBook Logo" width={20} height={20} className="object-cover" />
             </div>
-            <span className="text-[#fdfdfd] font-medium">closebook.</span>
+            <span className="text-[#fdfdfd] font-medium">closedbook.</span>
             <span>— The Zero-Budget Production & Project Management OS</span>
           </div>
 

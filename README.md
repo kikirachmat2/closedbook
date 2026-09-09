@@ -1,27 +1,27 @@
-# Closebook
+# ClosedBook
 > **The Zero-Budget Production & Project Management OS**
 > *Built on a pure black canvas for visual curators, filmmakers, and project leads.*
 
-![Closebook Red Quill Icon](/public/icon.png)
+![ClosedBook Red Quill Icon](/public/icon.png)
 
 ---
 
 ## ✦ Overview
 
-**Closebook** is an integrated production and project management operating system designed for high-velocity teams who refuse to pay monthly SaaS subscription fees.
+**ClosedBook** is an integrated production and project management operating system designed for high-velocity teams who refuse to pay monthly SaaS subscription fees.
 
-Instead of renting costly cloud storage servers, Closebook pioneers the **Bring-Your-Own-Storage (BYOS)** architecture:
+Instead of renting costly cloud storage servers, ClosedBook pioneers the **Bring-Your-Own-Storage (BYOS)** architecture:
 - **Receipts & Attachments** stream directly into the Project Owner's **Google Drive** (using their free 15 GB quota).
 - **Master Records & Accounting** are automatically mirrored into **Google Sheets** for immediate access by accountants and executives.
-- **Closebook Engine** (Next.js 15 + Supabase Free Tier) acts as a high-speed, noise-free controller for mobile logging, approval gates, task management, and contextual discussions.
+- **ClosedBook Engine** (Next.js 15 + Supabase Free Tier) acts as a high-speed, noise-free controller for mobile logging, approval gates, task management, and contextual discussions.
 
-If Closebook ever goes offline, **100% of your production records remain safely in your personal Google Drive and Sheets.**
+If ClosedBook ever goes offline, **100% of your production records remain safely in your personal Google Drive and Sheets.**
 
 ---
 
 ## ✦ Design System: Savee Reference
 
-Closebook is crafted with extreme aesthetic discipline, directly adopting the **Savee editorial design language**:
+ClosedBook is crafted with extreme aesthetic discipline, directly adopting the **Savee editorial design language**:
 
 - **Obsidian Canvas (`#050505`)**: Pure near-total darkness where surfaces and content float without visual clutter.
 - **Electric Crimson (`#ff1e42`)**: The sole chromatic accent in the system, reserved exclusively for the primary CTA button and active indicators.
@@ -44,7 +44,7 @@ Closebook is crafted with extreme aesthetic discipline, directly adopting the **
 
 ## ✦ Data Sovereignty & Security
 
-- **Zero Server Data Retention**: Closebook never hosts or stores your project files, invoices, or records on our servers. All physical assets reside strictly in your personal Google Workspace.
+- **Zero Server Data Retention**: ClosedBook never hosts or stores your project files, invoices, or records on our servers. All physical assets reside strictly in your personal Google Workspace.
 - **Sandboxed Permissions (`drive.file`)**: Restricted by Google security policies from reading or modifying any existing photos, emails, or personal documents.
 - **Client-Side EXIF Stripping**: Location coordinates and camera telemetry are removed in client memory before network transit.
 - **Enterprise-Grade Handshake**: AES-256 encrypted refresh handshakes and direct Google Identity validation.
@@ -55,8 +55,8 @@ Closebook is crafted with extreme aesthetic discipline, directly adopting the **
 
 ```bash
 # Clone repository
-git clone https://github.com/kikirachmat2/CloseBook.git
-cd closebook
+git clone https://github.com/kikirachmat2/closedbook.git
+cd closedbook
 
 # Install dependencies
 npm install

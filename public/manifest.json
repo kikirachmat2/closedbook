@@ -1,6 +1,6 @@
 {
-  "name": "Closebook Production OS",
-  "short_name": "Closebook",
+  "name": "ClosedBook Production OS",
+  "short_name": "ClosedBook",
   "description": "Zero-budget, user-owned production and project management operating system.",
   "start_url": "/",
   "display": "standalone",

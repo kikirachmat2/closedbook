@@ -9,20 +9,20 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Closebook — Modern Production & Project OS",
+  title: "ClosedBook — Modern Production & Project OS",
   description:
     "Zero-budget, user-owned production management system. Connects directly to your Google Drive & Sheets with zero vendor lock-in.",
-  applicationName: "Closebook",
+  applicationName: "ClosedBook",
   icons: {
     icon: "/icon.png",
     apple: "/icon.png",
   },
   manifest: "/manifest.json",
   openGraph: {
-    title: "Closebook — Modern Production & Project OS",
+    title: "ClosedBook — Modern Production & Project OS",
     description:
       "A black canvas for production curators and project leads. Direct BYOS sync with your Google Workspace.",
-    siteName: "Closebook",
+    siteName: "ClosedBook",
     type: "website",
   },
 };

@@ -61,13 +61,13 @@ type TabId =
   | "reconcile";
 
 const APPS_SCRIPT_TEMPLATE = `// =========================================================================
-// CLOSEBOOK PRODUCTION OS — GOOGLE APPS SCRIPT WEBHOOK BRIDGE (BYOS)
+// CLOSEDBOOK PRODUCTION OS — GOOGLE APPS SCRIPT WEBHOOK BRIDGE (BYOS)
 // =========================================================================
 // Instructions:
 // 1. Open your Google Sheet. Go to Extensions > Apps Script.
 // 2. Paste this code and click Deploy > New Deployment.
 // 3. Select type: "Web app". Set Who has access: "Anyone". Execute as: "Me".
-// 4. Copy the Web App URL and paste it into Closebook > Google Sheet Mirror.
+// 4. Copy the Web App URL and paste it into ClosedBook > Google Sheet Mirror.
 
 function doPost(e) {
   try {
@@ -170,7 +170,7 @@ export default function WorkspacePage() {
         body: JSON.stringify({
           event: "PING",
           timestamp: new Date().toISOString(),
-          app: "Closebook",
+          app: "ClosedBook",
         }),
       });
       store.persistWebhookConfig(tempWebhookUrl, true);
@@ -433,10 +433,10 @@ export default function WorkspacePage() {
           <div className="flex items-center justify-between pb-6 mb-6 border-b border-white/[0.06]">
             <Link href="/" className="flex items-center gap-3 min-h-[44px]">
               <div className="w-8 h-8 rounded-full overflow-hidden bg-[#121212] border border-white/[0.08] flex items-center justify-center">
-                <Image src="/icon.png" alt="Closebook" width={32} height={32} className="object-cover" />
+                <Image src="/icon.png" alt="ClosedBook" width={32} height={32} className="object-cover" />
               </div>
               <span className="text-base font-medium tracking-tight text-[#fdfdfd]">
-                closebook<span className="text-[var(--color-primary,#ff1e42)]">.</span>
+                closedbook<span className="text-[var(--color-primary,#ff1e42)]">.</span>
               </span>
             </Link>
             <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-[#181818] text-[#a3a3a3] border border-white/[0.06]">
@@ -634,10 +634,10 @@ export default function WorkspacePage() {
             {/* Mobile Brand Logo */}
             <Link href="/" className="md:hidden flex items-center gap-2 min-h-[44px]">
               <div className="w-7 h-7 rounded-full overflow-hidden bg-[#121212] border border-white/[0.08] flex items-center justify-center">
-                <Image src="/icon.png" alt="Closebook" width={28} height={28} className="object-cover" />
+                <Image src="/icon.png" alt="ClosedBook" width={28} height={28} className="object-cover" />
               </div>
               <span className="text-sm font-medium tracking-tight text-[#fdfdfd]">
-                closebook<span className="text-[var(--color-primary,#ff1e42)]">.</span>
+                closedbook<span className="text-[var(--color-primary,#ff1e42)]">.</span>
               </span>
             </Link>
 
@@ -1837,7 +1837,7 @@ export default function WorkspacePage() {
                     <h3 className="text-sm font-medium text-[#fdfdfd]">Google Drive Folder Tree</h3>
                   </div>
                   <div className="surface-overlay p-3.5 font-mono text-xs text-[#a3a3a3] space-y-1.5">
-                    <div className="text-white font-medium">📁 SetFlow_Closebook_TheQuietHorizon/</div>
+                    <div className="text-white font-medium">📁 ClosedBook_TheQuietHorizon/</div>
                     <div className="pl-4">📁 01_Petty_Cash_Receipts/ ({store.transactions.length} files)</div>
                     <div className="pl-4">📁 02_Daily_Call_Sheets/ (Day 1-{store.callSheet.dayNumber})</div>
                     <div className="pl-4">📁 03_Deal_Memos_Talent/ (28 signed)</div>
@@ -1868,7 +1868,7 @@ export default function WorkspacePage() {
                   <div>
                     <h3 className="text-sm font-semibold text-white mb-1">Zero-Vendor-Lock-in Guarantee</h3>
                     <p className="text-xs text-[#a3a3a3] leading-relaxed max-w-xl">
-                      Your production records never depend on Closebook remaining online. Download your complete encrypted JSON database package or raw CSV ledger anytime for offline accounting and archival.
+                      Your production records never depend on ClosedBook remaining online. Download your complete encrypted JSON database package or raw CSV ledger anytime for offline accounting and archival.
                     </p>
                   </div>
                   <button
@@ -2574,7 +2574,7 @@ export default function WorkspacePage() {
             </p>
           </div>
           <div className="text-right text-xs font-mono">
-            <div className="font-bold">Closebook Accounting Audit</div>
+            <div className="font-bold">ClosedBook Accounting Audit</div>
             <div>Generated: {new Date().toLocaleDateString()}</div>
           </div>
         </div>

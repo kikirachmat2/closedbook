@@ -94,7 +94,7 @@ export const THEMES: Record<ThemeCode, ThemeConfig> = {
 export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
   en: {
     // Brand & System
-    appName: "closebook.",
+    appName: "closedbook.",
     appTagline: "Modern Production & Project OS",
     activeProduction: "ACTIVE PRODUCTION",
     driveVaultSynced: "Drive Vault: Synced",
@@ -246,7 +246,7 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
   },
   id: {
     // Brand & System
-    appName: "closebook.",
+    appName: "closedbook.",
     appTagline: "OS Manajemen Produksi & Proyek Modern",
     activeProduction: "PRODUKSI AKTIF",
     driveVaultSynced: "Vault Drive: Tersinkron",
@@ -398,7 +398,7 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
   },
   es: {
     // Brand & System
-    appName: "closebook.",
+    appName: "closedbook.",
     appTagline: "Sistema Operativo de Producción y Proyectos",
     activeProduction: "PRODUCCIÓN ACTIVA",
     driveVaultSynced: "Drive Vault: Sincronizado",
@@ -550,7 +550,7 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
   },
   ja: {
     // Brand & System
-    appName: "closebook.",
+    appName: "closedbook.",
     appTagline: "モダン制作＆プロジェクトOS",
     activeProduction: "進行中の制作",
     driveVaultSynced: "Drive保管庫: 同期済み",

@@ -105,7 +105,7 @@ async function delay(ms) {
 
 async function runBlackboxTests() {
   console.log("=================================================================");
-  console.log("CLOSEBOOK BLACKBOX E2E TEST SUITE — HYBRID CONTEXT ARCHITECTURE");
+  console.log("CLOSEDBOOK BLACKBOX E2E TEST SUITE — HYBRID CONTEXT ARCHITECTURE");
   console.log("=================================================================");
 
   const browser = await puppeteer.launch({
@@ -138,7 +138,7 @@ async function runBlackboxTests() {
     await page.goto("http://localhost:3000", { waitUntil: "domcontentloaded" });
     await page.waitForSelector("h1");
     const title = await page.title();
-    assert("Page Title Contains Closebook", title.toLowerCase().includes("closebook"), title);
+    assert("Page Title Contains Closebook", (title.toLowerCase().includes("closedbook") || title.toLowerCase().includes("closebook")), title);
     const h1 = await page.$eval("h1", (el) => el.textContent);
     assert("Hero Headline Rendered", h1.length > 3, h1);
     await page.screenshot({ path: path.join(ARTIFACT_DIR, "audit_01_landing.png") });
@@ -155,7 +155,7 @@ async function runBlackboxTests() {
     const url = page.url();
     assert("Workspace URL Correct", url.includes("/workspace"), url);
     const bodyText = await page.evaluate(() => document.body.textContent);
-    assert("Project Name Displayed", bodyText.includes("Quiet Horizon") || bodyText.includes("closebook"), "Project loaded");
+    assert("Project Name Displayed", bodyText.includes("Quiet Horizon") || (bodyText.includes("closedbook") || bodyText.includes("closebook")), "Project loaded");
     await page.screenshot({ path: path.join(ARTIFACT_DIR, "audit_02_workspace_overview.png") });
 
     // TEST 3: OVERVIEW KPIs & BURN RATE
