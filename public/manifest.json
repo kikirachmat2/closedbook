@@ -8,14 +8,14 @@
   "theme_color": "#050505",
   "icons": [
     {
-      "src": "/quill-icon.jpg",
+      "src": "/icon.png",
       "sizes": "192x192",
-      "type": "image/jpeg"
+      "type": "image/png"
     },
     {
-      "src": "/quill-icon.jpg",
+      "src": "/icon.png",
       "sizes": "512x512",
-      "type": "image/jpeg"
+      "type": "image/png"
     }
   ]
 }

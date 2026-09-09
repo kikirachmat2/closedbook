@@ -11,28 +11,17 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Closebook — Modern Production & Project OS",
   description:
-    "Zero-budget, user-owned storage management for film crews, creative agencies, and high-velocity projects. Connects seamlessly with your Google Drive & Sheets. Free forever.",
+    "Zero-budget, user-owned production management system. Connects directly to your Google Drive & Sheets with zero vendor lock-in.",
   applicationName: "Closebook",
-  authors: [{ name: "Closebook Team" }],
-  keywords: [
-    "production management",
-    "petty cash",
-    "film production",
-    "call sheet",
-    "project management",
-    "google drive sync",
-    "google sheets sync",
-    "closebook",
-  ],
   icons: {
-    icon: "/quill-icon.jpg",
-    apple: "/quill-icon.jpg",
+    icon: "/icon.png",
+    apple: "/icon.png",
   },
   manifest: "/manifest.json",
   openGraph: {
     title: "Closebook — Modern Production & Project OS",
     description:
-      "A black canvas for production curators and project leads. Zero-cost BYOS architecture directly to your Google Workspace.",
+      "A black canvas for production curators and project leads. Direct BYOS sync with your Google Workspace.",
     siteName: "Closebook",
     type: "website",
   },
@@ -52,7 +41,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="bg-[#050505] text-[#fdfdfd] antialiased selection:bg-[#1500ff] selection:text-[#fdfdfd]">
+      <body className="bg-[#050505] text-[#fdfdfd] antialiased selection:bg-[#ff1744] selection:text-[#ffffff]">
         {children}
       </body>
     </html>
