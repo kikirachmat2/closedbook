@@ -81,8 +81,6 @@ async function runBlackboxTests() {
     // -------------------------------------------------------------
     console.log("\n--- TEST 3: Navigation to /workspace ---");
     await page.goto("http://localhost:3000/workspace", { waitUntil: "domcontentloaded" });
-    await page.evaluate(() => localStorage.clear());
-    await page.reload({ waitUntil: "domcontentloaded" });
     await page.waitForSelector("header");
     await new Promise((r) => setTimeout(r, 1000));
     const currentUrl = page.url();
@@ -118,26 +116,11 @@ async function runBlackboxTests() {
     });
     await new Promise((r) => setTimeout(r, 600));
 
-    // Fill form using deterministic input events
+    // Fill form
     await page.waitForSelector('input[placeholder*="Generator"]');
-    await page.evaluate(() => {
-      const descInput = document.querySelector('input[placeholder*="Generator"]');
-      const amountInput = document.querySelector('form input[type="number"]');
-      const vendorInput = document.querySelector('input[placeholder*="Marina"]');
-      if (descInput) {
-        descInput.value = "Field Drone Battery Extra Sets";
-        descInput.dispatchEvent(new Event("input", { bubbles: true }));
-      }
-      if (amountInput) {
-        amountInput.value = "290";
-        amountInput.dispatchEvent(new Event("input", { bubbles: true }));
-      }
-      if (vendorInput) {
-        vendorInput.value = "DroneWorks Rentals";
-        vendorInput.dispatchEvent(new Event("input", { bubbles: true }));
-      }
-    });
-    await new Promise((r) => setTimeout(r, 300));
+    await page.type('input[placeholder*="Generator"]', "Field Drone Battery Extra Sets");
+    await page.type('form input[type="number"]', "290.00");
+    await page.type('input[placeholder*="Marina"]', "DroneWorks Rentals");
 
     // Submit modal form
     await page.evaluate(() => {
