@@ -14,6 +14,9 @@ import {
   SystemAlert,
   ContextComment,
   PocketTransfer,
+  DailyReconcile,
+  ReconcileEntry,
+  ProjectShell,
 } from "./types";
 
 const INITIAL_PROJECT: Project = {
@@ -25,6 +28,10 @@ const INITIAL_PROJECT: Project = {
   currentDisbursed: 42350,
   driveFolderId: "1A2B3C_Drive_Closebook_QuietHorizon",
   sheetId: "1X2Y3Z_Sheet_Master_Ledger",
+  shootDays: 16,
+  startDate: "October 11, 2026",
+  director: "Alex Mercer",
+  createdAt: new Date().toISOString(),
 };
 
 const INITIAL_DEPARTMENTS: Department[] = [
@@ -187,6 +194,26 @@ const INITIAL_COMMENTS: ContextComment[] = [
   { id: "c-2", entityId: "TX-105", author: "Markus Vance", authorRole: "Producer", message: "Please ask antique vendor for written statement with tax ID tomorrow.", timestamp: "Today, 09:10" },
 ];
 
+const INITIAL_RECONCILIATIONS: DailyReconcile[] = [
+  {
+    id: "rec-day-3",
+    dayNumber: 3,
+    date: "Tuesday, October 13",
+    status: "signed_off",
+    entries: [
+      { pocketId: "pkt-upm", pocketName: "UPM Field Cash", systemBalance: 9200, physicalCount: 9200, discrepancy: 0, custodian: "Devon Reed (UPM)", notes: "" },
+      { pocketId: "pkt-transport", pocketName: "Unit Transport Float", systemBalance: 2100, physicalCount: 2100, discrepancy: 0, custodian: "Rizal Pratama", notes: "" },
+    ],
+    totalSystemBalance: 11300,
+    totalPhysicalCount: 11300,
+    totalDiscrepancy: 0,
+    reconciledBy: "Devon Reed (UPM)",
+    signedOffBy: "Elena Rostova (LP)",
+    signedOffAt: "Day 3, 20:15",
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+  },
+];
+
 export function useClosebookStore() {
   const [project, setProject] = useState<Project>(INITIAL_PROJECT);
   const [departments, setDepartments] = useState<Department[]>(INITIAL_DEPARTMENTS);
@@ -198,6 +225,20 @@ export function useClosebookStore() {
   const [equipment, setEquipment] = useState<EquipmentRental[]>(INITIAL_EQUIPMENT);
   const [alerts, setAlerts] = useState<SystemAlert[]>(INITIAL_ALERTS);
   const [comments, setComments] = useState<ContextComment[]>(INITIAL_COMMENTS);
+  const [reconciliations, setReconciliations] = useState<DailyReconcile[]>(INITIAL_RECONCILIATIONS);
+  const [projects, setProjects] = useState<ProjectShell[]>([
+    {
+      id: "proj-001",
+      name: "Feature Film: 'The Quiet Horizon'",
+      slug: "the-quiet-horizon",
+      totalBudget: 120000,
+      shootDays: 16,
+      startDate: "October 11, 2026",
+      director: "Alex Mercer",
+      createdAt: new Date().toISOString(),
+      isActive: true,
+    },
+  ]);
   const [webhookUrl, setWebhookUrl] = useState<string>("");
   const [isWebhookSyncEnabled, setIsWebhookSyncEnabled] = useState<boolean>(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -227,77 +268,73 @@ export function useClosebookStore() {
       if (savedWebhook) setWebhookUrl(savedWebhook);
       const savedSync = localStorage.getItem("closebook_webhook_sync");
       if (savedSync) setIsWebhookSyncEnabled(savedSync === "true");
+      const savedReconciles = localStorage.getItem("closebook_reconciliations");
+      if (savedReconciles) setReconciliations(JSON.parse(savedReconciles));
+      const savedProjects = localStorage.getItem("closebook_projects");
+      if (savedProjects) setProjects(JSON.parse(savedProjects));
     } catch {
       // fallback to initial
     }
     setIsLoaded(true);
   }, []);
 
-  // Save to LocalStorage
+  // ─── Persist Helpers ────────────────────────────────────────────────────────
   const persistTransactions = (newTx: Transaction[]) => {
     setTransactions(newTx);
-    try {
-      localStorage.setItem("closebook_tx", JSON.stringify(newTx));
-    } catch {}
+    try { localStorage.setItem("closebook_tx", JSON.stringify(newTx)); } catch {}
   };
 
   const persistPockets = (newPockets: Pocket[]) => {
     setPockets(newPockets);
-    try {
-      localStorage.setItem("closebook_pockets", JSON.stringify(newPockets));
-    } catch {}
+    try { localStorage.setItem("closebook_pockets", JSON.stringify(newPockets)); } catch {}
   };
 
   const persistTransfers = (newTransfers: PocketTransfer[]) => {
     setTransfers(newTransfers);
-    try {
-      localStorage.setItem("closebook_transfers", JSON.stringify(newTransfers));
-    } catch {}
+    try { localStorage.setItem("closebook_transfers", JSON.stringify(newTransfers)); } catch {}
   };
 
   const persistTasks = (newTasks: Task[]) => {
     setTasks(newTasks);
-    try {
-      localStorage.setItem("closebook_tasks", JSON.stringify(newTasks));
-    } catch {}
+    try { localStorage.setItem("closebook_tasks", JSON.stringify(newTasks)); } catch {}
   };
 
   const persistDepartments = (newDepts: Department[]) => {
     setDepartments(newDepts);
-    try {
-      localStorage.setItem("closebook_depts", JSON.stringify(newDepts));
-    } catch {}
+    try { localStorage.setItem("closebook_depts", JSON.stringify(newDepts)); } catch {}
   };
 
   const persistCallSheet = (newCallSheet: DailyCallSheet) => {
     setCallSheet(newCallSheet);
-    try {
-      localStorage.setItem("closebook_callsheet", JSON.stringify(newCallSheet));
-    } catch {}
+    try { localStorage.setItem("closebook_callsheet", JSON.stringify(newCallSheet)); } catch {}
   };
 
   const persistEquipment = (newEquipment: EquipmentRental[]) => {
     setEquipment(newEquipment);
-    try {
-      localStorage.setItem("closebook_equipment", JSON.stringify(newEquipment));
-    } catch {}
+    try { localStorage.setItem("closebook_equipment", JSON.stringify(newEquipment)); } catch {}
   };
 
   const persistAlerts = (newAlerts: SystemAlert[]) => {
     setAlerts(newAlerts);
-    try {
-      localStorage.setItem("closebook_alerts", JSON.stringify(newAlerts));
-    } catch {}
+    try { localStorage.setItem("closebook_alerts", JSON.stringify(newAlerts)); } catch {}
   };
 
   const persistComments = (newComments: ContextComment[]) => {
     setComments(newComments);
-    try {
-      localStorage.setItem("closebook_comments", JSON.stringify(newComments));
-    } catch {}
+    try { localStorage.setItem("closebook_comments", JSON.stringify(newComments)); } catch {}
   };
 
-  // 1. Add Transaction & deduct from pocket
+  const persistReconciliations = (newRecs: DailyReconcile[]) => {
+    setReconciliations(newRecs);
+    try { localStorage.setItem("closebook_reconciliations", JSON.stringify(newRecs)); } catch {}
+  };
+
+  const persistProjects = (newProjects: ProjectShell[]) => {
+    setProjects(newProjects);
+    try { localStorage.setItem("closebook_projects", JSON.stringify(newProjects)); } catch {}
+  };
+
+  // ─── 1. Transactions ────────────────────────────────────────────────────────
   const addTransaction = (data: {
     description: string;
     amount: number;
@@ -308,13 +345,10 @@ export function useClosebookStore() {
     isMissingReceipt?: boolean;
     notes?: string;
   }) => {
-    if (data.amount <= 0 || isNaN(data.amount)) {
-      return null;
-    }
+    if (data.amount <= 0 || isNaN(data.amount)) return null;
 
     const targetDept = departments.find((d) => d.id === data.departmentId);
     const targetPocket = pockets.find((p) => p.id === data.pocketId);
-
     const initialStatus = data.isMissingReceipt ? "pending" : "approved";
 
     const newTx: Transaction = {
@@ -334,26 +368,16 @@ export function useClosebookStore() {
       notes: data.notes || (data.isMissingReceipt ? "Auto-flagged: Missing physical receipt slip." : undefined),
     };
 
-    // Deduct from pocket
-    const updatedPockets = pockets.map((p) => {
-      if (p.id === data.pocketId) {
-        return { ...p, balance: Math.max(0, p.balance - data.amount) };
-      }
-      return p;
-    });
+    const updatedPockets = pockets.map((p) =>
+      p.id === data.pocketId ? { ...p, balance: Math.max(0, p.balance - data.amount) } : p
+    );
+    const updatedDepts = departments.map((d) =>
+      d.id === data.departmentId ? { ...d, spentAmount: d.spentAmount + data.amount } : d
+    );
 
-    // Update department spent amount
-    const updatedDepts = departments.map((d) => {
-      if (d.id === data.departmentId) {
-        return { ...d, spentAmount: d.spentAmount + data.amount };
-      }
-      return d;
-    });
-
-    // Dynamic alert trigger 1: Missing Receipt
     let updatedAlerts = [...alerts];
     if (data.isMissingReceipt) {
-      const missingAlert: SystemAlert = {
+      updatedAlerts = [{
         id: `alt-rec-${Date.now()}`,
         type: "missing_receipt",
         severity: "critical",
@@ -361,16 +385,14 @@ export function useClosebookStore() {
         message: `Expense '${newTx.description}' ($${data.amount.toFixed(2)}) was recorded without receipt image. Auditor verification required.`,
         timestamp: "Just now",
         isResolved: false,
-      };
-      updatedAlerts = [missingAlert, ...updatedAlerts];
+      }, ...updatedAlerts];
     }
 
-    // Dynamic alert trigger 2: Department budget ceiling >= 90%
     if (targetDept) {
       const newSpent = targetDept.spentAmount + data.amount;
       const pct = (newSpent / targetDept.allocatedBudget) * 100;
       if (pct >= 90) {
-        const overAlert: SystemAlert = {
+        updatedAlerts = [{
           id: `alt-over-${Date.now()}`,
           type: "overspend",
           severity: pct >= 100 ? "critical" : "warning",
@@ -378,8 +400,7 @@ export function useClosebookStore() {
           message: `${targetDept.name} has reached ${pct.toFixed(1)}% of its allocated budget ($${newSpent.toLocaleString()} / $${targetDept.allocatedBudget.toLocaleString()}).`,
           timestamp: "Just now",
           isResolved: false,
-        };
-        updatedAlerts = [overAlert, ...updatedAlerts];
+        }, ...updatedAlerts];
       }
     }
 
@@ -388,7 +409,6 @@ export function useClosebookStore() {
     persistPockets(updatedPockets);
     persistTransactions([newTx, ...transactions]);
 
-    // Asynchronous fire-and-forget push to Google Sheets Webhook if configured
     if (isWebhookSyncEnabled && webhookUrl) {
       try {
         fetch(webhookUrl, {
@@ -408,7 +428,6 @@ export function useClosebookStore() {
     return newTx;
   };
 
-  // 2. Approve/Reject Transaction with Financial Balancing & Refund
   const updateTransactionStatus = (id: string, newStatus: "approved" | "rejected") => {
     const tx = transactions.find((t) => t.id === id);
     if (!tx || tx.status === newStatus) return;
@@ -416,101 +435,68 @@ export function useClosebookStore() {
     let updatedPockets = [...pockets];
     let updatedDepts = [...departments];
 
-    // If changing TO rejected from an active expense (approved or pending), refund pocket & department
     if (newStatus === "rejected" && tx.status !== "rejected") {
-      updatedPockets = updatedPockets.map((p) => {
-        if (p.id === tx.pocketId) {
-          return { ...p, balance: p.balance + tx.amount };
-        }
-        return p;
-      });
-
-      updatedDepts = updatedDepts.map((d) => {
-        if (d.id === tx.departmentId) {
-          return { ...d, spentAmount: Math.max(0, d.spentAmount - tx.amount) };
-        }
-        return d;
-      });
+      updatedPockets = updatedPockets.map((p) =>
+        p.id === tx.pocketId ? { ...p, balance: p.balance + tx.amount } : p
+      );
+      updatedDepts = updatedDepts.map((d) =>
+        d.id === tx.departmentId ? { ...d, spentAmount: Math.max(0, d.spentAmount - tx.amount) } : d
+      );
     }
 
-    // If changing FROM rejected back to approved, re-deduct
     if (tx.status === "rejected" && newStatus === "approved") {
-      updatedPockets = updatedPockets.map((p) => {
-        if (p.id === tx.pocketId) {
-          return { ...p, balance: Math.max(0, p.balance - tx.amount) };
-        }
-        return p;
-      });
-
-      updatedDepts = updatedDepts.map((d) => {
-        if (d.id === tx.departmentId) {
-          return { ...d, spentAmount: d.spentAmount + tx.amount };
-        }
-        return d;
-      });
+      updatedPockets = updatedPockets.map((p) =>
+        p.id === tx.pocketId ? { ...p, balance: Math.max(0, p.balance - tx.amount) } : p
+      );
+      updatedDepts = updatedDepts.map((d) =>
+        d.id === tx.departmentId ? { ...d, spentAmount: d.spentAmount + tx.amount } : d
+      );
     }
 
     persistPockets(updatedPockets);
     persistDepartments(updatedDepts);
-
-    const updatedTx = transactions.map((t) => (t.id === id ? { ...t, status: newStatus } : t));
-    persistTransactions(updatedTx);
+    persistTransactions(transactions.map((t) => (t.id === id ? { ...t, status: newStatus } : t)));
   };
 
-  // 3. Delete Transaction with Refund
   const deleteTransaction = (id: string) => {
     const tx = transactions.find((t) => t.id === id);
     if (!tx) return;
 
     if (tx.status !== "rejected") {
-      const updatedPockets = pockets.map((p) => (p.id === tx.pocketId ? { ...p, balance: p.balance + tx.amount } : p));
-      const updatedDepts = departments.map((d) =>
+      persistPockets(pockets.map((p) => (p.id === tx.pocketId ? { ...p, balance: p.balance + tx.amount } : p)));
+      persistDepartments(departments.map((d) =>
         d.id === tx.departmentId ? { ...d, spentAmount: Math.max(0, d.spentAmount - tx.amount) } : d
-      );
-      persistPockets(updatedPockets);
-      persistDepartments(updatedDepts);
+      ));
     }
-
     persistTransactions(transactions.filter((t) => t.id !== id));
   };
 
-  // 4. Transfer Pocket Funds with Strict Overdraft Guard & Transfer Log
+  // ─── 2. Transfers ───────────────────────────────────────────────────────────
   const transferFunds = (
     sourcePocketId: string,
     destPocketId: string,
     amount: number,
     notes?: string
   ): { success: boolean; error?: string } => {
-    if (sourcePocketId === destPocketId) {
+    if (sourcePocketId === destPocketId)
       return { success: false, error: "Source and destination pockets cannot be identical." };
-    }
-
-    if (amount <= 0 || isNaN(amount)) {
+    if (amount <= 0 || isNaN(amount))
       return { success: false, error: "Transfer amount must be a positive numeric value." };
-    }
 
     const sourcePocket = pockets.find((p) => p.id === sourcePocketId);
     const destPocket = pockets.find((p) => p.id === destPocketId);
 
-    if (!sourcePocket || !destPocket) {
+    if (!sourcePocket || !destPocket)
       return { success: false, error: "Invalid pocket selection." };
-    }
-
-    if (sourcePocket.balance < amount) {
+    if (sourcePocket.balance < amount)
       return {
         success: false,
         error: `Insufficient liquid balance in ${sourcePocket.name}. Available: $${sourcePocket.balance.toLocaleString()}, Requested: $${amount.toLocaleString()}`,
       };
-    }
 
-    // Execute transfer
     const updatedPockets = pockets.map((p) => {
-      if (p.id === sourcePocketId) {
-        return { ...p, balance: p.balance - amount };
-      }
-      if (p.id === destPocketId) {
-        return { ...p, balance: p.balance + amount };
-      }
+      if (p.id === sourcePocketId) return { ...p, balance: p.balance - amount };
+      if (p.id === destPocketId) return { ...p, balance: p.balance + amount };
       return p;
     });
 
@@ -526,10 +512,9 @@ export function useClosebookStore() {
       notes: notes || "Operational fund disbursement",
     };
 
-    // Alert if source pocket balance is low (<15% of allocation)
     const remainingSource = sourcePocket.balance - amount;
     if (remainingSource / sourcePocket.allocated < 0.15) {
-      const lowBalAlert: SystemAlert = {
+      persistAlerts([{
         id: `alt-bal-${Date.now()}`,
         type: "low_balance",
         severity: "warning",
@@ -537,99 +522,188 @@ export function useClosebookStore() {
         message: `${sourcePocket.name} liquid balance is now down to $${remainingSource.toLocaleString()} (<15% allocation).`,
         timestamp: "Just now",
         isResolved: false,
-      };
-      persistAlerts([lowBalAlert, ...alerts]);
+      }, ...alerts]);
     }
 
     persistPockets(updatedPockets);
     persistTransfers([newTransfer, ...transfers]);
-
     return { success: true };
   };
 
-  // 5. Toggle Task status
+  // ─── 3. Tasks ───────────────────────────────────────────────────────────────
   const toggleTask = (taskId: string) => {
-    const updated = tasks.map((t) => {
-      if (t.id === taskId) {
-        const nextStatus: TaskStatus = t.status === "todo" ? "in_progress" : t.status === "in_progress" ? "completed" : "todo";
-        return { ...t, status: nextStatus };
-      }
-      return t;
-    });
-    persistTasks(updated);
+    persistTasks(tasks.map((t) => {
+      if (t.id !== taskId) return t;
+      const nextStatus: TaskStatus = t.status === "todo" ? "in_progress" : t.status === "in_progress" ? "completed" : "todo";
+      return { ...t, status: nextStatus };
+    }));
   };
 
-  // 6. Add new Task
   const addTask = (task: Omit<Task, "id">) => {
-    const newTask: Task = {
-      id: `tsk-${Date.now()}`,
-      ...task,
-    };
-    persistTasks([...tasks, newTask]);
+    persistTasks([...tasks, { id: `tsk-${Date.now()}`, ...task }]);
   };
 
-  // 7. Delete Task
   const deleteTask = (taskId: string) => {
     persistTasks(tasks.filter((t) => t.id !== taskId));
   };
 
-  // 8. Call Sheet Operations
+  // ─── 4. Call Sheet ──────────────────────────────────────────────────────────
   const updateCallSheet = (updates: Partial<DailyCallSheet>) => {
-    const updated = { ...callSheet, ...updates };
-    persistCallSheet(updated);
+    persistCallSheet({ ...callSheet, ...updates });
   };
 
   const advanceShootDay = () => {
     if (callSheet.dayNumber < callSheet.totalDays) {
       const nextDay = callSheet.dayNumber + 1;
-      const updated: DailyCallSheet = {
+      persistCallSheet({
         ...callSheet,
         dayNumber: nextDay,
         date: `Production Day ${nextDay} of ${callSheet.totalDays}`,
         scenesScheduled: `Scene ${nextDay * 3} & Scene ${nextDay * 3 + 1} (Scheduled for Day ${nextDay})`,
-      };
-      persistCallSheet(updated);
+      });
     }
   };
 
-  // 9. Equipment Operations
+  // ─── 5. Equipment ───────────────────────────────────────────────────────────
   const addEquipment = (item: Omit<EquipmentRental, "id">) => {
-    const newItem: EquipmentRental = {
-      id: `eq-${Date.now().toString().slice(-4)}`,
-      ...item,
-    };
-    persistEquipment([...equipment, newItem]);
+    persistEquipment([...equipment, { id: `eq-${Date.now().toString().slice(-4)}`, ...item }]);
   };
 
   const updateEquipmentStatus = (id: string, status: EquipmentStatus) => {
-    const updated = equipment.map((e) => (e.id === id ? { ...e, status } : e));
-    persistEquipment(updated);
+    persistEquipment(equipment.map((e) => (e.id === id ? { ...e, status } : e)));
   };
 
   const deleteEquipment = (id: string) => {
     persistEquipment(equipment.filter((e) => e.id !== id));
   };
 
-  // 10. Dismiss / Resolve Alert
+  // ─── 6. Alerts ──────────────────────────────────────────────────────────────
   const resolveAlert = (alertId: string) => {
-    const updated = alerts.map((a) => (a.id === alertId ? { ...a, isResolved: true } : a));
-    persistAlerts(updated);
+    persistAlerts(alerts.map((a) => (a.id === alertId ? { ...a, isResolved: true } : a)));
   };
 
-  // 11. Add Context Comment
+  // ─── 7. Comments ────────────────────────────────────────────────────────────
   const addComment = (entityId: string, author: string, message: string) => {
-    const newComment: ContextComment = {
+    persistComments([...comments, {
       id: `c-${Date.now()}`,
       entityId,
       author,
       authorRole: "Crew",
       message,
       timestamp: "Just now",
-    };
-    persistComments([...comments, newComment]);
+    }]);
   };
 
-  // 12. Data Sovereignty & BYOS Exports
+  // ─── 8. Daily Reconciliation ────────────────────────────────────────────────
+  /**
+   * Submit an end-of-day cash reconciliation.
+   * @param physicalCounts - Map of pocketId → physical cash count (in USD)
+   * @param reconciledBy - Name of UPM/person performing the count
+   */
+  const reconcileDay = (
+    physicalCounts: Record<string, number>,
+    reconciledBy: string
+  ): DailyReconcile => {
+    const fieldPockets = pockets.filter((p) => p.type !== "master_vault");
+    const entries: ReconcileEntry[] = fieldPockets.map((p) => {
+      const physical = physicalCounts[p.id] ?? p.balance;
+      const discrepancy = physical - p.balance;
+      return {
+        pocketId: p.id,
+        pocketName: p.name,
+        systemBalance: p.balance,
+        physicalCount: physical,
+        discrepancy,
+        custodian: p.custodian,
+        notes: "",
+      };
+    });
+
+    const totalSystem = entries.reduce((a, e) => a + e.systemBalance, 0);
+    const totalPhysical = entries.reduce((a, e) => a + e.physicalCount, 0);
+    const totalDiscrepancy = totalPhysical - totalSystem;
+
+    const status = entries.every((e) => e.discrepancy === 0) ? "balanced" : "discrepancy";
+
+    const newRec: DailyReconcile = {
+      id: `rec-day-${callSheet.dayNumber}-${Date.now()}`,
+      dayNumber: callSheet.dayNumber,
+      date: callSheet.date,
+      status,
+      entries,
+      totalSystemBalance: totalSystem,
+      totalPhysicalCount: totalPhysical,
+      totalDiscrepancy,
+      reconciledBy,
+      createdAt: new Date().toISOString(),
+    };
+
+    persistReconciliations([newRec, ...reconciliations]);
+
+    // If there's a discrepancy, raise an alert
+    if (totalDiscrepancy !== 0) {
+      const discAlert: SystemAlert = {
+        id: `alt-rec-${Date.now()}`,
+        type: "daily_reconcile",
+        severity: Math.abs(totalDiscrepancy) > 100 ? "critical" : "warning",
+        title: `Day ${callSheet.dayNumber} Reconciliation: Cash Discrepancy`,
+        message: `A discrepancy of $${Math.abs(totalDiscrepancy).toFixed(2)} was found during end-of-day cash count. Immediate review required.`,
+        timestamp: "Just now",
+        isResolved: false,
+      };
+      persistAlerts([discAlert, ...alerts]);
+    }
+
+    return newRec;
+  };
+
+  const signOffReconciliation = (recId: string, signedOffBy: string) => {
+    persistReconciliations(reconciliations.map((r) =>
+      r.id === recId
+        ? { ...r, status: "signed_off", signedOffBy, signedOffAt: `Day ${r.dayNumber}, ${new Date().toLocaleTimeString()}` }
+        : r
+    ));
+  };
+
+  // ─── 9. Multi-Project ───────────────────────────────────────────────────────
+  const createProject = (name: string, totalBudget: number, shootDays: number, director: string) => {
+    const id = `proj-${Date.now()}`;
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const newShell: ProjectShell = {
+      id,
+      name,
+      slug,
+      totalBudget,
+      shootDays,
+      startDate: new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
+      director,
+      createdAt: new Date().toISOString(),
+      isActive: false,
+    };
+    persistProjects([...projects, newShell]);
+    return id;
+  };
+
+  const switchProject = (projectId: string) => {
+    // Mark selected as active; rest inactive
+    persistProjects(projects.map((p) => ({ ...p, isActive: p.id === projectId })));
+    // Update the active project display info from shell
+    const shell = projects.find((p) => p.id === projectId);
+    if (shell) {
+      setProject((prev) => ({
+        ...prev,
+        id: shell.id,
+        name: shell.name,
+        slug: shell.slug,
+        totalBudget: shell.totalBudget,
+        shootDays: shell.shootDays,
+        startDate: shell.startDate,
+        director: shell.director,
+      }));
+    }
+  };
+
+  // ─── 10. BYOS Exports ───────────────────────────────────────────────────────
   const exportLedgerCSV = () => {
     const headers = ["Transaction ID", "Description", "Department", "Pocket", "Vendor", "Amount", "Status", "Date Logged", "Missing Receipt", "Notes"];
     const rows = transactions.map((t) => [
@@ -644,11 +718,9 @@ export function useClosebookStore() {
       t.isMissingReceipt ? "YES" : "NO",
       `"${(t.notes || "").replace(/"/g, '""')}"`,
     ]);
-
     const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", encodeURI(csvContent));
     link.setAttribute("download", `closebook_ledger_${new Date().toISOString().split("T")[0]}.csv`);
     document.body.appendChild(link);
     link.click();
@@ -669,8 +741,8 @@ export function useClosebookStore() {
       equipment,
       alerts,
       comments,
+      reconciliations,
     };
-
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(vaultData, null, 2));
     const link = document.createElement("a");
     link.setAttribute("href", dataStr);
@@ -680,7 +752,7 @@ export function useClosebookStore() {
     document.body.removeChild(link);
   };
 
-  // 13. Real Google Sheets / Drive Webhook Connector (BYOS)
+  // ─── 11. Webhook / Google Sheets ────────────────────────────────────────────
   const persistWebhookConfig = (url: string, enabled: boolean) => {
     setWebhookUrl(url);
     setIsWebhookSyncEnabled(enabled);
@@ -691,49 +763,59 @@ export function useClosebookStore() {
   };
 
   const syncTransactionToWebhook = async (tx: Transaction): Promise<{ success: boolean; error?: string }> => {
-    if (!webhookUrl || !webhookUrl.startsWith("http")) {
+    if (!webhookUrl || !webhookUrl.startsWith("http"))
       return { success: false, error: "No valid Webhook URL configured." };
-    }
     try {
       await fetch(webhookUrl, {
         method: "POST",
         mode: "no-cors",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          event: "NEW_TRANSACTION",
-          projectName: project.name,
-          transaction: tx,
-          timestamp: new Date().toISOString(),
-        }),
+        body: JSON.stringify({ event: "NEW_TRANSACTION", projectName: project.name, transaction: tx, timestamp: new Date().toISOString() }),
       });
       return { success: true };
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      return { success: false, error: msg };
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
   };
 
   const bulkSyncToWebhook = async (): Promise<{ success: boolean; count: number; error?: string }> => {
-    if (!webhookUrl || !webhookUrl.startsWith("http")) {
+    if (!webhookUrl || !webhookUrl.startsWith("http"))
       return { success: false, count: 0, error: "No valid Webhook URL configured." };
-    }
     try {
       await fetch(webhookUrl, {
         method: "POST",
         mode: "no-cors",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          event: "BULK_SYNC",
-          projectName: project.name,
-          transactions,
-          timestamp: new Date().toISOString(),
-        }),
+        body: JSON.stringify({ event: "BULK_SYNC", projectName: project.name, transactions, timestamp: new Date().toISOString() }),
       });
       return { success: true, count: transactions.length };
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      return { success: false, count: 0, error: msg };
+      return { success: false, count: 0, error: err instanceof Error ? err.message : String(err) };
     }
+  };
+
+  // ─── 12. Burn Rate Forecast ─────────────────────────────────────────────────
+  const getBurnRateForecast = () => {
+    const totalSpent = departments.reduce((a, d) => a + d.spentAmount, 0);
+    const daysElapsed = Math.max(1, callSheet.dayNumber);
+    const daysRemaining = callSheet.totalDays - daysElapsed;
+    const dailyBurnRate = totalSpent / daysElapsed;
+    const projectedTotal = totalSpent + dailyBurnRate * daysRemaining;
+    const projectedOverBudget = projectedTotal > project.totalBudget;
+    const daysUntilBudgetExhausted = projectedOverBudget
+      ? Math.floor((project.totalBudget - totalSpent) / dailyBurnRate)
+      : null;
+
+    return {
+      totalSpent,
+      dailyBurnRate,
+      projectedTotal,
+      projectedOverBudget,
+      daysUntilBudgetExhausted,
+      daysElapsed,
+      daysRemaining,
+      budgetUtilizationPct: (totalSpent / project.totalBudget) * 100,
+    };
   };
 
   return {
@@ -748,26 +830,45 @@ export function useClosebookStore() {
     equipment,
     alerts,
     comments,
+    reconciliations,
+    projects,
     webhookUrl,
     isWebhookSyncEnabled,
-    persistWebhookConfig,
-    syncTransactionToWebhook,
-    bulkSyncToWebhook,
+    // Transactions
     addTransaction,
     updateTransactionStatus,
     deleteTransaction,
+    // Transfers
     transferFunds,
+    // Tasks
     toggleTask,
     addTask,
     deleteTask,
+    // Call Sheet
     updateCallSheet,
     advanceShootDay,
+    // Equipment
     addEquipment,
     updateEquipmentStatus,
     deleteEquipment,
+    // Alerts
     resolveAlert,
+    // Comments
     addComment,
+    // Reconciliation
+    reconcileDay,
+    signOffReconciliation,
+    // Multi-project
+    createProject,
+    switchProject,
+    // Webhook
+    persistWebhookConfig,
+    syncTransactionToWebhook,
+    bulkSyncToWebhook,
+    // Exports
     exportLedgerCSV,
     exportProductionVaultJSON,
+    // Computed
+    getBurnRateForecast,
   };
 }

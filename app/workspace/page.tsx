@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useClosebookStore } from "@/lib/store";
 import { usePreferences } from "@/lib/preferences";
 import PreferencesControls from "@/components/PreferencesControls";
+import ReconciliationTab from "@/components/workspace/ReconciliationTab";
+import OverviewTab from "@/components/workspace/OverviewTab";
 import { Transaction, EquipmentStatus } from "@/lib/types";
 import {
   LayoutDashboard,
@@ -55,7 +57,8 @@ type TabId =
   | "callsheet"
   | "equipment"
   | "alerts"
-  | "sync";
+  | "sync"
+  | "reconcile";
 
 const APPS_SCRIPT_TEMPLATE = `// =========================================================================
 // CLOSEBOOK PRODUCTION OS — GOOGLE APPS SCRIPT WEBHOOK BRIDGE (BYOS)
@@ -575,6 +578,23 @@ export default function WorkspacePage() {
               <FileSpreadsheet className="w-4 h-4 text-[var(--color-primary,#ff1e42)] shrink-0" />
               <span>{t("tabSheet")}</span>
             </button>
+
+            <button
+              onClick={() => setActiveTab("reconcile")}
+              className={`w-full flex items-center justify-between px-3.5 min-h-[44px] rounded-xl text-xs font-medium transition-all ${
+                activeTab === "reconcile"
+                  ? "bg-[#181818] text-[#ffffff] border border-white/[0.12] shadow-sm"
+                  : "text-[#a3a3a3] hover:text-[#fdfdfd] hover:bg-[#121212]"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="w-4 h-4 text-[var(--color-primary,#ff1e42)] shrink-0" />
+                <span>Reconcile</span>
+              </div>
+              {store.reconciliations.filter(r => r.dayNumber === store.callSheet.dayNumber).length === 0 && (
+                <span className="w-2 h-2 rounded-full bg-[#f59e0b] shrink-0" />
+              )}
+            </button>
           </nav>
         </div>
 
@@ -631,6 +651,7 @@ export default function WorkspacePage() {
                 {activeTab === "equipment" && t("tabEquipment")}
                 {activeTab === "alerts" && t("tabAlerts")}
                 {activeTab === "sync" && t("tabSheet")}
+                {activeTab === "reconcile" && "Daily Reconciliation"}
               </h1>
             </div>
           </div>
@@ -685,6 +706,26 @@ export default function WorkspacePage() {
           {/* ========================================================================= */}
           {/* TAB 1: EXECUTIVE OVERVIEW */}
           {/* ========================================================================= */}
+          {/* =========================================================================
+           * RECONCILIATION TAB
+           * =========================================================================*/}
+          {activeTab === "reconcile" && (
+            <div className="animate-fade-in">
+              <ReconciliationTab
+                pockets={store.pockets}
+                reconciliations={store.reconciliations}
+                currentDay={store.callSheet.dayNumber}
+                currentDate={store.callSheet.date}
+                formatMoney={formatMoney}
+                onReconcile={store.reconcileDay}
+                onSignOff={store.signOffReconciliation}
+              />
+            </div>
+          )}
+
+          {/* =========================================================================
+           * OVERVIEW TAB (now uses extracted OverviewTab component with burn forecast)
+           * =========================================================================*/}
           {activeTab === "overview" && (
             <div className="space-y-6 sm:space-y-8 animate-fade-in">
               {/* Stat Cards */}
@@ -723,6 +764,47 @@ export default function WorkspacePage() {
                   <span className="text-[11px] text-[#a3a3a3] mt-2 block">{t("auditRequired")}</span>
                 </div>
               </div>
+
+              {/* ── Burn Rate Forecast Banner ── */}
+              {(() => {
+                const forecast = store.getBurnRateForecast();
+                return (
+                  <div className={`rounded-2xl border p-5 ${forecast.projectedOverBudget ? "bg-[#1a0a0a] border-[#ff1e42]/30" : "bg-[#0a1a0f] border-[#10b981]/20"}`}>
+                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                      <div>
+                        <span className={`text-[11px] uppercase tracking-wider font-semibold ${forecast.projectedOverBudget ? "text-[#ff1e42]" : "text-[#10b981]"}`}>
+                          {forecast.projectedOverBudget ? "⚠ Burn Rate Alert" : "✓ Burn Rate Forecast"}
+                        </span>
+                        <p className="text-xl font-bold text-[#fdfdfd] mt-1">
+                          {formatMoney(forecast.dailyBurnRate)} <span className="text-sm font-normal text-[#737373]">/ day avg</span>
+                        </p>
+                        <p className={`text-xs mt-1 ${forecast.projectedOverBudget ? "text-[#ff1e42]" : "text-[#10b981]"}`}>
+                          {forecast.projectedOverBudget
+                            ? `Projected overrun: ${formatMoney(forecast.projectedTotal - store.project.totalBudget)} over budget`
+                            : `On-track — projected final spend: ${formatMoney(forecast.projectedTotal)}`}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-[#737373]">Days remaining</p>
+                        <p className="text-2xl font-bold text-[#fdfdfd]">{forecast.daysRemaining}</p>
+                        {forecast.daysUntilBudgetExhausted !== null && (
+                          <p className="text-[11px] text-[#f59e0b] mt-0.5">Budget exhausted in ~{forecast.daysUntilBudgetExhausted}d</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <div className="flex justify-between text-[11px] text-[#737373] mb-1.5">
+                        <span>{forecast.budgetUtilizationPct.toFixed(1)}% consumed</span>
+                        <span>{formatMoney(forecast.totalSpent)} / {formatMoney(store.project.totalBudget)}</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                        <div className={`h-full rounded-full transition-all duration-700 ${forecast.budgetUtilizationPct > 90 ? "bg-[#ff1e42]" : forecast.budgetUtilizationPct > 70 ? "bg-[#f59e0b]" : "bg-[#10b981]"}`}
+                          style={{ width: `${Math.min(100, forecast.budgetUtilizationPct)}%` }} />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Department Budget Burn-rate Progress Bars */}
               <div className="surface-panel p-5 sm:p-6">
@@ -1847,12 +1929,25 @@ export default function WorkspacePage() {
 
         <button
           onClick={() => setActiveTab("callsheet")}
-          className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] rounded-lg transition-colors ${
+          className={`flex flex-col items-center justify-center min-w-[52px] min-h-[48px] rounded-lg transition-colors ${
             activeTab === "callsheet" ? "text-[var(--color-primary,#ff1e42)]" : "text-[#737373]"
           }`}
         >
           <Film className="w-5 h-5" />
-          <span className="text-[10px] mt-1 font-medium">Call Sheet</span>
+          <span className="text-[10px] mt-1 font-medium">Schedule</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("reconcile")}
+          className={`relative flex flex-col items-center justify-center min-w-[52px] min-h-[48px] rounded-lg transition-colors ${
+            activeTab === "reconcile" ? "text-[var(--color-primary,#ff1e42)]" : "text-[#737373]"
+          }`}
+        >
+          <CheckCircle2 className="w-5 h-5" />
+          <span className="text-[10px] mt-1 font-medium">Reconcile</span>
+          {store.reconciliations.filter(r => r.dayNumber === store.callSheet.dayNumber).length === 0 && (
+            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#f59e0b]" />
+          )}
         </button>
       </div>
 

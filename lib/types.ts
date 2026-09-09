@@ -6,6 +6,7 @@ export type TaskStatus = "todo" | "in_progress" | "completed";
 export type EquipmentStatus = "rented" | "on_set" | "returned" | "damaged";
 export type AlertSeverity = "info" | "warning" | "critical";
 export type AlertType = "overspend" | "low_balance" | "missing_receipt" | "pending_approval" | "daily_reconcile";
+export type ReconcileStatus = "open" | "balanced" | "discrepancy" | "signed_off";
 
 export interface Project {
   id: string;
@@ -16,6 +17,22 @@ export interface Project {
   currentDisbursed: number;
   driveFolderId: string;
   sheetId: string;
+  shootDays: number;
+  startDate: string;
+  director: string;
+  createdAt: string;
+}
+
+export interface ProjectShell {
+  id: string;
+  name: string;
+  slug: string;
+  totalBudget: number;
+  shootDays: number;
+  startDate: string;
+  director: string;
+  createdAt: string;
+  isActive: boolean;
 }
 
 export interface Department {
@@ -120,4 +137,38 @@ export interface PocketTransfer {
   authorizedBy: string;
   timestamp: string;
   notes?: string;
+}
+
+/** A single pocket count entry within a daily reconciliation */
+export interface ReconcileEntry {
+  pocketId: string;
+  pocketName: string;
+  systemBalance: number;    // balance from store at time of reconcile
+  physicalCount: number;    // what the custodian physically counted
+  discrepancy: number;      // physicalCount - systemBalance (negative = short)
+  custodian: string;
+  notes: string;
+}
+
+/** A complete end-of-day reconciliation record */
+export interface DailyReconcile {
+  id: string;
+  dayNumber: number;
+  date: string;
+  status: ReconcileStatus;
+  entries: ReconcileEntry[];
+  totalSystemBalance: number;
+  totalPhysicalCount: number;
+  totalDiscrepancy: number;
+  reconciledBy: string;
+  signedOffBy?: string;
+  signedOffAt?: string;
+  createdAt: string;
+}
+
+/** Burn rate forecast data point */
+export interface BurnRateForecast {
+  dayNumber: number;
+  projectedSpend: number;
+  actualSpend?: number;
 }
