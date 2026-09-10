@@ -35,14 +35,10 @@ const INITIAL_PROJECT: Project = {
 };
 
 const INITIAL_DEPARTMENTS: Department[] = [
-  { id: "dept-cam", name: "Camera & Optical", code: "CAM", allocatedBudget: 28000, spentAmount: 14200, color: "#ff1e42" },
-  { id: "dept-art", name: "Art & Production Design", code: "ART", allocatedBudget: 22000, spentAmount: 19450, color: "#f59e0b" },
-  { id: "dept-grp", name: "Grip & Electric", code: "G&E", allocatedBudget: 18000, spentAmount: 8200, color: "#3b82f6" },
-  { id: "dept-unt", name: "Unit & Logistics", code: "UNT", allocatedBudget: 14000, spentAmount: 6450, color: "#10b981" },
-  { id: "dept-cat", name: "Catering & Craft", code: "CAT", allocatedBudget: 12000, spentAmount: 4800, color: "#8b5cf6" },
-  { id: "dept-wrd", name: "Wardrobe & HMU", code: "WRD", allocatedBudget: 9000, spentAmount: 3100, color: "#ec4899" },
-  { id: "dept-snd", name: "Sound Engineering", code: "SND", allocatedBudget: 8000, spentAmount: 2150, color: "#06b6d4" },
-  { id: "dept-ops", name: "Production Office", code: "OPS", allocatedBudget: 9000, spentAmount: 4000, color: "#64748b" },
+  { id: "cat-ops", name: "Operations & Logistics", code: "OPS", allocatedBudget: 35000, spentAmount: 14650, color: "#10b981" },
+  { id: "cat-crt", name: "Production & Creative", code: "CRT", allocatedBudget: 45000, spentAmount: 33650, color: "#ff1e42" },
+  { id: "cat-vnd", name: "Vendors & External Services", code: "VND", allocatedBudget: 25000, spentAmount: 10350, color: "#3b82f6" },
+  { id: "cat-adm", name: "Administrative & Float", code: "ADM", allocatedBudget: 15000, spentAmount: 4000, color: "#f59e0b" },
 ];
 
 const INITIAL_POCKETS: Pocket[] = [
@@ -57,8 +53,8 @@ const INITIAL_TRANSACTIONS: Transaction[] = [
     id: "TX-101",
     pocketId: "pkt-upm",
     pocketName: "UPM Field Cash",
-    departmentId: "dept-unt",
-    departmentName: "Unit & Logistics",
+    departmentId: "cat-ops",
+    departmentName: "Operations & Logistics",
     amount: 380,
     description: "Diesel Fuel for Location Genset (200L)",
     vendor: "Pertamina Energy Depot",
@@ -72,23 +68,23 @@ const INITIAL_TRANSACTIONS: Transaction[] = [
     id: "TX-102",
     pocketId: "pkt-upm",
     pocketName: "UPM Field Cash",
-    departmentId: "dept-cat",
-    departmentName: "Catering & Craft",
+    departmentId: "cat-ops",
+    departmentName: "Operations & Logistics",
     amount: 640,
-    description: "Overtime Hot Dinner for Crew (40 Pax)",
+    description: "Overtime Hot Dinner for Team (40 Pax)",
     vendor: "Harbor Bistro Catering",
     status: "pending",
     loggedBy: "Sarah Lin",
     loggedAt: "Today, 18:05",
     receiptUrl: "/icon.png",
-    notes: "Ordered due to night scene delay.",
+    notes: "Ordered due to night schedule extension.",
   },
   {
     id: "TX-103",
     pocketId: "pkt-upm",
     pocketName: "UPM Field Cash",
-    departmentId: "dept-art",
-    departmentName: "Art & Production Design",
+    departmentId: "cat-crt",
+    departmentName: "Production & Creative",
     amount: 190,
     description: "Weathered Wallpaper & Acrylic Primer",
     vendor: "ACE Hardware Central",
@@ -101,8 +97,8 @@ const INITIAL_TRANSACTIONS: Transaction[] = [
     id: "TX-104",
     pocketId: "pkt-lp",
     pocketName: "Line Producer Reserve",
-    departmentId: "dept-cam",
-    departmentName: "Camera & Optical",
+    departmentId: "cat-vnd",
+    departmentName: "Vendors & External Services",
     amount: 450,
     description: "Additional 1TB CFexpress Type B Media",
     vendor: "Prisma Cine Gear Rental",
@@ -115,8 +111,8 @@ const INITIAL_TRANSACTIONS: Transaction[] = [
     id: "TX-105",
     pocketId: "pkt-upm",
     pocketName: "UPM Field Cash",
-    departmentId: "dept-art",
-    departmentName: "Art & Production Design",
+    departmentId: "cat-crt",
+    departmentName: "Production & Creative",
     amount: 320,
     description: "Vintage Rotary Telephone Prop Purchase",
     vendor: "Antique Flea Market",
@@ -154,11 +150,11 @@ const INITIAL_TRANSFERS: PocketTransfer[] = [
 ];
 
 const INITIAL_TASKS: Task[] = [
-  { id: "tsk-1", departmentId: "dept-unt", departmentName: "Unit & Logistics", title: "Confirm police escort for convoy to coastal cliff", assignee: "Rizal Pratama", priority: "high", status: "completed", dueDate: "Day 4" },
-  { id: "tsk-2", departmentId: "dept-art", departmentName: "Art & Production Design", title: "Complete distressing on hero boat cabin props", assignee: "Dina Kartika", priority: "urgent", status: "in_progress", dueDate: "Day 4" },
-  { id: "tsk-3", departmentId: "dept-cat", departmentName: "Catering & Craft", title: "Prep midnight warm tea & soup station for rain scenes", assignee: "Sarah Lin", priority: "medium", status: "todo", dueDate: "Day 5" },
-  { id: "tsk-4", departmentId: "dept-cam", departmentName: "Camera & Optical", title: "Sensor recalibration and lens rain-cover waterproof check", assignee: "Budi Santoso", priority: "high", status: "in_progress", dueDate: "Day 4" },
-  { id: "tsk-5", departmentId: "dept-grp", departmentName: "Grip & Electric", title: "Position 18K HMI backlight towers on crane 2", assignee: "Leo Hardi", priority: "urgent", status: "todo", dueDate: "Day 4" },
+  { id: "tsk-1", departmentId: "cat-ops", departmentName: "Operations & Logistics", title: "Confirm security escort for convoy to coastal site", assignee: "Rizal Pratama", priority: "high", status: "completed", dueDate: "Day 4" },
+  { id: "tsk-2", departmentId: "cat-crt", departmentName: "Production & Creative", title: "Complete distressing on hero boat cabin props", assignee: "Dina Kartika", priority: "urgent", status: "in_progress", dueDate: "Day 4" },
+  { id: "tsk-3", departmentId: "cat-ops", departmentName: "Operations & Logistics", title: "Prep warm refreshment station for rain setup", assignee: "Sarah Lin", priority: "medium", status: "todo", dueDate: "Day 5" },
+  { id: "tsk-4", departmentId: "cat-crt", departmentName: "Production & Creative", title: "Optical sensor calibration and waterproof protection check", assignee: "Budi Santoso", priority: "high", status: "in_progress", dueDate: "Day 4" },
+  { id: "tsk-5", departmentId: "cat-vnd", departmentName: "Vendors & External Services", title: "Coordinate 18K backlight generator delivery with rental provider", assignee: "Leo Hardi", priority: "urgent", status: "todo", dueDate: "Day 4" },
 ];
 
 const INITIAL_CALLSHEET: DailyCallSheet = {
@@ -177,16 +173,16 @@ const INITIAL_CALLSHEET: DailyCallSheet = {
 };
 
 const INITIAL_EQUIPMENT: EquipmentRental[] = [
-  { id: "eq-1", itemName: "ARRI Alexa 35 Camera Package (A-Cam)", vendor: "CamTek Rentals", department: "Camera", dailyRate: 1200, returnDate: "Oct 28", daysRemaining: 14, status: "on_set" },
-  { id: "eq-2", itemName: "Cooke Anamorphic /i Prime Lens Set (5 Lenses)", vendor: "CamTek Rentals", department: "Camera", dailyRate: 850, returnDate: "Oct 28", daysRemaining: 14, status: "on_set" },
-  { id: "eq-3", itemName: "120kW Super-Silent Trailer Generator", vendor: "GripMaster Indo", department: "Grip & Electric", dailyRate: 400, returnDate: "Oct 20", daysRemaining: 6, status: "on_set" },
-  { id: "eq-4", itemName: "Technocrane 30ft Telescopic Jib", vendor: "MotionDynamics", department: "Grip & Electric", dailyRate: 1500, returnDate: "Oct 16", daysRemaining: 2, status: "rented" },
+  { id: "eq-1", itemName: "ARRI Alexa 35 Camera Package (A-Cam)", vendor: "CamTek Rentals", department: "Production & Creative", dailyRate: 1200, returnDate: "Oct 28", daysRemaining: 14, status: "on_set" },
+  { id: "eq-2", itemName: "Cooke Anamorphic /i Prime Lens Set (5 Lenses)", vendor: "CamTek Rentals", department: "Production & Creative", dailyRate: 850, returnDate: "Oct 28", daysRemaining: 14, status: "on_set" },
+  { id: "eq-3", itemName: "120kW Super-Silent Trailer Generator", vendor: "GripMaster Indo", department: "Operations & Logistics", dailyRate: 400, returnDate: "Oct 20", daysRemaining: 6, status: "on_set" },
+  { id: "eq-4", itemName: "Technocrane 30ft Telescopic Jib", vendor: "MotionDynamics", department: "Vendors & External Services", dailyRate: 1500, returnDate: "Oct 16", daysRemaining: 2, status: "rented" },
 ];
 
 const INITIAL_ALERTS: SystemAlert[] = [
-  { id: "alt-1", type: "overspend", severity: "warning", title: "Art Department Approaching Budget Limit", message: "Art & Set has consumed 88.4% ($19,450 / $22,000) of its total allocation with 12 shoot days remaining.", timestamp: "2 hours ago", isResolved: false },
+  { id: "alt-1", type: "overspend", severity: "warning", title: "Production & Creative Approaching Budget Limit", message: "Production & Creative has consumed 74.8% ($33,650 / $45,000) of its total allocation with 12 project days remaining.", timestamp: "2 hours ago", isResolved: false },
   { id: "alt-2", type: "missing_receipt", severity: "critical", title: "Missing Photo on Transaction TX-105", message: "Expense 'Vintage Rotary Telephone ($320)' was logged without an attached receipt file.", timestamp: "Yesterday", isResolved: false },
-  { id: "alt-3", type: "daily_reconcile", severity: "info", title: "Daily Reconcile Window Approaching", message: "Day 4 wraps at 19:30 PM. UPM is requested to verify today's cash count with Line Producer.", timestamp: "1 hour ago", isResolved: false },
+  { id: "alt-3", type: "daily_reconcile", severity: "info", title: "Daily Reconcile Window Approaching", message: "Day 4 wraps at 19:30 PM. Field lead is requested to verify today's cash count with Project Coordinator.", timestamp: "1 hour ago", isResolved: false },
 ];
 
 const INITIAL_COMMENTS: ContextComment[] = [
@@ -547,6 +543,33 @@ export function useClosebookStore() {
     persistTasks(tasks.filter((t) => t.id !== taskId));
   };
 
+  // ─── 3b. Categories (Departments) ──────────────────────────────────────────
+  const addDepartment = (dept: Omit<Department, "id" | "spentAmount">) => {
+    const id = `cat-${Date.now().toString().slice(-4)}`;
+    const newDept: Department = {
+      id,
+      spentAmount: 0,
+      ...dept,
+    };
+    persistDepartments([...departments, newDept]);
+    return newDept;
+  };
+
+  const updateDepartment = (id: string, updates: Partial<Omit<Department, "id">>) => {
+    const updated = departments.map((d) => (d.id === id ? { ...d, ...updates } : d));
+    persistDepartments(updated);
+  };
+
+  const deleteDepartment = (id: string) => {
+    // Prevent deletion if transactions exist for this category
+    const hasTx = transactions.some((t) => t.departmentId === id);
+    if (hasTx) {
+      return { success: false, error: "Cannot delete category with associated transactions" };
+    }
+    persistDepartments(departments.filter((d) => d.id !== id));
+    return { success: true };
+  };
+
   // ─── 4. Call Sheet ──────────────────────────────────────────────────────────
   const updateCallSheet = (updates: Partial<DailyCallSheet>) => {
     persistCallSheet({ ...callSheet, ...updates });
@@ -844,6 +867,10 @@ export function useClosebookStore() {
     toggleTask,
     addTask,
     deleteTask,
+    // Categories
+    addDepartment,
+    updateDepartment,
+    deleteDepartment,
     // Call Sheet
     updateCallSheet,
     advanceShootDay,

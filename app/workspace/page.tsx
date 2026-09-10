@@ -8,7 +8,7 @@ import { usePreferences } from "@/lib/preferences";
 import PreferencesControls from "@/components/PreferencesControls";
 import ReconciliationTab from "@/components/workspace/ReconciliationTab";
 import OverviewTab from "@/components/workspace/OverviewTab";
-import { Transaction, EquipmentStatus } from "@/lib/types";
+import { Transaction, EquipmentStatus, Department } from "@/lib/types";
 import { m, AnimatePresence } from "@/components/MotionProvider";
 import CountUp from "@/components/CountUp";
 import { Skeleton, WorkspaceSkeleton } from "@/components/Skeleton";
@@ -209,13 +209,15 @@ export default function WorkspacePage() {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isCallSheetModalOpen, setIsCallSheetModalOpen] = useState(false);
   const [isEquipmentModalOpen, setIsEquipmentModalOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Department | null>(null);
   const [activeCommentTxId, setActiveCommentTxId] = useState<string | null>(null);
   const [previewReceiptTx, setPreviewReceiptTx] = useState<Transaction | null>(null);
 
   // Form states - Expense
   const [newDesc, setNewDesc] = useState("");
   const [newAmount, setNewAmount] = useState("");
-  const [newDept, setNewDept] = useState("dept-unt");
+  const [newDept, setNewDept] = useState("cat-ops");
   const [newPocket, setNewPocket] = useState("pkt-upm");
   const [newVendor, setNewVendor] = useState("");
   const [missingReceiptCheck, setMissingReceiptCheck] = useState(false);
@@ -232,9 +234,16 @@ export default function WorkspacePage() {
 
   // Form states - Task
   const [taskTitle, setTaskTitle] = useState("");
-  const [taskDept, setTaskDept] = useState("dept-art");
+  const [taskDept, setTaskDept] = useState("cat-crt");
   const [taskAssignee, setTaskAssignee] = useState("");
   const [taskPriority, setTaskPriority] = useState<"low" | "medium" | "high" | "urgent">("medium");
+
+  // Form states - Category
+  const [catName, setCatName] = useState("");
+  const [catCode, setCatCode] = useState("");
+  const [catBudget, setCatBudget] = useState("");
+  const [catColor, setCatColor] = useState("#3b82f6");
+  const [catError, setCatError] = useState<string | null>(null);
 
   // Form states - Call Sheet Edit
   const [csCallTime, setCsCallTime] = useState(store.callSheet.callTime);
@@ -373,6 +382,69 @@ export default function WorkspacePage() {
     setTaskTitle("");
     setTaskAssignee("");
     setIsTaskModalOpen(false);
+  };
+
+  const openAddCategory = () => {
+    setEditingCategory(null);
+    setCatName("");
+    setCatCode("");
+    setCatBudget("");
+    setCatColor("#3b82f6");
+    setCatError(null);
+    setIsCategoryModalOpen(true);
+  };
+
+  const openEditCategory = (dept: Department) => {
+    setEditingCategory(dept);
+    setCatName(dept.name);
+    setCatCode(dept.code);
+    const rate = currencies[currency]?.rate || 1;
+    setCatBudget((dept.allocatedBudget * rate).toString());
+    setCatColor(dept.color);
+    setCatError(null);
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleSaveCategory = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!catName || !catCode || !catBudget) {
+      setCatError("All fields are required");
+      return;
+    }
+
+    const rate = currencies[currency]?.rate || 1;
+    const budgetUSD = parseFloat(catBudget) / rate;
+    if (isNaN(budgetUSD) || budgetUSD <= 0) {
+      setCatError("Please enter a valid budget amount");
+      return;
+    }
+
+    if (editingCategory) {
+      store.updateDepartment(editingCategory.id, {
+        name: catName,
+        code: catCode.toUpperCase().slice(0, 5),
+        allocatedBudget: budgetUSD,
+        color: catColor,
+      });
+    } else {
+      store.addDepartment({
+        name: catName,
+        code: catCode.toUpperCase().slice(0, 5),
+        allocatedBudget: budgetUSD,
+        color: catColor,
+      });
+    }
+
+    setIsCategoryModalOpen(false);
+  };
+
+  const handleDeleteCategory = (deptId: string) => {
+    if (confirm(t("confirmDeleteCategory"))) {
+      const res = store.deleteDepartment(deptId);
+      if (!res.success) {
+        alert(res.error || "Cannot delete category");
+      }
+    }
   };
 
   const handleSaveCallSheet = (e: React.FormEvent) => {
@@ -825,9 +897,19 @@ export default function WorkspacePage() {
                     <h3 className="text-sm font-medium text-[#fdfdfd]">{t("deptBudgetRealization")}</h3>
                     <p className="text-xs text-[#737373] mt-0.5">{t("deptBudgetSub")}</p>
                   </div>
-                  <span className="text-xs text-[#a3a3a3] font-mono hidden sm:inline">
-                    {store.departments.length} Departments
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-[#a3a3a3] font-mono hidden sm:inline">
+                      {store.departments.length} {t("colDept") || "Categories"}
+                    </span>
+                    <button
+                      onClick={openAddCategory}
+                      className="btn-ghost-pill text-xs flex items-center gap-1.5 px-3 py-1.5 min-h-[32px] hover:text-[var(--color-primary,#ff1e42)]"
+                      title={t("addCategory")}
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>{t("addCategory")}</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
@@ -835,18 +917,39 @@ export default function WorkspacePage() {
                     const pct = Math.min(100, Math.round((dept.spentAmount / (dept.allocatedBudget || 1)) * 100));
                     const isHigh = pct >= 80;
                     return (
-                      <div key={dept.id} className="space-y-2">
+                      <div key={dept.id} className="space-y-2 group/cat relative p-2.5 -m-2.5 rounded-lg hover:bg-white/[0.02] transition-colors">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="font-medium text-[#fdfdfd] flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: dept.color }} />
-                            {dept.name}
-                          </span>
-                          <span className="font-mono text-[#a3a3a3]">
-                            {formatMoney(dept.spentAmount)} / {formatMoney(dept.allocatedBudget)}
-                            <span className={`ml-2 font-bold ${isHigh ? "text-[var(--color-primary,#ff1e42)]" : "text-[#737373]"}`}>
-                              ({pct}%)
+                          <div className="flex items-center gap-2 font-medium text-[#fdfdfd]">
+                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: dept.color }} />
+                            <span>{dept.name}</span>
+                            <span className="text-[10px] font-mono text-[#737373] px-1.5 py-0.5 rounded bg-white/[0.04]">
+                              {dept.code}
                             </span>
-                          </span>
+                          </div>
+                          <div className="flex items-center gap-2 font-mono text-[#a3a3a3]">
+                            <span>
+                              {formatMoney(dept.spentAmount)} / {formatMoney(dept.allocatedBudget)}
+                              <span className={`ml-2 font-bold ${isHigh ? "text-[var(--color-primary,#ff1e42)]" : "text-[#737373]"}`}>
+                                ({pct}%)
+                              </span>
+                            </span>
+                            <div className="flex items-center gap-1 opacity-0 group-hover/cat:opacity-100 transition-opacity ml-1">
+                              <button
+                                onClick={() => openEditCategory(dept)}
+                                className="p-1 hover:text-white text-[#737373] transition-colors"
+                                title={t("editCategory")}
+                              >
+                                <Edit3 className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteCategory(dept.id)}
+                                className="p-1 hover:text-[#ff1e42] text-[#737373] transition-colors"
+                                title={t("deleteCategory")}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
                         </div>
                         <div className="h-2 w-full bg-[#181818] rounded-full overflow-hidden">
                           <div
@@ -2572,6 +2675,120 @@ export default function WorkspacePage() {
                 Close Inspector
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 7: CATEGORY (DEPARTMENT) CREATOR & EDITOR */}
+      {/* ========================================================================= */}
+      {isCategoryModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="surface-panel w-full max-w-md rounded-[18px] p-6 relative border border-white/[0.08] shadow-2xl">
+            <div className="flex items-center justify-between pb-4 mb-6 border-b border-white/[0.08]">
+              <div className="flex items-center gap-2">
+                <Package className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
+                <h3 className="text-sm font-semibold text-white">
+                  {editingCategory ? t("editCategory") : t("addCategory")}
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsCategoryModalOpen(false)}
+                className="text-[#737373] hover:text-white p-1 rounded-full transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {catError && (
+              <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-400">
+                {catError}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveCategory} className="space-y-4">
+              <div>
+                <label className="block text-xs text-[#737373] mb-1.5">{t("categoryName")}</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Operations & Logistics"
+                  value={catName}
+                  onChange={(e) => setCatName(e.target.value)}
+                  className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-white/20"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs text-[#737373] mb-1.5">{t("categoryCode")}</label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={5}
+                    placeholder="e.g. OPS"
+                    value={catCode}
+                    onChange={(e) => setCatCode(e.target.value)}
+                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] uppercase font-mono focus:outline-none focus:border-white/20"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs text-[#737373] mb-1.5">
+                    {t("categoryBudget")} ({currency})
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    step="any"
+                    placeholder="e.g. 25000"
+                    value={catBudget}
+                    onChange={(e) => setCatBudget(e.target.value)}
+                    className="w-full bg-[#181818] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] font-mono focus:outline-none focus:border-white/20"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs text-[#737373] mb-1.5">{t("categoryColor")}</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={catColor}
+                    onChange={(e) => setCatColor(e.target.value)}
+                    className="w-10 h-10 rounded-full border border-white/[0.1] bg-transparent cursor-pointer p-0.5"
+                  />
+                  <span className="text-xs font-mono text-[#a3a3a3] uppercase">{catColor}</span>
+                  <div className="flex gap-1.5 ml-auto">
+                    {["#ff1e42", "#10b981", "#3b82f6", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4"].map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setCatColor(c)}
+                        className={`w-6 h-6 rounded-full border transition-transform ${catColor === c ? "scale-110 border-white" : "border-transparent hover:scale-105"}`}
+                        style={{ backgroundColor: c }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsCategoryModalOpen(false)}
+                  className="flex-1 btn-ghost-pill text-xs min-h-[44px] text-white"
+                >
+                  {t("close")}
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 btn-primary-crimson text-xs min-h-[44px] font-medium"
+                >
+                  {t("saveCategory")}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
