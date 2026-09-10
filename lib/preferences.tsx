@@ -184,6 +184,9 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     reminderPendingApprovalsPlural: "{count} pending approvals (>1 day)",
     dismissReminder: "Dismiss",
     resolveNow: "Review Now",
+    storageQuotaTitle: "Browser Storage Full (Quota Exceeded)",
+    storageQuotaDesc: "Device storage capacity reached. Download your emergency data backup now to prevent data loss.",
+    downloadBackup: "Download Backup JSON",
 
     // Ledger
     ledgerTitle: "Petty Cash Audit Ledger",
@@ -427,6 +430,9 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     reminderPendingApprovalsPlural: "{count} persetujuan tertunda (>1 hari)",
     dismissReminder: "Tutup",
     resolveNow: "Tinjau Sekarang",
+    storageQuotaTitle: "Penyimpanan Browser Penuh (Quota Exceeded)",
+    storageQuotaDesc: "Kapasitas localStorage perangkat telah mencapai batas. Segera unduh backup data Anda untuk menghindari kehilangan transaksi.",
+    downloadBackup: "Download Backup JSON",
 
     // Ledger
     ledgerTitle: "Buku Kas Lapangan & Audit Nota",
@@ -667,6 +673,9 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     reminderPendingApprovalsPlural: "{count} aprobaciones pendientes (>1 día)",
     dismissReminder: "Descartar",
     resolveNow: "Revisar Ahora",
+    storageQuotaTitle: "Almacenamiento del navegador lleno (Cuota excedida)",
+    storageQuotaDesc: "Se ha alcanzado la capacidad de almacenamiento del dispositivo. Descargue su copia de seguridad ahora para evitar pérdidas de datos.",
+    downloadBackup: "Descargar Backup JSON",
 
     // Ledger
     ledgerTitle: "Libro de Auditoría de Caja Chica",
@@ -907,6 +916,9 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     reminderPendingApprovalsPlural: "{count}件の保留中の承認 (>1日)",
     dismissReminder: "閉じる",
     resolveNow: "今すぐ確認",
+    storageQuotaTitle: "ブラウザストレージ容量超過（Quota Exceeded）",
+    storageQuotaDesc: "端末のlocalStorage容量の上限に達しました。データ損失を防ぐため、直ちにバックアップJSONをダウンロードしてください。",
+    downloadBackup: "バックアップJSONをダウンロード",
 
     // Ledger
     ledgerTitle: "現場小口現金出納帳",

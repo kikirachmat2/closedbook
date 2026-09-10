@@ -310,6 +310,60 @@ export default function WorkspacePage() {
     } catch {}
   }, []);
 
+  // Synchronize form dropdown defaults whenever active project or its departments/pockets change
+  useEffect(() => {
+    if (store.departments.length > 0) {
+      if (!store.departments.some((d) => d.id === newDept)) {
+        setNewDept(store.departments[0].id);
+      }
+      if (!store.departments.some((d) => d.id === taskDept)) {
+        setTaskDept(store.departments[0].id);
+      }
+    }
+    if (store.pockets.length > 0) {
+      if (!store.pockets.some((p) => p.id === newPocket)) {
+        setNewPocket(store.pockets[0].id);
+      }
+      if (!store.pockets.some((p) => p.id === transferSource)) {
+        setTransferSource(store.pockets[0].id);
+      }
+      if (!store.pockets.some((p) => p.id === transferDest)) {
+        setTransferDest(store.pockets.length > 1 ? store.pockets[1].id : store.pockets[0].id);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store.project.id, store.departments, store.pockets]);
+
+  const openLogModal = () => {
+    if (store.departments.length > 0 && !store.departments.some((d) => d.id === newDept)) {
+      setNewDept(store.departments[0].id);
+    }
+    if (store.pockets.length > 0 && !store.pockets.some((p) => p.id === newPocket)) {
+      setNewPocket(store.pockets[0].id);
+    }
+    setIsLogModalOpen(true);
+  };
+
+  const openTransferModal = () => {
+    if (store.pockets.length > 0) {
+      if (!store.pockets.some((p) => p.id === transferSource)) {
+        setTransferSource(store.pockets[0].id);
+      }
+      if (!store.pockets.some((p) => p.id === transferDest)) {
+        setTransferDest(store.pockets.length > 1 ? store.pockets[1].id : store.pockets[0].id);
+      }
+    }
+    setTransferError(null);
+    setIsTransferModalOpen(true);
+  };
+
+  const openTaskModal = () => {
+    if (store.departments.length > 0 && !store.departments.some((d) => d.id === taskDept)) {
+      setTaskDept(store.departments[0].id);
+    }
+    setIsTaskModalOpen(true);
+  };
+
   // ── Heartbeat Reminder Engine ─────────────────────────────────────────────
   const currentShootDay = store.callSheet.dayNumber || 1;
   const [dismissedReminders, setDismissedReminders] = useState<string[]>([]);
@@ -643,11 +697,19 @@ export default function WorkspacePage() {
     const rate = currencies[currency]?.rate || 1;
     const amountInUSD = parseFloat(newAmount) / rate;
 
+    // Resolve project-scoped IDs dynamically to prevent desync
+    const resolvedDeptId = store.departments.some((d) => d.id === newDept)
+      ? newDept
+      : (store.departments[0]?.id || newDept);
+    const resolvedPocketId = store.pockets.some((p) => p.id === newPocket)
+      ? newPocket
+      : (store.pockets[0]?.id || newPocket);
+
     store.addTransaction({
       description: newDesc,
       amount: amountInUSD,
-      departmentId: newDept,
-      pocketId: newPocket,
+      departmentId: resolvedDeptId,
+      pocketId: resolvedPocketId,
       vendor: newVendor || "Local Vendor",
       isMissingReceipt: missingReceiptCheck,
       receiptUrl: receiptDataUrl || (missingReceiptCheck ? undefined : "/icon.png"),
@@ -673,7 +735,14 @@ export default function WorkspacePage() {
     const rate = currencies[currency]?.rate || 1;
     const amountInUSD = parseFloat(transferAmount) / rate;
 
-    const result = store.transferFunds(transferSource, transferDest, amountInUSD, transferNotes);
+    const resolvedSource = store.pockets.some((p) => p.id === transferSource)
+      ? transferSource
+      : (store.pockets[0]?.id || transferSource);
+    const resolvedDest = store.pockets.some((p) => p.id === transferDest && p.id !== resolvedSource)
+      ? transferDest
+      : (store.pockets.find((p) => p.id !== resolvedSource)?.id || store.pockets[0]?.id || transferDest);
+
+    const result = store.transferFunds(resolvedSource, resolvedDest, amountInUSD, transferNotes);
     if (!result.success) {
       setTransferError(result.error || "Transfer failed");
       return;
@@ -687,11 +756,14 @@ export default function WorkspacePage() {
   const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (!taskTitle) return;
-    const targetDept = store.departments.find((d) => d.id === taskDept);
+    const targetDept = store.departments.find((d) => d.id === taskDept) || store.departments[0];
+    const resolvedDeptId = targetDept ? targetDept.id : taskDept;
+    const resolvedDeptName = targetDept ? targetDept.name : "Production";
+
     store.addTask({
       title: taskTitle,
-      departmentId: taskDept,
-      departmentName: targetDept ? targetDept.name : "Production",
+      departmentId: resolvedDeptId,
+      departmentName: resolvedDeptName,
       assignee: taskAssignee || "Unassigned",
       priority: taskPriority,
       status: "todo",
@@ -1155,7 +1227,7 @@ export default function WorkspacePage() {
           </button>
 
           <button
-            onClick={() => setIsLogModalOpen(true)}
+            onClick={openLogModal}
             className="w-full btn-primary-crimson text-xs min-h-[44px]"
           >
             <Plus className="w-4 h-4" />
@@ -1294,9 +1366,9 @@ export default function WorkspacePage() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Preferences switcher */}
+            {/* Currency Selector */}
             <div className="hidden sm:flex items-center">
-              <PreferencesControls />
+              <PreferencesControls compact={true} />
             </div>
 
             <div className="flex sm:hidden items-center">
@@ -1336,7 +1408,7 @@ export default function WorkspacePage() {
             </button>
 
             <button
-              onClick={() => setIsLogModalOpen(true)}
+              onClick={openLogModal}
               className="btn-primary-crimson text-xs min-h-[40px] px-3.5 hidden sm:inline-flex"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -1347,6 +1419,55 @@ export default function WorkspacePage() {
 
         {/* Tab Content Panels with AnimatePresence Transitions */}
         <div className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8 flex-1">
+          {/* Storage Quota Guard Warning Banner */}
+          <AnimatePresence>
+            {store.storageQuotaExceeded && (
+              <m.div
+                key="storage-quota-warning-banner"
+                id="storage-quota-warning-banner"
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, height: 0, overflow: "hidden", marginBottom: 0, transition: { duration: 0.18 } }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="surface-overlay p-3.5 sm:p-4 rounded-xl border border-rose-500/40 bg-rose-500/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg mb-6"
+              >
+                <div className="flex items-start sm:items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 shrink-0">
+                    <AlertTriangle className="w-4 h-4 animate-bounce" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-rose-200">
+                        {t("storageQuotaTitle")}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-rose-300/90 mt-0.5">
+                      {t("storageQuotaDesc")}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                  <button
+                    id="btn-download-emergency-backup"
+                    onClick={() => store.exportProductionVaultJSON()}
+                    className="px-3.5 py-1.5 rounded-full bg-rose-500 hover:bg-rose-600 text-white text-xs font-medium flex items-center gap-1.5 shadow-sm transition-colors min-h-[36px]"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>{t("downloadBackup")}</span>
+                  </button>
+                  <button
+                    id="btn-dismiss-storage-quota"
+                    onClick={() => store.clearStorageQuotaWarning()}
+                    className="p-1.5 rounded-full hover:bg-white/10 text-rose-300 hover:text-white transition-colors"
+                    title="Dismiss"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </m.div>
+            )}
+          </AnimatePresence>
+
           {/* Proactive Heartbeat Reminder Banner */}
           <AnimatePresence>
             {showReminderBanner && (
@@ -1896,7 +2017,7 @@ export default function WorkspacePage() {
                   </button>
 
                   <button
-                    onClick={() => setIsLogModalOpen(true)}
+                    onClick={openLogModal}
                     className="btn-primary-crimson text-xs min-h-[44px] px-5"
                   >
                     <Plus className="w-4 h-4" />
@@ -2046,10 +2167,7 @@ export default function WorkspacePage() {
                   <p className="text-xs text-[#737373] mt-0.5">{t("pocketsSub")}</p>
                 </div>
                 <button
-                  onClick={() => {
-                    setTransferError(null);
-                    setIsTransferModalOpen(true);
-                  }}
+                  onClick={openTransferModal}
                   className="btn-primary-crimson text-xs min-h-[44px] px-5"
                 >
                   <ArrowUpRight className="w-4 h-4" />
@@ -2156,7 +2274,7 @@ export default function WorkspacePage() {
                   </select>
 
                   <button
-                    onClick={() => setIsTaskModalOpen(true)}
+                    onClick={openTaskModal}
                     className="btn-primary-crimson text-xs min-h-[44px] px-5"
                   >
                     <Plus className="w-4 h-4" />
@@ -2930,7 +3048,7 @@ export default function WorkspacePage() {
 
         {/* Mobile Quick Log FAB */}
         <button
-          onClick={() => setIsLogModalOpen(true)}
+          onClick={openLogModal}
           className="w-12 h-12 rounded-full bg-[var(--color-primary,#ff1e42)] text-white flex items-center justify-center shadow-[0_0_20px_rgba(255,30,66,0.4)] -mt-4 shrink-0 transition-transform active:scale-95"
           title="Quick Log Petty Cash"
         >

@@ -793,6 +793,137 @@ async function runBlackboxTests() {
       "Seamless bi-directional project switching verified"
     );
 
+    // 18.d: BUG FIX VERIFICATION (Fase F.1): Project-Scoped Department & Pocket Resolution
+    console.log("\n--- TEST 18.d: Project-Scoped Department & Pocket ID Resolution (Bug Fix F.1) ---");
+    // Open Log Expense modal while in Project 2
+    await page.evaluate(() => {
+      const btns = Array.from(document.querySelectorAll("button"));
+      const logBtn = btns.find(b => b.textContent && b.textContent.includes("Log Expense"));
+      if (logBtn) logBtn.click();
+    });
+    await delay(400);
+
+    // Verify modal select values are resolved from Project 2 (never hardcoded "cat-ops" or "pkt-upm")
+    const formResolution = await page.evaluate(() => {
+      const selects = Array.from(document.querySelectorAll("select"));
+      const deptSelect = selects.find(s => Array.from(s.options).some(opt => opt.text.includes("Operations") || opt.text.includes("Camera")));
+      const pocketSelect = selects.find(s => Array.from(s.options).some(opt => opt.text.includes("Vault") || opt.text.includes("Petty Cash")));
+
+      return {
+        deptVal: deptSelect ? deptSelect.value : null,
+        pocketVal: pocketSelect ? pocketSelect.value : null,
+        deptOptionCount: deptSelect ? deptSelect.options.length : 0,
+        pocketOptionCount: pocketSelect ? pocketSelect.options.length : 0,
+      };
+    });
+
+    const isDeptValid = formResolution.deptVal && formResolution.deptVal !== "cat-ops";
+    const isPocketValid = formResolution.pocketVal && formResolution.pocketVal !== "pkt-upm";
+
+    assert(
+      "Log Expense Form Resolves Project-Scoped Department (Not Hardcoded cat-ops)",
+      isDeptValid,
+      `Resolved department ID: '${formResolution.deptVal}' from active project`
+    );
+    assert(
+      "Log Expense Form Resolves Project-Scoped Pocket (Not Hardcoded pkt-upm)",
+      isPocketValid,
+      `Resolved pocket ID: '${formResolution.pocketVal}' from active project`
+    );
+
+    // Read initial balance of the active pocket
+    const preBal = await page.evaluate((targetPocketId) => {
+      const projects = JSON.parse(localStorage.getItem("closebook_projects") || "[]");
+      const activeProj = projects.find((p) => p.isActive);
+      const pid = localStorage.getItem("closebook_active_project_id") || (activeProj ? activeProj.id : "proj-001");
+      const pockets = JSON.parse(localStorage.getItem(`closebook_${pid}_pockets`) || "[]");
+      const target = pockets.find((p) => p.id === targetPocketId);
+      return target ? target.balance : 0;
+    }, formResolution.pocketVal);
+
+    // Fill amount and description
+    await fillActiveModal(page, {
+      text1: "Audio & Grip Day 1 Rental",
+      text2: "Sound Stage Supplies",
+      number1: "250",
+    });
+    await delay(200);
+
+    // Submit Log Expense modal
+    await submitActiveModal(page);
+    await delay(700);
+
+    // Verify created transaction and pocket balance deduction in Project 2
+    const postVerification = await page.evaluate((targetPocketId, pre) => {
+      const projects = JSON.parse(localStorage.getItem("closebook_projects") || "[]");
+      const activeProj = projects.find((p) => p.isActive);
+      const pid = localStorage.getItem("closebook_active_project_id") || (activeProj ? activeProj.id : "proj-001");
+      const txs = JSON.parse(localStorage.getItem(`closebook_${pid}_tx`) || "[]");
+      const pockets = JSON.parse(localStorage.getItem(`closebook_${pid}_pockets`) || "[]");
+      const target = pockets.find((p) => p.id === targetPocketId);
+      const post = target ? target.balance : 0;
+      const latest = txs[0];
+
+      return {
+        hasTx: !!latest,
+        deptName: latest ? latest.departmentName : "",
+        pocketName: latest ? latest.pocketName : "",
+        isNotFallbackDept: latest ? latest.departmentName !== "General" : false,
+        isNotFallbackPocket: latest ? latest.pocketName !== "Field Cash" : false,
+        pre,
+        post,
+        balanceDecremented: post === pre - 250,
+      };
+    }, formResolution.pocketVal, preBal);
+
+    assert(
+      "Transaction Department Correctly Linked (Not Fallback 'General')",
+      postVerification.isNotFallbackDept,
+      `Linked department: '${postVerification.deptName}'`
+    );
+    assert(
+      "Transaction Pocket Correctly Linked (Not Fallback 'Field Cash')",
+      postVerification.isNotFallbackPocket,
+      `Linked pocket: '${postVerification.pocketName}'`
+    );
+    assert(
+      "Pocket Balance Accurately Decremented in New Project Context",
+      postVerification.balanceDecremented,
+      `Balance correctly decremented from $${postVerification.pre} to $${postVerification.post} (-$250)`
+    );
+
+    // 18.e: Storage Quota Guard Verification (Fase F.1)
+    console.log("\n--- TEST 18.e: Storage Quota Guard & Emergency Backup Flow ---");
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent("closebook:quota_exceeded"));
+    });
+    await delay(350);
+
+    const quotaBannerRendered = await page.evaluate(() => {
+      const banner = document.getElementById("storage-quota-warning-banner");
+      const backupBtn = document.getElementById("btn-download-emergency-backup");
+      return !!banner && !!backupBtn;
+    });
+    assert(
+      "Storage Quota Warning Banner Rendered with Emergency Backup CTA",
+      quotaBannerRendered,
+      "Warning banner visible with #btn-download-emergency-backup"
+    );
+
+    // Dismiss quota banner
+    await page.click("#btn-dismiss-storage-quota");
+    await delay(350);
+
+    const quotaBannerDismissed = await page.evaluate(() => {
+      const banner = document.getElementById("storage-quota-warning-banner");
+      return !banner;
+    });
+    assert(
+      "Storage Quota Warning Dismissible by User",
+      quotaBannerDismissed,
+      "Quota banner cleanly dismissed"
+    );
+
     // TEST 19: AI Receipt OCR (Gemini Vision BYOK Flow)
     console.log("\n--- TEST 19: AI Receipt OCR & BYOK Flow ---");
 

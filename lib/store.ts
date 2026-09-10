@@ -358,68 +358,103 @@ export function useClosebookStore() {
     setIsLoaded(true);
   }, []);
 
-  // ─── Persist Helpers (Project-Scoped) ───────────────────────────────────────
+  // ─── Storage Quota Guard & Persist Helpers (Project-Scoped) ─────────────────
+  const [storageQuotaExceeded, setStorageQuotaExceeded] = useState(false);
+  const clearStorageQuotaWarning = () => setStorageQuotaExceeded(false);
+
+  useEffect(() => {
+    const handleQuotaEvent = () => setStorageQuotaExceeded(true);
+    if (typeof window !== "undefined") {
+      window.addEventListener("closebook:quota_exceeded", handleQuotaEvent);
+      return () => window.removeEventListener("closebook:quota_exceeded", handleQuotaEvent);
+    }
+  }, []);
+
+  const safeStorageSet = (key: string, value: string): boolean => {
+    try {
+      localStorage.setItem(key, value);
+      return true;
+    } catch (err: any) {
+      const isQuota =
+        err &&
+        (err.name === "QuotaExceededError" ||
+          err.name === "NS_ERROR_DOM_QUOTA_REACHED" ||
+          err.code === 22 ||
+          err.code === 1014);
+      if (isQuota) {
+        console.error("[ClosedBook Storage Guard] LocalStorage quota exceeded for key:", key);
+        setStorageQuotaExceeded(true);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("closebook:quota_exceeded"));
+        }
+      } else {
+        console.warn("[ClosedBook Storage Guard] Storage write failed:", err);
+      }
+      return false;
+    }
+  };
+
   const getActivePid = () => activeProjectIdRef.current || project.id || "proj-001";
 
   const persistTransactions = (newTx: Transaction[]) => {
     setTransactions(newTx);
-    try { localStorage.setItem(getProjectStorageKey(getActivePid(), "tx"), JSON.stringify(newTx)); } catch {}
+    safeStorageSet(getProjectStorageKey(getActivePid(), "tx"), JSON.stringify(newTx));
   };
 
   const persistPockets = (newPockets: Pocket[]) => {
     setPockets(newPockets);
-    try { localStorage.setItem(getProjectStorageKey(getActivePid(), "pockets"), JSON.stringify(newPockets)); } catch {}
+    safeStorageSet(getProjectStorageKey(getActivePid(), "pockets"), JSON.stringify(newPockets));
   };
 
   const persistTransfers = (newTransfers: PocketTransfer[]) => {
     setTransfers(newTransfers);
-    try { localStorage.setItem(getProjectStorageKey(getActivePid(), "transfers"), JSON.stringify(newTransfers)); } catch {}
+    safeStorageSet(getProjectStorageKey(getActivePid(), "transfers"), JSON.stringify(newTransfers));
   };
 
   const persistTasks = (newTasks: Task[]) => {
     setTasks(newTasks);
-    try { localStorage.setItem(getProjectStorageKey(getActivePid(), "tasks"), JSON.stringify(newTasks)); } catch {}
+    safeStorageSet(getProjectStorageKey(getActivePid(), "tasks"), JSON.stringify(newTasks));
   };
 
   const persistDepartments = (newDepts: Department[]) => {
     setDepartments(newDepts);
-    try { localStorage.setItem(getProjectStorageKey(getActivePid(), "depts"), JSON.stringify(newDepts)); } catch {}
+    safeStorageSet(getProjectStorageKey(getActivePid(), "depts"), JSON.stringify(newDepts));
   };
 
   const persistCallSheet = (newCallSheet: DailyCallSheet) => {
     setCallSheet(newCallSheet);
-    try { localStorage.setItem(getProjectStorageKey(getActivePid(), "callsheet"), JSON.stringify(newCallSheet)); } catch {}
+    safeStorageSet(getProjectStorageKey(getActivePid(), "callsheet"), JSON.stringify(newCallSheet));
   };
 
   const persistEquipment = (newEquipment: EquipmentRental[]) => {
     setEquipment(newEquipment);
-    try { localStorage.setItem(getProjectStorageKey(getActivePid(), "equipment"), JSON.stringify(newEquipment)); } catch {}
+    safeStorageSet(getProjectStorageKey(getActivePid(), "equipment"), JSON.stringify(newEquipment));
   };
 
   const persistAlerts = (newAlerts: SystemAlert[]) => {
     setAlerts(newAlerts);
-    try { localStorage.setItem(getProjectStorageKey(getActivePid(), "alerts"), JSON.stringify(newAlerts)); } catch {}
+    safeStorageSet(getProjectStorageKey(getActivePid(), "alerts"), JSON.stringify(newAlerts));
   };
 
   const persistComments = (newComments: ContextComment[]) => {
     setComments(newComments);
-    try { localStorage.setItem(getProjectStorageKey(getActivePid(), "comments"), JSON.stringify(newComments)); } catch {}
+    safeStorageSet(getProjectStorageKey(getActivePid(), "comments"), JSON.stringify(newComments));
   };
 
   const persistReconciliations = (newRecs: DailyReconcile[]) => {
     setReconciliations(newRecs);
-    try { localStorage.setItem(getProjectStorageKey(getActivePid(), "reconciliations"), JSON.stringify(newRecs)); } catch {}
+    safeStorageSet(getProjectStorageKey(getActivePid(), "reconciliations"), JSON.stringify(newRecs));
   };
 
   const persistProjects = (newProjects: ProjectShell[]) => {
     projectsRef.current = newProjects;
     setProjects(newProjects);
-    try { localStorage.setItem("closebook_projects", JSON.stringify(newProjects)); } catch {}
+    safeStorageSet("closebook_projects", JSON.stringify(newProjects));
   };
 
   const persistNotes = (newNotes: ProjectNote[]) => {
     setNotes(newNotes);
-    try { localStorage.setItem(getProjectStorageKey(getActivePid(), "notes"), JSON.stringify(newNotes)); } catch {}
+    safeStorageSet(getProjectStorageKey(getActivePid(), "notes"), JSON.stringify(newNotes));
   };
 
   // ─── 1. Transactions ────────────────────────────────────────────────────────
@@ -435,15 +470,26 @@ export function useClosebookStore() {
   }) => {
     if (data.amount <= 0 || isNaN(data.amount)) return null;
 
-    const targetDept = departments.find((d) => d.id === data.departmentId);
-    const targetPocket = pockets.find((p) => p.id === data.pocketId);
+    let targetDept = departments.find((d) => d.id === data.departmentId);
+    let targetPocket = pockets.find((p) => p.id === data.pocketId);
+
+    // Dynamic resolution if IDs are from a different project context
+    if (!targetDept && departments.length > 0) {
+      targetDept = departments[0];
+    }
+    if (!targetPocket && pockets.length > 0) {
+      targetPocket = pockets[0];
+    }
+
+    const resolvedDeptId = targetDept ? targetDept.id : data.departmentId;
+    const resolvedPocketId = targetPocket ? targetPocket.id : data.pocketId;
     const initialStatus = data.isMissingReceipt ? "pending" : "approved";
 
     const newTx: Transaction = {
       id: `TX-${Math.floor(106 + Math.random() * 893)}`,
-      pocketId: data.pocketId,
+      pocketId: resolvedPocketId,
       pocketName: targetPocket ? targetPocket.name : "Field Cash",
-      departmentId: data.departmentId,
+      departmentId: resolvedDeptId,
       departmentName: targetDept ? targetDept.name : "General",
       amount: data.amount,
       description: data.description,
@@ -458,10 +504,10 @@ export function useClosebookStore() {
     };
 
     const updatedPockets = pockets.map((p) =>
-      p.id === data.pocketId ? { ...p, balance: Math.max(0, p.balance - data.amount) } : p
+      p.id === resolvedPocketId ? { ...p, balance: Math.max(0, p.balance - data.amount) } : p
     );
     const updatedDepts = departments.map((d) =>
-      d.id === data.departmentId ? { ...d, spentAmount: d.spentAmount + data.amount } : d
+      d.id === resolvedDeptId ? { ...d, spentAmount: d.spentAmount + data.amount } : d
     );
 
     const nextTx = [newTx, ...transactions];
@@ -611,7 +657,16 @@ export function useClosebookStore() {
   };
 
   const addTask = (task: Omit<Task, "id">) => {
-    const updated = [...tasks, { id: `tsk-${Date.now()}`, ...task }];
+    let resolvedDeptId = task.departmentId;
+    let resolvedDeptName = task.departmentName;
+    const foundDept = departments.find((d) => d.id === task.departmentId);
+    if (foundDept) {
+      resolvedDeptName = foundDept.name;
+    } else if (departments.length > 0) {
+      resolvedDeptId = departments[0].id;
+      resolvedDeptName = departments[0].name;
+    }
+    const updated = [...tasks, { id: `tsk-${Date.now()}`, ...task, departmentId: resolvedDeptId, departmentName: resolvedDeptName }];
     persistTasks(updated);
     reevaluateAlerts({ overrideTasks: updated });
   };
@@ -994,19 +1049,17 @@ export function useClosebookStore() {
       directorNotes: `Welcome to Day 1 of ${name}! Safety briefing at call time.`,
     };
 
-    try {
-      localStorage.setItem(getProjectStorageKey(id, "depts"), JSON.stringify(defaultDepts));
-      localStorage.setItem(getProjectStorageKey(id, "pockets"), JSON.stringify(defaultPockets));
-      localStorage.setItem(getProjectStorageKey(id, "callsheet"), JSON.stringify(defaultCallSheet));
-      localStorage.setItem(getProjectStorageKey(id, "tx"), JSON.stringify([]));
-      localStorage.setItem(getProjectStorageKey(id, "transfers"), JSON.stringify([]));
-      localStorage.setItem(getProjectStorageKey(id, "tasks"), JSON.stringify([]));
-      localStorage.setItem(getProjectStorageKey(id, "equipment"), JSON.stringify([]));
-      localStorage.setItem(getProjectStorageKey(id, "alerts"), JSON.stringify([]));
-      localStorage.setItem(getProjectStorageKey(id, "comments"), JSON.stringify([]));
-      localStorage.setItem(getProjectStorageKey(id, "reconciliations"), JSON.stringify([]));
-      localStorage.setItem(getProjectStorageKey(id, "notes"), JSON.stringify([]));
-    } catch {}
+    safeStorageSet(getProjectStorageKey(id, "depts"), JSON.stringify(defaultDepts));
+    safeStorageSet(getProjectStorageKey(id, "pockets"), JSON.stringify(defaultPockets));
+    safeStorageSet(getProjectStorageKey(id, "callsheet"), JSON.stringify(defaultCallSheet));
+    safeStorageSet(getProjectStorageKey(id, "tx"), JSON.stringify([]));
+    safeStorageSet(getProjectStorageKey(id, "transfers"), JSON.stringify([]));
+    safeStorageSet(getProjectStorageKey(id, "tasks"), JSON.stringify([]));
+    safeStorageSet(getProjectStorageKey(id, "equipment"), JSON.stringify([]));
+    safeStorageSet(getProjectStorageKey(id, "alerts"), JSON.stringify([]));
+    safeStorageSet(getProjectStorageKey(id, "comments"), JSON.stringify([]));
+    safeStorageSet(getProjectStorageKey(id, "reconciliations"), JSON.stringify([]));
+    safeStorageSet(getProjectStorageKey(id, "notes"), JSON.stringify([]));
 
     persistProjects([...projectsRef.current, newShell]);
     return id;
@@ -1020,19 +1073,17 @@ export function useClosebookStore() {
 
     // 1. Flush/save current in-memory state to current active project storage keys
     const curId = activeProjectIdRef.current || project.id;
-    try {
-      localStorage.setItem(getProjectStorageKey(curId, "tx"), JSON.stringify(transactions));
-      localStorage.setItem(getProjectStorageKey(curId, "pockets"), JSON.stringify(pockets));
-      localStorage.setItem(getProjectStorageKey(curId, "transfers"), JSON.stringify(transfers));
-      localStorage.setItem(getProjectStorageKey(curId, "tasks"), JSON.stringify(tasks));
-      localStorage.setItem(getProjectStorageKey(curId, "depts"), JSON.stringify(departments));
-      localStorage.setItem(getProjectStorageKey(curId, "callsheet"), JSON.stringify(callSheet));
-      localStorage.setItem(getProjectStorageKey(curId, "equipment"), JSON.stringify(equipment));
-      localStorage.setItem(getProjectStorageKey(curId, "alerts"), JSON.stringify(alerts));
-      localStorage.setItem(getProjectStorageKey(curId, "comments"), JSON.stringify(comments));
-      localStorage.setItem(getProjectStorageKey(curId, "reconciliations"), JSON.stringify(reconciliations));
-      localStorage.setItem(getProjectStorageKey(curId, "notes"), JSON.stringify(notes));
-    } catch {}
+    safeStorageSet(getProjectStorageKey(curId, "tx"), JSON.stringify(transactions));
+    safeStorageSet(getProjectStorageKey(curId, "pockets"), JSON.stringify(pockets));
+    safeStorageSet(getProjectStorageKey(curId, "transfers"), JSON.stringify(transfers));
+    safeStorageSet(getProjectStorageKey(curId, "tasks"), JSON.stringify(tasks));
+    safeStorageSet(getProjectStorageKey(curId, "depts"), JSON.stringify(departments));
+    safeStorageSet(getProjectStorageKey(curId, "callsheet"), JSON.stringify(callSheet));
+    safeStorageSet(getProjectStorageKey(curId, "equipment"), JSON.stringify(equipment));
+    safeStorageSet(getProjectStorageKey(curId, "alerts"), JSON.stringify(alerts));
+    safeStorageSet(getProjectStorageKey(curId, "comments"), JSON.stringify(comments));
+    safeStorageSet(getProjectStorageKey(curId, "reconciliations"), JSON.stringify(reconciliations));
+    safeStorageSet(getProjectStorageKey(curId, "notes"), JSON.stringify(notes));
 
     // 2. Load target project's data from localStorage (or fallback to defaults if proj-001)
     try {
@@ -1073,6 +1124,7 @@ export function useClosebookStore() {
     // 3. Mark active in projects list
     const updatedProjects = list.map((p) => ({ ...p, isActive: p.id === targetProjectId }));
     persistProjects(updatedProjects);
+    safeStorageSet("closebook_active_project_id", targetShell.id);
 
     // 4. Update ref and active project metadata
     activeProjectIdRef.current = targetShell.id;
@@ -1287,5 +1339,8 @@ export function useClosebookStore() {
     deleteNote,
     // Computed
     getBurnRateForecast,
+    // Storage Quota Guard
+    storageQuotaExceeded,
+    clearStorageQuotaWarning,
   };
 }
