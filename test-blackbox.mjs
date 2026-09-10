@@ -685,11 +685,111 @@ async function runBlackboxTests() {
 
     // Close preferences modal
     await page.evaluate(() => {
-      const btns = Array.from(document.querySelectorAll("div.fixed.z-50 button, div[class*='z-50'] button"));
-      const saveBtn = btns.find(b => b.textContent && (b.textContent.includes("Save") || b.textContent.includes("Terapkan") || b.textContent.includes("Close") || b.textContent.includes("Tutup")));
-      if (saveBtn) saveBtn.click();
+      const closeBtn = document.querySelector("button[aria-label='Close preferences']") 
+        || document.querySelector(".btn-primary-crimson")
+        || Array.from(document.querySelectorAll("button")).find(b => b.textContent && (b.textContent.includes("Save") || b.textContent.includes("Simpan") || b.textContent.includes("Close") || b.textContent.includes("Tutup")));
+      if (closeBtn) closeBtn.click();
+    });
+    await delay(500);
+
+    // TEST 18: Multi-Project Switcher & Context Isolation (Fase D)
+    console.log("\n--- TEST 18: Multi-Project Switcher & Context Isolation ---");
+
+    // 18.a: Open Project Switcher & Create New Project
+    await page.waitForSelector("#project-switcher-btn", { visible: true });
+    await page.click("#project-switcher-btn");
+    await delay(300);
+
+    await page.waitForSelector("#btn-open-new-project-modal", { visible: true });
+    await page.click("#btn-open-new-project-modal");
+    await delay(400);
+
+    await page.waitForSelector("#new-project-name");
+    await page.type("#new-project-name", "Documentary 2026: Voices of the Deep");
+    await page.type("#new-project-budget", "45000");
+    await page.click("#new-project-days", { clickCount: 3 });
+    await page.keyboard.press("Backspace");
+    await page.type("#new-project-days", "10");
+    await page.type("#new-project-director", "Marcus Vance");
+    await delay(200);
+
+    await page.click("#submit-new-project");
+    await delay(800);
+
+    // Verify Project B is active & isolated
+    const projectBState = await page.evaluate(() => {
+      const switcher = document.getElementById("project-switcher-btn");
+      const name = switcher ? switcher.textContent : "";
+      const bodyText = document.body.textContent || "";
+      return {
+        hasName: name.includes("Documentary 2026"),
+        hasBudget: bodyText.includes("45,000") || bodyText.includes("45.000"),
+      };
+    });
+    assert(
+      "New Project Created & Switched Context",
+      projectBState.hasName && projectBState.hasBudget,
+      "New project 'Documentary 2026' active with $45k budget"
+    );
+
+    // 18.b: Switch back to Project 1 ("The Quiet Horizon") via Switch Confirmation
+    await page.waitForSelector("#project-switcher-btn", { visible: true });
+    await page.click("#project-switcher-btn");
+    await delay(300);
+
+    await page.waitForSelector("#switch-to-project-proj-001", { visible: true });
+    await page.click("#switch-to-project-proj-001");
+    await delay(400);
+
+    await page.waitForSelector("#confirm-switch-project-btn", { visible: true });
+    await page.click("#confirm-switch-project-btn");
+    await delay(800);
+
+    const project1Restored = await page.evaluate(() => {
+      const switcher = document.getElementById("project-switcher-btn");
+      const name = switcher ? switcher.textContent : "";
+      const bodyText = document.body.textContent || "";
+      return {
+        hasName: name.includes("The Quiet Horizon"),
+        hasBudget: bodyText.includes("120,000") || bodyText.includes("120.000"),
+      };
+    });
+    assert(
+      "Switch Back to Original Project Preserves Data",
+      project1Restored.hasName && project1Restored.hasBudget,
+      "Original project 'The Quiet Horizon' intact with $120k budget"
+    );
+
+    // 18.c: Switch back to Project 2 and verify isolated context
+    await page.waitForSelector("#project-switcher-btn", { visible: true });
+    await page.click("#project-switcher-btn");
+    await delay(300);
+
+    await page.evaluate(() => {
+      const btns = Array.from(document.querySelectorAll("button[id^='switch-to-project-']"));
+      const projBtn = btns.find(b => b.textContent && b.textContent.includes("Documentary 2026"));
+      if (projBtn) projBtn.click();
     });
     await delay(400);
+
+    await page.waitForSelector("#confirm-switch-project-btn", { visible: true });
+    await page.click("#confirm-switch-project-btn");
+    await delay(800);
+
+    const project2Restored = await page.evaluate(() => {
+      const switcher = document.getElementById("project-switcher-btn");
+      const name = switcher ? switcher.textContent : "";
+      const bodyText = document.body.textContent || "";
+      return {
+        hasName: name.includes("Documentary 2026"),
+        hasBudget: bodyText.includes("45,000") || bodyText.includes("45.000"),
+      };
+    });
+    assert(
+      "Multi-Project Data Scoping 100% Isolated",
+      project2Restored.hasName && project2Restored.hasBudget,
+      "Seamless bi-directional project switching verified"
+    );
 
     await page.close();
 

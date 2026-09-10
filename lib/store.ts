@@ -253,6 +253,10 @@ export function useClosebookStore() {
       isActive: true,
     },
   ]);
+  const projectsRef = useRef<ProjectShell[]>(projects);
+  useEffect(() => {
+    projectsRef.current = projects;
+  }, [projects]);
   const [notes, setNotes] = useState<ProjectNote[]>([]);
   const [webhookUrl, setWebhookUrl] = useState<string>("");
   const [isWebhookSyncEnabled, setIsWebhookSyncEnabled] = useState<boolean>(false);
@@ -408,6 +412,7 @@ export function useClosebookStore() {
   };
 
   const persistProjects = (newProjects: ProjectShell[]) => {
+    projectsRef.current = newProjects;
     setProjects(newProjects);
     try { localStorage.setItem("closebook_projects", JSON.stringify(newProjects)); } catch {}
   };
@@ -962,13 +967,12 @@ export function useClosebookStore() {
       isActive: false,
     };
 
-    // Initialize sensible fresh defaults for the new project
+    // Initialize sensible fresh defaults for the new project (4 standard categories from Fase B)
     const defaultDepts: Department[] = [
-      { id: `dept-${id}-1`, name: "Camera & Lighting", code: "CAM", allocatedBudget: Math.round(totalBudget * 0.35), spentAmount: 0, color: "#3b82f6" },
-      { id: `dept-${id}-2`, name: "Art & Production Design", code: "ART", allocatedBudget: Math.round(totalBudget * 0.25), spentAmount: 0, color: "#10b981" },
-      { id: `dept-${id}-3`, name: "Catering & Craft Services", code: "CAT", allocatedBudget: Math.round(totalBudget * 0.15), spentAmount: 0, color: "#f59e0b" },
-      { id: `dept-${id}-4`, name: "Sound & Post-Audio", code: "SND", allocatedBudget: Math.round(totalBudget * 0.15), spentAmount: 0, color: "#8b5cf6" },
-      { id: `dept-${id}-5`, name: "Locations & Logistics", code: "LOC", allocatedBudget: Math.round(totalBudget * 0.10), spentAmount: 0, color: "#ec4899" },
+      { id: `cat-${id}-ops`, name: "Operations & Logistics", code: "OPS", allocatedBudget: Math.round(totalBudget * 0.30), spentAmount: 0, color: "#14b8a6" },
+      { id: `cat-${id}-crt`, name: "Production & Creative", code: "CRT", allocatedBudget: Math.round(totalBudget * 0.40), spentAmount: 0, color: "#8b5cf6" },
+      { id: `cat-${id}-vnd`, name: "Vendors & External Services", code: "VND", allocatedBudget: Math.round(totalBudget * 0.20), spentAmount: 0, color: "#38bdf8" },
+      { id: `cat-${id}-adm`, name: "Administrative & Float", code: "ADM", allocatedBudget: Math.round(totalBudget * 0.10), spentAmount: 0, color: "#94a3b8" },
     ];
     const defaultPockets: Pocket[] = [
       { id: `poc-${id}-1`, name: "Production Petty Cash", type: "operational_pocket", custodian: "Devon Reed (UPM)", balance: Math.round(totalBudget * 0.1), allocated: Math.round(totalBudget * 0.1) },
@@ -1004,14 +1008,15 @@ export function useClosebookStore() {
       localStorage.setItem(getProjectStorageKey(id, "notes"), JSON.stringify([]));
     } catch {}
 
-    persistProjects([...projects, newShell]);
+    persistProjects([...projectsRef.current, newShell]);
     return id;
   };
 
   const switchProject = (targetProjectId: string) => {
-    if (targetProjectId === project.id) return;
-    const targetShell = projects.find((p) => p.id === targetProjectId);
+    const list = projectsRef.current;
+    const targetShell = list.find((p) => p.id === targetProjectId);
     if (!targetShell) return;
+    if (targetProjectId === project.id && targetProjectId === activeProjectIdRef.current) return;
 
     // 1. Flush/save current in-memory state to current active project storage keys
     const curId = activeProjectIdRef.current || project.id;
@@ -1066,7 +1071,7 @@ export function useClosebookStore() {
     } catch {}
 
     // 3. Mark active in projects list
-    const updatedProjects = projects.map((p) => ({ ...p, isActive: p.id === targetProjectId }));
+    const updatedProjects = list.map((p) => ({ ...p, isActive: p.id === targetProjectId }));
     persistProjects(updatedProjects);
 
     // 4. Update ref and active project metadata
@@ -1088,8 +1093,9 @@ export function useClosebookStore() {
   };
 
   const deleteProject = (projectId: string) => {
-    if (projects.length <= 1) return false;
-    const remaining = projects.filter((p) => p.id !== projectId);
+    const list = projectsRef.current;
+    if (list.length <= 1) return false;
+    const remaining = list.filter((p) => p.id !== projectId);
     if (project.id === projectId) {
       const fallback = remaining[0];
       switchProject(fallback.id);

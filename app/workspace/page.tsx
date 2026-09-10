@@ -52,6 +52,8 @@ import {
   Code,
   Wifi,
   WifiOff,
+  ChevronDown,
+  ArrowLeftRight,
 } from "lucide-react";
 
 type TabId =
@@ -217,6 +219,20 @@ export default function WorkspacePage() {
   const [editingCategory, setEditingCategory] = useState<Department | null>(null);
   const [activeCommentEntity, setActiveCommentEntity] = useState<{ id: string; title: string } | null>(null);
   const [previewReceiptTx, setPreviewReceiptTx] = useState<Transaction | null>(null);
+
+  // Project Switcher & Management states
+  const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
+  const [isMobileProjectDropdownOpen, setIsMobileProjectDropdownOpen] = useState(false);
+  const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
+  const [isSwitchConfirmModalOpen, setIsSwitchConfirmModalOpen] = useState(false);
+  const [pendingSwitchProjectId, setPendingSwitchProjectId] = useState<string | null>(null);
+
+  // Form states - New Project
+  const [newProjName, setNewProjName] = useState("");
+  const [newProjBudget, setNewProjBudget] = useState("");
+  const [newProjDays, setNewProjDays] = useState("16");
+  const [newProjDirector, setNewProjDirector] = useState("");
+  const [newProjError, setNewProjError] = useState<string | null>(null);
 
   // Form states - Expense
   const [newDesc, setNewDesc] = useState("");
@@ -600,6 +616,64 @@ export default function WorkspacePage() {
     setCommentText("");
   };
 
+  const handleInitiateSwitchProject = (targetId: string) => {
+    if (targetId === store.project.id) {
+      setIsProjectDropdownOpen(false);
+      setIsMobileProjectDropdownOpen(false);
+      return;
+    }
+    setPendingSwitchProjectId(targetId);
+    setIsSwitchConfirmModalOpen(true);
+    setIsProjectDropdownOpen(false);
+    setIsMobileProjectDropdownOpen(false);
+  };
+
+  const handleConfirmSwitchProject = () => {
+    if (pendingSwitchProjectId) {
+      store.switchProject(pendingSwitchProjectId);
+    }
+    setPendingSwitchProjectId(null);
+    setIsSwitchConfirmModalOpen(false);
+  };
+
+  const handleCreateProject = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newProjName.trim()) {
+      setNewProjError("Project name is required.");
+      return;
+    }
+    const budgetNum = parseFloat(newProjBudget);
+    if (isNaN(budgetNum) || budgetNum <= 0) {
+      setNewProjError("Please enter a valid total budget.");
+      return;
+    }
+    const daysNum = parseInt(newProjDays, 10);
+    if (isNaN(daysNum) || daysNum <= 0) {
+      setNewProjError("Please enter valid shoot duration days.");
+      return;
+    }
+    if (!newProjDirector.trim()) {
+      setNewProjError("Director / Producer name is required.");
+      return;
+    }
+
+    const newId = store.createProject(
+      newProjName.trim(),
+      budgetNum,
+      daysNum,
+      newProjDirector.trim()
+    );
+    store.switchProject(newId);
+
+    // Reset form
+    setNewProjName("");
+    setNewProjBudget("");
+    setNewProjDays("16");
+    setNewProjDirector("");
+    setNewProjError(null);
+    setIsNewProjectModalOpen(false);
+  };
+
   const totalSpent = store.departments.reduce((acc, d) => acc + d.spentAmount, 0);
   const totalAllocated = store.departments.reduce((acc, d) => acc + d.allocatedBudget, 0);
   const activeAlertsCount = store.alerts.filter((a) => !a.isResolved).length;
@@ -628,24 +702,117 @@ export default function WorkspacePage() {
             </span>
           </div>
 
-          {/* Project Switcher Info Card */}
-          <div className="surface-overlay p-3.5 mb-6">
-            <span className="text-[10px] uppercase tracking-wider text-[#737373] block mb-1 font-medium">
-              {t("activeProduction")}
-            </span>
-            <span className="text-xs font-medium text-[#fdfdfd] block truncate">
-              {store.project.name}
-            </span>
-            <div className="flex items-center gap-2 mt-2 text-[11px] text-[#a3a3a3]">
-              <span className="w-2 h-2 rounded-full bg-[var(--color-primary,#ff1e42)] animate-pulse" />
-              <span>
-                {t("dayCount")
-                  .replace("{day}", store.callSheet.dayNumber.toString())
-                  .replace("{total}", store.callSheet.totalDays.toString())}
-              </span>
-              <span>•</span>
-              <span className="text-[#10b981] font-medium">{t("syncActive")}</span>
-            </div>
+          {/* Project Switcher Dropdown Anchor */}
+          <div className="relative mb-6">
+            <button
+              id="project-switcher-btn"
+              onClick={() => setIsProjectDropdownOpen(!isProjectDropdownOpen)}
+              className="w-full text-left surface-overlay p-3.5 rounded-xl border border-white/[0.08] hover:border-white/[0.16] hover:bg-[#121212] transition-all group min-h-[44px] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary,#ff1e42)]/50 cursor-pointer"
+              aria-expanded={isProjectDropdownOpen}
+              aria-label={t("switchProject")}
+            >
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <span className="text-[10px] uppercase tracking-wider text-[#737373] font-medium truncate">
+                  {t("activeProduction")}
+                </span>
+                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-white/[0.05] text-[#a3a3a3] border border-white/[0.06] shrink-0">
+                  {store.projects.length} {store.projects.length === 1 ? "project" : "projects"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-[#fdfdfd] truncate group-hover:text-[var(--color-primary,#ff1e42)] transition-colors">
+                  {store.project.name}
+                </span>
+                <ChevronDown className={`w-3.5 h-3.5 text-[#737373] transition-transform duration-200 shrink-0 ${isProjectDropdownOpen ? "rotate-180 text-white" : ""}`} />
+              </div>
+              <div className="flex items-center gap-2 mt-2 text-[11px] text-[#a3a3a3]">
+                <span className="w-2 h-2 rounded-full bg-[var(--color-primary,#ff1e42)] animate-pulse shrink-0" />
+                <span className="truncate">
+                  {t("dayCount")
+                    .replace("{day}", store.callSheet.dayNumber.toString())
+                    .replace("{total}", store.callSheet.totalDays.toString())}
+                </span>
+                <span>•</span>
+                <span className="text-[#10b981] font-medium font-mono text-[10px]">{formatMoney(store.project.totalBudget)}</span>
+              </div>
+            </button>
+
+            {/* Desktop Dropdown Popover */}
+            <AnimatePresence>
+              {isProjectDropdownOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsProjectDropdownOpen(false)}
+                  />
+                  <m.div
+                    initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
+                    className="absolute left-0 right-0 top-full mt-2 z-50 bg-[#0d0d0d] border border-white/[0.12] rounded-xl shadow-2xl p-2 max-h-80 overflow-y-auto backdrop-blur-xl"
+                  >
+                    <div className="px-2 py-1.5 text-[10px] uppercase font-mono tracking-wider text-[#737373] border-b border-white/[0.06] flex items-center justify-between mb-1">
+                      <span>{t("allProjects")}</span>
+                      <span>{store.projects.length}</span>
+                    </div>
+
+                    <div className="space-y-1 my-1">
+                      {store.projects.map((proj) => {
+                        const isCurrent = proj.id === store.project.id;
+                        return (
+                          <button
+                            key={proj.id}
+                            id={`switch-to-project-${proj.id}`}
+                            onClick={() => handleInitiateSwitchProject(proj.id)}
+                            className={`w-full text-left px-2.5 py-2 rounded-lg text-xs transition-all flex items-start justify-between gap-2 group min-h-[44px] cursor-pointer ${
+                              isCurrent
+                                ? "bg-white/[0.08] text-white border border-white/[0.08]"
+                                : "text-[#a3a3a3] hover:text-[#fdfdfd] hover:bg-white/[0.04]"
+                            }`}
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-medium text-xs truncate text-[#fdfdfd]">
+                                  {proj.name}
+                                </span>
+                                {isCurrent && (
+                                  <span className="text-[9px] uppercase px-1.5 py-0.2 rounded-full bg-[var(--color-primary,#ff1e42)]/20 text-[var(--color-primary,#ff1e42)] font-mono border border-[var(--color-primary,#ff1e42)]/30">
+                                    {t("activeBadge")}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[10px] text-[#737373] flex items-center gap-1.5 mt-0.5 font-mono">
+                                <span>{formatMoney(proj.totalBudget)}</span>
+                                <span>•</span>
+                                <span>{proj.shootDays} days</span>
+                              </div>
+                            </div>
+                            {isCurrent && (
+                              <Check className="w-3.5 h-3.5 text-[var(--color-primary,#ff1e42)] shrink-0 mt-0.5" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="pt-1 mt-1 border-t border-white/[0.06]">
+                      <button
+                        id="btn-open-new-project-modal"
+                        onClick={() => {
+                          setIsProjectDropdownOpen(false);
+                          setIsNewProjectModalOpen(true);
+                        }}
+                        className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-xs font-medium text-white transition-all border border-white/[0.06] min-h-[44px] cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5 text-[var(--color-primary,#ff1e42)]" />
+                        <span>{t("newProject")}</span>
+                      </button>
+                    </div>
+                  </m.div>
+                </>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Nav Items */}
@@ -824,6 +991,97 @@ export default function WorkspacePage() {
                 closedbook<span className="text-[var(--color-primary,#ff1e42)]">.</span>
               </span>
             </Link>
+
+            {/* Mobile Project Switcher Pill */}
+            <div className="relative md:hidden">
+              <button
+                id="mobile-project-switcher-btn"
+                onClick={() => setIsMobileProjectDropdownOpen(!isMobileProjectDropdownOpen)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#141414] border border-white/[0.08] hover:border-white/[0.16] text-[11px] font-medium text-[#fdfdfd] max-w-[150px] truncate min-h-[44px] cursor-pointer"
+                aria-expanded={isMobileProjectDropdownOpen}
+                aria-label={t("switchProject")}
+              >
+                <span className="truncate">{store.project.name}</span>
+                <ChevronDown className={`w-3 h-3 text-[#737373] shrink-0 transition-transform duration-200 ${isMobileProjectDropdownOpen ? "rotate-180 text-white" : ""}`} />
+              </button>
+
+              {/* Mobile Popover */}
+              <AnimatePresence>
+                {isMobileProjectDropdownOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs"
+                      onClick={() => setIsMobileProjectDropdownOpen(false)}
+                    />
+                    <m.div
+                      initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                      transition={{ duration: 0.15, ease: "easeOut" }}
+                      className="fixed left-4 right-4 top-16 z-50 bg-[#0d0d0d] border border-white/[0.12] rounded-xl shadow-2xl p-3 max-h-96 overflow-y-auto backdrop-blur-xl"
+                    >
+                      <div className="px-2 py-1.5 text-[10px] uppercase font-mono tracking-wider text-[#737373] border-b border-white/[0.06] flex items-center justify-between mb-2">
+                        <span>{t("allProjects")}</span>
+                        <span>{store.projects.length}</span>
+                      </div>
+
+                      <div className="space-y-1.5 my-1">
+                        {store.projects.map((proj) => {
+                          const isCurrent = proj.id === store.project.id;
+                          return (
+                            <button
+                              key={proj.id}
+                              id={`mobile-switch-to-project-${proj.id}`}
+                              onClick={() => handleInitiateSwitchProject(proj.id)}
+                              className={`w-full text-left px-3 py-2.5 rounded-lg text-xs transition-all flex items-center justify-between gap-2 min-h-[44px] cursor-pointer ${
+                                isCurrent
+                                  ? "bg-white/[0.08] text-white border border-white/[0.08]"
+                                  : "text-[#a3a3a3] hover:text-[#fdfdfd] hover:bg-white/[0.04]"
+                              }`}
+                            >
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-medium text-xs truncate text-[#fdfdfd]">
+                                    {proj.name}
+                                  </span>
+                                  {isCurrent && (
+                                    <span className="text-[9px] uppercase px-1.5 py-0.2 rounded-full bg-[var(--color-primary,#ff1e42)]/20 text-[var(--color-primary,#ff1e42)] font-mono border border-[var(--color-primary,#ff1e42)]/30">
+                                      {t("activeBadge")}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[10px] text-[#737373] flex items-center gap-1.5 mt-0.5 font-mono">
+                                  <span>{formatMoney(proj.totalBudget)}</span>
+                                  <span>•</span>
+                                  <span>{proj.shootDays} days</span>
+                                </div>
+                              </div>
+                              {isCurrent && (
+                                <Check className="w-4 h-4 text-[var(--color-primary,#ff1e42)] shrink-0" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div className="pt-2 mt-2 border-t border-white/[0.06]">
+                        <button
+                          id="btn-mobile-open-new-project-modal"
+                          onClick={() => {
+                            setIsMobileProjectDropdownOpen(false);
+                            setIsNewProjectModalOpen(true);
+                          }}
+                          className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-xs font-medium text-white transition-all border border-white/[0.06] min-h-[44px] cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5 text-[var(--color-primary,#ff1e42)]" />
+                          <span>{t("newProject")}</span>
+                        </button>
+                      </div>
+                    </m.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
 
             <div className="hidden md:block">
               <h1 className="text-sm font-medium text-[#fdfdfd] capitalize">
@@ -3233,6 +3491,191 @@ export default function WorkspacePage() {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* ─── MODAL: NEW PRODUCTION ────────────────────────────────────────── */}
+      {isNewProjectModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <m.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="surface-card w-full max-w-md p-6 rounded-2xl border border-white/[0.1] shadow-2xl relative my-8"
+          >
+            <button
+              onClick={() => {
+                setIsNewProjectModalOpen(false);
+                setNewProjError(null);
+              }}
+              className="absolute top-5 right-5 text-[#737373] hover:text-[#fdfdfd] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
+              aria-label="Close modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-9 h-9 rounded-xl bg-[var(--color-primary,#ff1e42)]/10 text-[var(--color-primary,#ff1e42)] border border-[var(--color-primary,#ff1e42)]/20 flex items-center justify-center shrink-0">
+                <Plus className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-[#fdfdfd]">
+                  {t("createProjectTitle")}
+                </h2>
+                <p className="text-xs text-[#737373]">
+                  {t("createProjectDesc")}
+                </p>
+              </div>
+            </div>
+
+            {newProjError && (
+              <div className="p-3 my-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>{newProjError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleCreateProject} className="space-y-4 mt-4">
+              <div>
+                <label className="text-xs text-[#a3a3a3] block mb-1 font-medium">
+                  {t("projectName")} <span className="text-[var(--color-primary,#ff1e42)]">*</span>
+                </label>
+                <input
+                  id="new-project-name"
+                  type="text"
+                  placeholder="e.g. Documentary 2026: Voices of the Deep"
+                  value={newProjName}
+                  onChange={(e) => setNewProjName(e.target.value)}
+                  className="w-full bg-[#121212] border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-xs text-[#fdfdfd] placeholder-[#525252] focus:outline-none focus:border-[var(--color-primary,#ff1e42)] min-h-[44px]"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-[#a3a3a3] block mb-1 font-medium">
+                    {t("projectBudget")} ($) <span className="text-[var(--color-primary,#ff1e42)]">*</span>
+                  </label>
+                  <input
+                    id="new-project-budget"
+                    type="number"
+                    min="1"
+                    placeholder="e.g. 50000"
+                    value={newProjBudget}
+                    onChange={(e) => setNewProjBudget(e.target.value)}
+                    className="w-full bg-[#121212] border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-xs text-[#fdfdfd] font-mono placeholder-[#525252] focus:outline-none focus:border-[var(--color-primary,#ff1e42)] min-h-[44px]"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-[#a3a3a3] block mb-1 font-medium">
+                    {t("projectShootDays")} <span className="text-[var(--color-primary,#ff1e42)]">*</span>
+                  </label>
+                  <input
+                    id="new-project-days"
+                    type="number"
+                    min="1"
+                    placeholder="16"
+                    value={newProjDays}
+                    onChange={(e) => setNewProjDays(e.target.value)}
+                    className="w-full bg-[#121212] border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-xs text-[#fdfdfd] font-mono placeholder-[#525252] focus:outline-none focus:border-[var(--color-primary,#ff1e42)] min-h-[44px]"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs text-[#a3a3a3] block mb-1 font-medium">
+                  {t("projectDirector")} <span className="text-[var(--color-primary,#ff1e42)]">*</span>
+                </label>
+                <input
+                  id="new-project-director"
+                  type="text"
+                  placeholder="e.g. Sarah Jenkins"
+                  value={newProjDirector}
+                  onChange={(e) => setNewProjDirector(e.target.value)}
+                  className="w-full bg-[#121212] border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-xs text-[#fdfdfd] placeholder-[#525252] focus:outline-none focus:border-[var(--color-primary,#ff1e42)] min-h-[44px]"
+                  required
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-3 border-t border-white/[0.06]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsNewProjectModalOpen(false);
+                    setNewProjError(null);
+                  }}
+                  className="px-4 py-2.5 text-xs font-medium text-[#a3a3a3] hover:text-[#fdfdfd] transition-colors min-h-[44px] cursor-pointer"
+                >
+                  {t("cancel")}
+                </button>
+                <button
+                  id="submit-new-project"
+                  type="submit"
+                  className="px-5 py-2.5 text-xs font-medium rounded-xl bg-[var(--color-primary,#ff1e42)] text-white hover:brightness-110 shadow-lg shadow-[var(--color-primary,#ff1e42)]/20 transition-all min-h-[44px] cursor-pointer"
+                >
+                  {t("createProjectButton")}
+                </button>
+              </div>
+            </form>
+          </m.div>
+        </div>
+      )}
+
+      {/* ─── MODAL: SWITCH CONFIRMATION ──────────────────────────────────── */}
+      {isSwitchConfirmModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <m.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="surface-card w-full max-w-sm p-6 rounded-2xl border border-white/[0.1] shadow-2xl relative"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0">
+                <ArrowLeftRight className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-[#fdfdfd]">
+                  {t("switchConfirmTitle")}
+                </h3>
+                <span className="text-[11px] text-[#737373]">
+                  ClosedBook Context Isolation
+                </span>
+              </div>
+            </div>
+
+            <p className="text-xs text-[#a3a3a3] leading-relaxed my-3">
+              {t("switchConfirmDesc").replace(
+                "{name}",
+                store.projects.find((p) => p.id === pendingSwitchProjectId)?.name || "selected production"
+              )}
+            </p>
+
+            <div className="pt-3 flex items-center justify-end gap-2 border-t border-white/[0.06]">
+              <button
+                id="cancel-switch-project-btn"
+                type="button"
+                onClick={() => {
+                  setPendingSwitchProjectId(null);
+                  setIsSwitchConfirmModalOpen(false);
+                }}
+                className="px-4 py-2.5 text-xs font-medium text-[#a3a3a3] hover:text-[#fdfdfd] transition-colors min-h-[44px] cursor-pointer"
+              >
+                {t("cancel")}
+              </button>
+              <button
+                id="confirm-switch-project-btn"
+                type="button"
+                onClick={handleConfirmSwitchProject}
+                className="px-4 py-2.5 text-xs font-medium rounded-xl bg-[var(--color-primary,#ff1e42)] text-white hover:brightness-110 shadow-lg shadow-[var(--color-primary,#ff1e42)]/20 transition-all min-h-[44px] cursor-pointer"
+              >
+                {t("confirmSwitch")}
+              </button>
+            </div>
+          </m.div>
         </div>
       )}
 

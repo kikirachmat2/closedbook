@@ -291,6 +291,23 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     sendComment: "Send",
     noCommentsYet: "No comments recorded yet for this item.",
     postingAs: "Posting as",
+
+    // Project Switcher & Management
+    switchProject: "Switch Production",
+    allProjects: "All Productions",
+    newProject: "New Production",
+    createProjectTitle: "Create New Production",
+    createProjectDesc: "Set up a new isolated production ledger, budget, and schedule.",
+    projectName: "Production Name",
+    projectBudget: "Total Budget",
+    projectShootDays: "Shoot Duration (Days)",
+    projectDirector: "Director / Producer",
+    switchConfirmTitle: "Switch Production Context?",
+    switchConfirmDesc: "You are switching to \"{name}\". Current progress is safely persisted.",
+    confirmSwitch: "Confirm & Switch",
+    cancel: "Cancel",
+    activeBadge: "Active",
+    createProjectButton: "Create Production",
   },
   id: {
     // Brand & System
@@ -480,6 +497,23 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     sendComment: "Kirim",
     noCommentsYet: "Belum ada komentar yang dicatat untuk item ini.",
     postingAs: "Kirim sebagai",
+
+    // Project Switcher & Management
+    switchProject: "Ganti Produksi",
+    allProjects: "Semua Produksi",
+    newProject: "Produksi Baru",
+    createProjectTitle: "Buat Produksi Baru",
+    createProjectDesc: "Siapkan buku kas, anggaran, dan jadwal produksi baru yang terisolasi.",
+    projectName: "Nama Produksi",
+    projectBudget: "Total Anggaran",
+    projectShootDays: "Durasi Syuting (Hari)",
+    projectDirector: "Sutradara / Produser",
+    switchConfirmTitle: "Pindah Buku Kas Produksi?",
+    switchConfirmDesc: "Anda akan berpindah ke \"{name}\". Progres saat ini tersimpan dengan aman.",
+    confirmSwitch: "Konfirmasi & Pindah",
+    cancel: "Batal",
+    activeBadge: "Aktif",
+    createProjectButton: "Buat Produksi",
   },
   es: {
     // Brand & System
@@ -669,6 +703,23 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     sendComment: "Enviar",
     noCommentsYet: "Aún no hay comentarios registrados para este elemento.",
     postingAs: "Publicando como",
+
+    // Project Switcher & Management
+    switchProject: "Cambiar Producción",
+    allProjects: "Todas las Producciones",
+    newProject: "Nueva Producción",
+    createProjectTitle: "Crear Nueva Producción",
+    createProjectDesc: "Configure un nuevo libro de contabilidad, presupuesto y cronograma de producción.",
+    projectName: "Nombre de la Producción",
+    projectBudget: "Presupuesto Total",
+    projectShootDays: "Duración de Rodaje (Días)",
+    projectDirector: "Director / Productor",
+    switchConfirmTitle: "¿Cambiar Contexto de Producción?",
+    switchConfirmDesc: "Está cambiando a \"{name}\". El progreso actual se guarda de forma segura.",
+    confirmSwitch: "Confirmar y Cambiar",
+    cancel: "Cancelar",
+    activeBadge: "Activo",
+    createProjectButton: "Crear Producción",
   },
   ja: {
     // Brand & System
@@ -861,6 +912,23 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     sendComment: "送信",
     noCommentsYet: "このアイテムにはまだコメントがありません。",
     postingAs: "投稿者",
+
+    // Project Switcher & Management
+    switchProject: "制作を切替",
+    allProjects: "すべての制作",
+    newProject: "新規制作",
+    createProjectTitle: "新規制作プロジェクト作成",
+    createProjectDesc: "新しい独立した制作台帳、予算、スケジュールを設定します。",
+    projectName: "制作名",
+    projectBudget: "総予算",
+    projectShootDays: "撮影期間（日数）",
+    projectDirector: "監督 / プロデューサー",
+    switchConfirmTitle: "制作コンテキストを切り替えますか？",
+    switchConfirmDesc: "「{name}」に切り替えます。現在の進捗は安全に保存されています。",
+    confirmSwitch: "確認して切替",
+    cancel: "キャンセル",
+    activeBadge: "アクティブ",
+    createProjectButton: "制作を作成",
   },
 };
 
