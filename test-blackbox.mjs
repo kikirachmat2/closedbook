@@ -480,13 +480,60 @@ async function runBlackboxTests() {
     assert("Reconciliation Result Shown", postRecon.includes("Reconciled") || postRecon.includes("Discrepancy") || postRecon.includes("Balanced") || postRecon.includes("Day"), "Result feedback visible");
     await page.screenshot({ path: path.join(ARTIFACT_DIR, "audit_11_reconciliation.png") });
 
-    // TEST 15: SYSTEM ALERT COUNT
-    console.log("\n--- TEST 15: System Alerts ---");
+    // TEST 15: SYSTEM ALERT COUNT & RE-EVALUATION ENGINE
+    console.log("\n--- TEST 15: System Alerts & Centralized Evaluator ---");
     await clickNavButton(page, "Automated Alerts", "Peringatan", "Alerts");
     await delay(600);
 
     const alertContent = await page.evaluate(() => document.body.textContent);
     assert("Alerts Tab Loads", alertContent.includes("Alert") || alertContent.includes("Peringatan") || alertContent.includes("Budget"), "Alert content visible");
+
+    // Assertion 1: Overdue Task Alert Generated after Day Advance
+    // In Test 8, project day was advanced to Day 5. Tasks due Day 4 (tsk-2, tsk-4, tsk-5) should now trigger overdue_task alert.
+    const overdueAlertFound = await page.evaluate(() => {
+      const text = document.body.textContent || "";
+      return text.includes("Overdue:") || text.includes("overdue") || text.includes("past deadline");
+    });
+    assert("Overdue Task Alert Generated", overdueAlertFound, "Overdue task alert present after day advance");
+
+    // Assertion 2: Dedup Guard — Running Advance Day or Evaluator again does NOT duplicate alert cards
+    const initialCardCount = await page.evaluate(() => {
+      return document.querySelectorAll("div[data-testid^='alert-card-']").length;
+    });
+
+    // Advance day once more
+    await clickNavButton(page, "Project Schedule", "Schedule", "Digital Call Sheet", "Call Sheet");
+    await delay(500);
+    await clickNavButton(page, "Advance Project Day", "Advance Day", "Advance Shoot Day");
+    await delay(500);
+    await clickNavButton(page, "Automated Alerts", "Peringatan", "Alerts");
+    await delay(500);
+
+    const postCardCount = await page.evaluate(() => {
+      // Check unique alert IDs
+      const cards = Array.from(document.querySelectorAll("div[data-testid^='alert-card-']"));
+      const ids = cards.map(c => c.getAttribute("data-testid"));
+      const uniqueIds = new Set(ids);
+      return { total: cards.length, unique: uniqueIds.size };
+    });
+    assert("Dedup Guard Prevents Duplicate Alerts", postCardCount.total === postCardCount.unique, "Alert IDs remain unique with no duplicate cards");
+
+    // Assertion 3: Alert Resolve Lifecycle (Acknowledge & Resolve)
+    // Click acknowledge/resolve on an active alert card
+    const didResolveAlert = await page.evaluate(() => {
+      const resolveBtn = document.querySelector("button[data-testid^='resolve-alert-btn-']");
+      if (resolveBtn) {
+        resolveBtn.click();
+        return true;
+      }
+      return false;
+    });
+    await delay(500);
+
+    const resolvedCount = await page.evaluate(() => {
+      return document.querySelectorAll("div[data-resolved='true']").length;
+    });
+    assert("Alert Resolve Lifecycle", didResolveAlert && resolvedCount > 0, "Alert successfully acknowledged and marked resolved");
 
     await page.close();
 

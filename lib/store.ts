@@ -12,6 +12,7 @@ import {
   EquipmentRental,
   EquipmentStatus,
   SystemAlert,
+  AlertSeverity,
   ContextComment,
   PocketTransfer,
   DailyReconcile,
@@ -371,39 +372,15 @@ export function useClosebookStore() {
       d.id === data.departmentId ? { ...d, spentAmount: d.spentAmount + data.amount } : d
     );
 
-    let updatedAlerts = [...alerts];
-    if (data.isMissingReceipt) {
-      updatedAlerts = [{
-        id: `alt-rec-${Date.now()}`,
-        type: "missing_receipt",
-        severity: "critical",
-        title: `Missing Receipt on ${newTx.id}`,
-        message: `Expense '${newTx.description}' ($${data.amount.toFixed(2)}) was recorded without receipt image. Auditor verification required.`,
-        timestamp: "Just now",
-        isResolved: false,
-      }, ...updatedAlerts];
-    }
-
-    if (targetDept) {
-      const newSpent = targetDept.spentAmount + data.amount;
-      const pct = (newSpent / targetDept.allocatedBudget) * 100;
-      if (pct >= 90) {
-        updatedAlerts = [{
-          id: `alt-over-${Date.now()}`,
-          type: "overspend",
-          severity: pct >= 100 ? "critical" : "warning",
-          title: `${targetDept.name} Approaching Budget Cap`,
-          message: `${targetDept.name} has reached ${pct.toFixed(1)}% of its allocated budget ($${newSpent.toLocaleString()} / $${targetDept.allocatedBudget.toLocaleString()}).`,
-          timestamp: "Just now",
-          isResolved: false,
-        }, ...updatedAlerts];
-      }
-    }
-
-    persistAlerts(updatedAlerts);
+    const nextTx = [newTx, ...transactions];
     persistDepartments(updatedDepts);
     persistPockets(updatedPockets);
-    persistTransactions([newTx, ...transactions]);
+    persistTransactions(nextTx);
+    reevaluateAlerts({
+      overrideTransactions: nextTx,
+      overrideDepts: updatedDepts,
+      overridePockets: updatedPockets,
+    });
 
     if (isWebhookSyncEnabled && webhookUrl) {
       try {
@@ -451,20 +428,36 @@ export function useClosebookStore() {
 
     persistPockets(updatedPockets);
     persistDepartments(updatedDepts);
-    persistTransactions(transactions.map((t) => (t.id === id ? { ...t, status: newStatus } : t)));
+    const nextTx = transactions.map((t) => (t.id === id ? { ...t, status: newStatus } : t));
+    persistTransactions(nextTx);
+    reevaluateAlerts({
+      overrideTransactions: nextTx,
+      overrideDepts: updatedDepts,
+      overridePockets: updatedPockets,
+    });
   };
 
   const deleteTransaction = (id: string) => {
     const tx = transactions.find((t) => t.id === id);
     if (!tx) return;
 
+    let updatedPockets = pockets;
+    let updatedDepts = departments;
     if (tx.status !== "rejected") {
-      persistPockets(pockets.map((p) => (p.id === tx.pocketId ? { ...p, balance: p.balance + tx.amount } : p)));
-      persistDepartments(departments.map((d) =>
+      updatedPockets = pockets.map((p) => (p.id === tx.pocketId ? { ...p, balance: p.balance + tx.amount } : p));
+      updatedDepts = departments.map((d) =>
         d.id === tx.departmentId ? { ...d, spentAmount: Math.max(0, d.spentAmount - tx.amount) } : d
-      ));
+      );
+      persistPockets(updatedPockets);
+      persistDepartments(updatedDepts);
     }
-    persistTransactions(transactions.filter((t) => t.id !== id));
+    const nextTx = transactions.filter((t) => t.id !== id);
+    persistTransactions(nextTx);
+    reevaluateAlerts({
+      overrideTransactions: nextTx,
+      overrideDepts: updatedDepts,
+      overridePockets: updatedPockets,
+    });
   };
 
   // ─── 2. Transfers ───────────────────────────────────────────────────────────
@@ -508,39 +501,33 @@ export function useClosebookStore() {
       notes: notes || "Operational fund disbursement",
     };
 
-    const remainingSource = sourcePocket.balance - amount;
-    if (remainingSource / sourcePocket.allocated < 0.15) {
-      persistAlerts([{
-        id: `alt-bal-${Date.now()}`,
-        type: "low_balance",
-        severity: "warning",
-        title: `Low Balance Warning on ${sourcePocket.name}`,
-        message: `${sourcePocket.name} liquid balance is now down to $${remainingSource.toLocaleString()} (<15% allocation).`,
-        timestamp: "Just now",
-        isResolved: false,
-      }, ...alerts]);
-    }
-
     persistPockets(updatedPockets);
     persistTransfers([newTransfer, ...transfers]);
+    reevaluateAlerts({ overridePockets: updatedPockets });
     return { success: true };
   };
 
   // ─── 3. Tasks ───────────────────────────────────────────────────────────────
   const toggleTask = (taskId: string) => {
-    persistTasks(tasks.map((t) => {
+    const updated = tasks.map((t) => {
       if (t.id !== taskId) return t;
       const nextStatus: TaskStatus = t.status === "todo" ? "in_progress" : t.status === "in_progress" ? "completed" : "todo";
       return { ...t, status: nextStatus };
-    }));
+    });
+    persistTasks(updated);
+    reevaluateAlerts({ overrideTasks: updated });
   };
 
   const addTask = (task: Omit<Task, "id">) => {
-    persistTasks([...tasks, { id: `tsk-${Date.now()}`, ...task }]);
+    const updated = [...tasks, { id: `tsk-${Date.now()}`, ...task }];
+    persistTasks(updated);
+    reevaluateAlerts({ overrideTasks: updated });
   };
 
   const deleteTask = (taskId: string) => {
-    persistTasks(tasks.filter((t) => t.id !== taskId));
+    const updated = tasks.filter((t) => t.id !== taskId);
+    persistTasks(updated);
+    reevaluateAlerts({ overrideTasks: updated });
   };
 
   // ─── 3b. Categories (Departments) ──────────────────────────────────────────
@@ -578,12 +565,14 @@ export function useClosebookStore() {
   const advanceShootDay = () => {
     if (callSheet.dayNumber < callSheet.totalDays) {
       const nextDay = callSheet.dayNumber + 1;
-      persistCallSheet({
+      const updatedCs: DailyCallSheet = {
         ...callSheet,
         dayNumber: nextDay,
         date: `Production Day ${nextDay} of ${callSheet.totalDays}`,
         scenesScheduled: `Scene ${nextDay * 3} & Scene ${nextDay * 3 + 1} (Scheduled for Day ${nextDay})`,
-      });
+      };
+      persistCallSheet(updatedCs);
+      reevaluateAlerts({ overrideCallSheet: updatedCs });
     }
   };
 
@@ -600,7 +589,167 @@ export function useClosebookStore() {
     persistEquipment(equipment.filter((e) => e.id !== id));
   };
 
-  // ─── 6. Alerts ──────────────────────────────────────────────────────────────
+  // ─── 6. Centralized Alerts & Evaluator Engine ───────────────────────────────
+  const reevaluateAlerts = (overrides?: {
+    overrideTasks?: Task[];
+    overrideCallSheet?: DailyCallSheet;
+    overrideDepts?: Department[];
+    overrideTransactions?: Transaction[];
+    overridePockets?: Pocket[];
+    baseAlerts?: SystemAlert[];
+  }): SystemAlert[] => {
+    const currentTasks = overrides?.overrideTasks ?? tasks;
+    const currentCs = overrides?.overrideCallSheet ?? callSheet;
+    const currentDepts = overrides?.overrideDepts ?? departments;
+    const currentTx = overrides?.overrideTransactions ?? transactions;
+    const currentPockets = overrides?.overridePockets ?? pockets;
+    let nextAlerts = overrides?.baseAlerts ? [...overrides.baseAlerts] : [...alerts];
+
+    // Helper: upsert alert or auto-resolve if no longer active
+    const upsertAlert = (alertData: Omit<SystemAlert, "timestamp"> & { timestamp?: string }) => {
+      const existingIdx = nextAlerts.findIndex((a) => a.id === alertData.id);
+      if (existingIdx >= 0) {
+        // Update in-place to prevent duplication
+        nextAlerts[existingIdx] = {
+          ...nextAlerts[existingIdx],
+          ...alertData,
+          timestamp: nextAlerts[existingIdx].timestamp || "Just now",
+        };
+      } else {
+        nextAlerts.unshift({
+          ...alertData,
+          timestamp: alertData.timestamp || "Just now",
+        });
+      }
+    };
+
+    const autoResolveAlert = (alertId: string) => {
+      const existingIdx = nextAlerts.findIndex((a) => a.id === alertId);
+      if (existingIdx >= 0 && !nextAlerts[existingIdx].isResolved) {
+        nextAlerts[existingIdx] = {
+          ...nextAlerts[existingIdx],
+          isResolved: true,
+        };
+      }
+    };
+
+    // Rule 1: OVERDUE_TASK
+    // Check all tasks with due dates formatted as "Day X"
+    currentTasks.forEach((task) => {
+      const alertId = `alt-task-${task.id}`;
+      if (task.status === "completed") {
+        autoResolveAlert(alertId);
+        return;
+      }
+
+      const match = task.dueDate.match(/Day\s*(\d+)/i);
+      if (match) {
+        const taskDueDay = parseInt(match[1], 10);
+        const dayDiff = currentCs.dayNumber - taskDueDay;
+
+        if (dayDiff > 0) {
+          const isCritical = dayDiff >= 2;
+          const severity: AlertSeverity = isCritical ? "critical" : "warning";
+          const title = isCritical
+            ? `Critical Overdue: ${task.title}`
+            : `Task Overdue: ${task.title}`;
+          const message = isCritical
+            ? `Task '${task.title}' assigned to ${task.assignee} is ${dayDiff} days past deadline (due Day ${taskDueDay}). Immediate escalation required.`
+            : `Task '${task.title}' assigned to ${task.assignee} was due on Day ${taskDueDay} (1 day overdue).`;
+
+          upsertAlert({
+            id: alertId,
+            type: "overdue_task",
+            severity,
+            title,
+            message,
+            isResolved: false,
+            entityId: task.id,
+          });
+        } else {
+          autoResolveAlert(alertId);
+        }
+      }
+    });
+
+    // Rule 2: OVERSPEND_WARN per category
+    currentDepts.forEach((dept) => {
+      const alertId = `alt-over-${dept.id}`;
+      if (dept.allocatedBudget > 0) {
+        const pct = (dept.spentAmount / dept.allocatedBudget) * 100;
+        if (pct >= 90) {
+          const severity: AlertSeverity = pct >= 100 ? "critical" : "warning";
+          upsertAlert({
+            id: alertId,
+            type: "overspend",
+            severity,
+            title: `${dept.name} Approaching Budget Cap`,
+            message: `${dept.name} has consumed ${pct.toFixed(1)}% of its allocated budget ($${dept.spentAmount.toLocaleString()} / $${dept.allocatedBudget.toLocaleString()}).`,
+            isResolved: false,
+            entityId: dept.id,
+          });
+        } else {
+          autoResolveAlert(alertId);
+        }
+      }
+    });
+
+    // Rule 3: MISSING_RECEIPT per transaction
+    currentTx.forEach((tx) => {
+      const alertId = `alt-rec-${tx.id}`;
+      if (tx.isMissingReceipt && tx.status !== "rejected") {
+        upsertAlert({
+          id: alertId,
+          type: "missing_receipt",
+          severity: "critical",
+          title: `Missing Receipt on ${tx.id}`,
+          message: `Expense '${tx.description}' ($${tx.amount.toFixed(2)}) recorded without receipt image. Auditor verification required.`,
+          isResolved: false,
+          entityId: tx.id,
+        });
+      } else {
+        autoResolveAlert(alertId);
+      }
+    });
+
+    // Rule 4: LOW_BALANCE per pocket
+    currentPockets.forEach((p) => {
+      const alertId = `alt-bal-${p.id}`;
+      if (p.allocated > 0 && p.balance / p.allocated < 0.15) {
+        upsertAlert({
+          id: alertId,
+          type: "low_balance",
+          severity: "warning",
+          title: `Low Balance Warning on ${p.name}`,
+          message: `${p.name} liquid balance is now down to $${p.balance.toLocaleString()} (<15% allocation).`,
+          isResolved: false,
+          entityId: p.id,
+        });
+      } else {
+        autoResolveAlert(alertId);
+      }
+    });
+
+    // Rule 5: Clean up alerts for deleted transactions/tasks/pockets
+    nextAlerts.forEach((a) => {
+      if (a.type === "overdue_task" && a.entityId) {
+        const exists = currentTasks.some((t) => t.id === a.entityId);
+        if (!exists) a.isResolved = true;
+      }
+      if (a.type === "missing_receipt" && a.entityId) {
+        const exists = currentTx.some((t) => t.id === a.entityId);
+        if (!exists) a.isResolved = true;
+      }
+      if (a.type === "low_balance" && a.entityId) {
+        const exists = currentPockets.some((p) => p.id === a.entityId);
+        if (!exists) a.isResolved = true;
+      }
+    });
+
+    persistAlerts(nextAlerts);
+    return nextAlerts;
+  };
+
   const resolveAlert = (alertId: string) => {
     persistAlerts(alerts.map((a) => (a.id === alertId ? { ...a, isResolved: true } : a)));
   };
@@ -880,6 +1029,7 @@ export function useClosebookStore() {
     deleteEquipment,
     // Alerts
     resolveAlert,
+    reevaluateAlerts,
     // Comments
     addComment,
     // Reconciliation

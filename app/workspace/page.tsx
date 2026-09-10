@@ -1832,45 +1832,78 @@ export default function WorkspacePage() {
                 </p>
               </div>
 
-              <div className="space-y-3">
-                {store.alerts.map((alert) => (
-                  <div
-                    key={alert.id}
-                    className={`surface-panel p-5 flex items-start gap-4 transition-all ${
-                      alert.isResolved ? "opacity-40" : ""
-                    }`}
-                  >
-                    <AlertTriangle
-                      className={`w-5 h-5 shrink-0 mt-0.5 ${
-                        alert.severity === "critical" ? "text-[var(--color-primary,#ff1e42)]" : "text-amber-400"
+              <div className="space-y-3" data-testid="alerts-container">
+                {store.alerts.map((alert) => {
+                  const isCrit = alert.severity === "critical";
+                  const isWarn = alert.severity === "warning";
+                  return (
+                    <div
+                      key={alert.id}
+                      data-testid={`alert-card-${alert.id}`}
+                      data-severity={alert.severity}
+                      data-resolved={alert.isResolved ? "true" : "false"}
+                      className={`surface-panel p-5 flex items-start gap-4 transition-all border ${
+                        alert.isResolved
+                          ? "opacity-40 border-white/[0.04]"
+                          : isCrit
+                          ? "border-[var(--color-primary,#ff1e42)]/40 bg-[var(--color-primary,#ff1e42)]/[0.03]"
+                          : isWarn
+                          ? "border-amber-500/40 bg-amber-500/[0.03]"
+                          : "border-sky-500/40 bg-sky-500/[0.03]"
                       }`}
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <h3 className="text-sm font-medium text-[#fdfdfd]">{alert.title}</h3>
-                        <span className="text-[11px] font-mono text-[#737373]">{alert.timestamp}</span>
+                    >
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                          isCrit
+                            ? "bg-[var(--color-primary,#ff1e42)]/15 text-[var(--color-primary,#ff1e42)]"
+                            : isWarn
+                            ? "bg-amber-500/15 text-amber-400"
+                            : "bg-sky-500/15 text-sky-400"
+                        }`}
+                      >
+                        <AlertTriangle className="w-4 h-4" />
                       </div>
-                      <p className="text-xs text-[#a3a3a3] leading-relaxed mb-3">{alert.message}</p>
-                      <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
-                        <span className="text-[10px] font-mono uppercase text-[#737373]">
-                          Trigger: Autonomous Engine
-                        </span>
-                        {!alert.isResolved ? (
-                          <button
-                            onClick={() => store.resolveAlert(alert.id)}
-                            className="btn-ghost-pill text-xs min-h-[38px] px-3.5 text-[var(--color-primary,#ff1e42)] border-[var(--color-primary,#ff1e42)]/30"
-                          >
-                            {t("acknowledgeResolve")}
-                          </button>
-                        ) : (
-                          <span className="text-xs text-[#10b981] flex items-center gap-1.5 font-mono font-medium">
-                            <CheckCircle2 className="w-4 h-4" /> {t("resolved")}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1.5 gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <h3 className="text-sm font-semibold text-[#fdfdfd] truncate">{alert.title}</h3>
+                            <span
+                              className={`text-[9px] font-mono uppercase px-2 py-0.5 rounded-full font-bold shrink-0 ${
+                                isCrit
+                                  ? "bg-[var(--color-primary,#ff1e42)] text-white"
+                                  : isWarn
+                                  ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                                  : "bg-sky-500/20 text-sky-400 border border-sky-500/30"
+                              }`}
+                            >
+                              {alert.severity}
+                            </span>
+                          </div>
+                          <span className="text-[11px] font-mono text-[#737373] shrink-0">{alert.timestamp}</span>
+                        </div>
+                        <p className="text-xs text-[#a3a3a3] leading-relaxed mb-3">{alert.message}</p>
+                        <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
+                          <span className="text-[10px] font-mono uppercase text-[#737373]">
+                            Type: {alert.type.replace(/_/g, " ")}
                           </span>
-                        )}
+                          {!alert.isResolved ? (
+                            <button
+                              onClick={() => store.resolveAlert(alert.id)}
+                              className="btn-ghost-pill text-xs min-h-[38px] px-3.5 text-[var(--color-primary,#ff1e42)] border-[var(--color-primary,#ff1e42)]/30 hover:bg-[var(--color-primary,#ff1e42)]/10"
+                              data-testid={`resolve-alert-btn-${alert.id}`}
+                            >
+                              {t("acknowledgeResolve")}
+                            </button>
+                          ) : (
+                            <span className="text-xs text-[#10b981] flex items-center gap-1.5 font-mono font-medium">
+                              <CheckCircle2 className="w-4 h-4" /> {t("resolved")}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

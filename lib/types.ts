@@ -5,7 +5,7 @@ export type TaskPriority = "low" | "medium" | "high" | "urgent";
 export type TaskStatus = "todo" | "in_progress" | "completed";
 export type EquipmentStatus = "rented" | "on_set" | "returned" | "damaged";
 export type AlertSeverity = "info" | "warning" | "critical";
-export type AlertType = "overspend" | "low_balance" | "missing_receipt" | "pending_approval" | "daily_reconcile";
+export type AlertType = "overspend" | "low_balance" | "missing_receipt" | "pending_approval" | "daily_reconcile" | "overdue_task";
 export type ReconcileStatus = "open" | "balanced" | "discrepancy" | "signed_off";
 
 export interface Project {
@@ -116,6 +116,7 @@ export interface SystemAlert {
   message: string;
   timestamp: string;
   isResolved: boolean;
+  entityId?: string;
 }
 
 export interface ContextComment {
