@@ -535,6 +535,60 @@ async function runBlackboxTests() {
     });
     assert("Alert Resolve Lifecycle", didResolveAlert && resolvedCount > 0, "Alert successfully acknowledged and marked resolved");
 
+    // Assertion 4: Rule 5 — Orphan Alert Cleanup on Task Deletion
+    // Navigate to Tasks, delete a task that has an active overdue alert (tsk-5 due Day 4, now Day 6 = 2 days overdue → critical).
+    // Then return to Alerts and verify the corresponding alert card is auto-resolved (isResolved=true), not left as an orphan active alert.
+    await clickNavButton(page, "Department Tasks", "Tasks");
+    await delay(600);
+
+    // Capture the overdue task ID before deletion (find task card whose title matches tsk-5 seed task)
+    const deletedTaskAlertId = await page.evaluate(() => {
+      // tsk-5: "Confirm vendor contract for staging and power backup"
+      const allCards = Array.from(document.querySelectorAll("button[data-testid^='task-delete-btn-']"));
+      // Find a delete button whose closest task card mentions the vendor contract task
+      const card = allCards.find((btn) => {
+        const parent = btn.closest("[data-testid^='task-card-']");
+        return parent && (parent.textContent || "").includes("vendor contract");
+      });
+      if (card) {
+        const testId = card.getAttribute("data-testid") || "";
+        const taskId = testId.replace("task-delete-btn-", "");
+        card.click();
+        return taskId;
+      }
+      // Fallback: delete any task with an active overdue alert card visible
+      const anyDeleteBtn = allCards[0];
+      if (anyDeleteBtn) {
+        const testId = anyDeleteBtn.getAttribute("data-testid") || "";
+        const taskId = testId.replace("task-delete-btn-", "");
+        anyDeleteBtn.click();
+        return taskId;
+      }
+      return null;
+    });
+    await delay(800);
+
+    if (deletedTaskAlertId) {
+      // Return to Alerts tab and check the overdue alert for the deleted task is resolved
+      await clickNavButton(page, "Automated Alerts", "Peringatan", "Alerts");
+      await delay(600);
+
+      const orphanAlertStatus = await page.evaluate((taskId) => {
+        const alertCard = document.querySelector(`div[data-testid="alert-card-alt-task-${taskId}"]`);
+        if (!alertCard) return "not_found"; // alert removed entirely — also acceptable
+        return alertCard.getAttribute("data-resolved"); // "true" = auto-resolved, "false" = orphan bug
+      }, deletedTaskAlertId);
+
+      assert(
+        "Rule 5: Orphan Alert Auto-Resolved on Task Deletion",
+        orphanAlertStatus === "true" || orphanAlertStatus === "not_found",
+        `Alert for deleted task should be resolved or absent, got: ${orphanAlertStatus}`
+      );
+    } else {
+      // No delete button found — may indicate tasks tab structure differs, skip gracefully
+      assert("Rule 5: Orphan Alert Auto-Resolved on Task Deletion", false, "Could not find task delete button to trigger Rule 5");
+    }
+
     await page.close();
 
     // =========================================================================

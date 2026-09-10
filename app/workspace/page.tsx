@@ -1396,6 +1396,7 @@ export default function WorkspacePage() {
                       .map((task) => (
                         <div
                           key={task.id}
+                          data-testid={`task-card-${task.id}`}
                           className="surface-overlay p-4 hover:border-white/[0.15] transition-all relative group"
                         >
                           <div className="flex items-center justify-between mb-2">
@@ -1450,6 +1451,7 @@ export default function WorkspacePage() {
                                 onClick={() => store.deleteTask(task.id)}
                                 className="opacity-0 group-hover:opacity-100 text-[#737373] hover:text-[var(--color-primary,#ff1e42)] transition-opacity"
                                 title="Delete task"
+                                data-testid={`task-delete-btn-${task.id}`}
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -1474,6 +1476,7 @@ export default function WorkspacePage() {
                       .map((task) => (
                         <div
                           key={task.id}
+                          data-testid={`task-card-${task.id}`}
                           className="surface-overlay p-4 hover:border-white/[0.15] transition-all relative group"
                         >
                           <div className="flex items-center justify-between mb-2">
@@ -1528,6 +1531,7 @@ export default function WorkspacePage() {
                                 onClick={() => store.deleteTask(task.id)}
                                 className="opacity-0 group-hover:opacity-100 text-[#737373] hover:text-[var(--color-primary,#ff1e42)] transition-opacity"
                                 title="Delete task"
+                                data-testid={`task-delete-btn-${task.id}`}
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -1552,6 +1556,7 @@ export default function WorkspacePage() {
                       .map((task) => (
                         <div
                           key={task.id}
+                          data-testid={`task-card-${task.id}`}
                           className="surface-overlay p-4 opacity-60 hover:opacity-100 transition-all relative group"
                         >
                           <div className="flex items-center justify-between mb-2">
@@ -1604,6 +1609,7 @@ export default function WorkspacePage() {
                                 onClick={() => store.deleteTask(task.id)}
                                 className="opacity-0 group-hover:opacity-100 text-[#737373] hover:text-[var(--color-primary,#ff1e42)] transition-opacity"
                                 title="Delete task"
+                                data-testid={`task-delete-btn-${task.id}`}
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
