@@ -242,8 +242,9 @@ export default function WorkspacePage() {
   const [catName, setCatName] = useState("");
   const [catCode, setCatCode] = useState("");
   const [catBudget, setCatBudget] = useState("");
-  const [catColor, setCatColor] = useState("#3b82f6");
+  const [catColor, setCatColor] = useState("#14b8a6");
   const [catError, setCatError] = useState<string | null>(null);
+  const [catBannerError, setCatBannerError] = useState<string | null>(null);
 
   // Form states - Call Sheet Edit
   const [csCallTime, setCsCallTime] = useState(store.callSheet.callTime);
@@ -389,7 +390,7 @@ export default function WorkspacePage() {
     setCatName("");
     setCatCode("");
     setCatBudget("");
-    setCatColor("#3b82f6");
+    setCatColor("#14b8a6");
     setCatError(null);
     setIsCategoryModalOpen(true);
   };
@@ -439,10 +440,12 @@ export default function WorkspacePage() {
   };
 
   const handleDeleteCategory = (deptId: string) => {
+    setCatBannerError(null);
     if (confirm(t("confirmDeleteCategory"))) {
       const res = store.deleteDepartment(deptId);
       if (!res.success) {
-        alert(res.error || "Cannot delete category");
+        setCatBannerError(res.error || "Cannot delete category with associated transactions");
+        setTimeout(() => setCatBannerError(null), 5000);
       }
     }
   };
@@ -911,6 +914,13 @@ export default function WorkspacePage() {
                     </button>
                   </div>
                 </div>
+
+                {catBannerError && (
+                  <div className="mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
+                    <span>{catBannerError}</span>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
                   {store.departments.map((dept) => {
@@ -2760,7 +2770,7 @@ export default function WorkspacePage() {
                   />
                   <span className="text-xs font-mono text-[#a3a3a3] uppercase">{catColor}</span>
                   <div className="flex gap-1.5 ml-auto">
-                    {["#ff1e42", "#10b981", "#3b82f6", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4"].map((c) => (
+                    {["#14b8a6", "#8b5cf6", "#38bdf8", "#94a3b8", "#06b6d4", "#a855f7", "#ec4899"].map((c) => (
                       <button
                         key={c}
                         type="button"

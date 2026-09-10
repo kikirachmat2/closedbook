@@ -35,10 +35,10 @@ const INITIAL_PROJECT: Project = {
 };
 
 const INITIAL_DEPARTMENTS: Department[] = [
-  { id: "cat-ops", name: "Operations & Logistics", code: "OPS", allocatedBudget: 35000, spentAmount: 14650, color: "#10b981" },
-  { id: "cat-crt", name: "Production & Creative", code: "CRT", allocatedBudget: 45000, spentAmount: 33650, color: "#ff1e42" },
-  { id: "cat-vnd", name: "Vendors & External Services", code: "VND", allocatedBudget: 25000, spentAmount: 10350, color: "#3b82f6" },
-  { id: "cat-adm", name: "Administrative & Float", code: "ADM", allocatedBudget: 15000, spentAmount: 4000, color: "#f59e0b" },
+  { id: "cat-ops", name: "Operations & Logistics", code: "OPS", allocatedBudget: 35000, spentAmount: 14650, color: "#14b8a6" },
+  { id: "cat-crt", name: "Production & Creative", code: "CRT", allocatedBudget: 45000, spentAmount: 33650, color: "#8b5cf6" },
+  { id: "cat-vnd", name: "Vendors & External Services", code: "VND", allocatedBudget: 25000, spentAmount: 10350, color: "#38bdf8" },
+  { id: "cat-adm", name: "Administrative & Float", code: "ADM", allocatedBudget: 15000, spentAmount: 4000, color: "#94a3b8" },
 ];
 
 const INITIAL_POCKETS: Pocket[] = [
