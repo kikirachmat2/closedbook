@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Project,
   Department,
@@ -218,8 +218,18 @@ const INITIAL_RECONCILIATIONS: DailyReconcile[] = [
   },
 ];
 
+// ─── Storage Key Helper (Namespaced Context) ──────────────────────────────────
+export const getProjectStorageKey = (projectId: string, slice: string) =>
+  `closebook_${projectId}_${slice}`;
+
 export function useClosebookStore() {
   const [project, setProject] = useState<Project>(INITIAL_PROJECT);
+  const activeProjectIdRef = useRef<string>(INITIAL_PROJECT.id);
+
+  useEffect(() => {
+    activeProjectIdRef.current = project.id;
+  }, [project.id]);
+
   const [departments, setDepartments] = useState<Department[]>(INITIAL_DEPARTMENTS);
   const [pockets, setPockets] = useState<Pocket[]>(INITIAL_POCKETS);
   const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
@@ -248,92 +258,153 @@ export function useClosebookStore() {
   const [isWebhookSyncEnabled, setIsWebhookSyncEnabled] = useState<boolean>(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load from LocalStorage
+  // Load from LocalStorage (with One-Time Idempotent Migration & Project Scoping)
   useEffect(() => {
     try {
-      const savedTx = localStorage.getItem("closebook_tx");
-      if (savedTx) setTransactions(JSON.parse(savedTx));
-      const savedPockets = localStorage.getItem("closebook_pockets");
-      if (savedPockets) setPockets(JSON.parse(savedPockets));
-      const savedTransfers = localStorage.getItem("closebook_transfers");
-      if (savedTransfers) setTransfers(JSON.parse(savedTransfers));
-      const savedTasks = localStorage.getItem("closebook_tasks");
-      if (savedTasks) setTasks(JSON.parse(savedTasks));
-      const savedDepts = localStorage.getItem("closebook_depts");
-      if (savedDepts) setDepartments(JSON.parse(savedDepts));
-      const savedCallSheet = localStorage.getItem("closebook_callsheet");
-      if (savedCallSheet) setCallSheet(JSON.parse(savedCallSheet));
-      const savedEquipment = localStorage.getItem("closebook_equipment");
-      if (savedEquipment) setEquipment(JSON.parse(savedEquipment));
-      const savedAlerts = localStorage.getItem("closebook_alerts");
-      if (savedAlerts) setAlerts(JSON.parse(savedAlerts));
-      const savedComments = localStorage.getItem("closebook_comments");
-      if (savedComments) setComments(JSON.parse(savedComments));
+      const MIGRATION_FLAG = "closebook_migration_v2_done";
+      const isMigrated = localStorage.getItem(MIGRATION_FLAG) === "true";
+
+      const legacyMap = [
+        { legacy: "closebook_tx", slice: "tx" },
+        { legacy: "closebook_pockets", slice: "pockets" },
+        { legacy: "closebook_transfers", slice: "transfers" },
+        { legacy: "closebook_tasks", slice: "tasks" },
+        { legacy: "closebook_depts", slice: "depts" },
+        { legacy: "closebook_callsheet", slice: "callsheet" },
+        { legacy: "closebook_equipment", slice: "equipment" },
+        { legacy: "closebook_alerts", slice: "alerts" },
+        { legacy: "closebook_comments", slice: "comments" },
+        { legacy: "closebook_reconciliations", slice: "reconciliations" },
+        { legacy: "closebook_notes", slice: "notes" },
+      ];
+
+      // One-time idempotent migration: only runs once, guarded by MIGRATION_FLAG
+      // Pre-existing legacy keys are left intact as safety net / fallback backup
+      if (!isMigrated) {
+        for (const { legacy, slice } of legacyMap) {
+          const legacyVal = localStorage.getItem(legacy);
+          const targetKey = getProjectStorageKey("proj-001", slice);
+          if (legacyVal && !localStorage.getItem(targetKey)) {
+            localStorage.setItem(targetKey, legacyVal);
+          }
+        }
+        localStorage.setItem(MIGRATION_FLAG, "true");
+      }
+
+      // Load Projects and identify active project
+      const savedProjects = localStorage.getItem("closebook_projects");
+      let activeId = "proj-001";
+      if (savedProjects) {
+        try {
+          const parsedProjects: ProjectShell[] = JSON.parse(savedProjects);
+          if (Array.isArray(parsedProjects) && parsedProjects.length > 0) {
+            setProjects(parsedProjects);
+            const active = parsedProjects.find((p) => p.isActive) || parsedProjects[0];
+            activeId = active.id;
+            setProject((prev) => ({
+              ...prev,
+              id: active.id,
+              name: active.name,
+              slug: active.slug,
+              totalBudget: active.totalBudget,
+              shootDays: active.shootDays,
+              startDate: active.startDate,
+              director: active.director,
+            }));
+          }
+        } catch {}
+      }
+      activeProjectIdRef.current = activeId;
+
+      // Helper to load slice with fallback hierarchy (Scoped -> Legacy for proj-001 -> Initial)
+      const loadSlice = <T>(slice: string, legacyKey: string, fallback: T): T => {
+        const scopedKey = getProjectStorageKey(activeId, slice);
+        const scopedVal = localStorage.getItem(scopedKey);
+        if (scopedVal) {
+          try { return JSON.parse(scopedVal); } catch {}
+        }
+        if (activeId === "proj-001") {
+          const legacyVal = localStorage.getItem(legacyKey);
+          if (legacyVal) {
+            try { return JSON.parse(legacyVal); } catch {}
+          }
+        }
+        return fallback;
+      };
+
+      setTransactions(loadSlice("tx", "closebook_tx", INITIAL_TRANSACTIONS));
+      setPockets(loadSlice("pockets", "closebook_pockets", INITIAL_POCKETS));
+      setTransfers(loadSlice("transfers", "closebook_transfers", INITIAL_TRANSFERS));
+      setTasks(loadSlice("tasks", "closebook_tasks", INITIAL_TASKS));
+      setDepartments(loadSlice("depts", "closebook_depts", INITIAL_DEPARTMENTS));
+      setCallSheet(loadSlice("callsheet", "closebook_callsheet", INITIAL_CALLSHEET));
+      setEquipment(loadSlice("equipment", "closebook_equipment", INITIAL_EQUIPMENT));
+      setAlerts(loadSlice("alerts", "closebook_alerts", INITIAL_ALERTS));
+      setComments(loadSlice("comments", "closebook_comments", INITIAL_COMMENTS));
+      setReconciliations(loadSlice("reconciliations", "closebook_reconciliations", INITIAL_RECONCILIATIONS));
+      setNotes(loadSlice("notes", "closebook_notes", []));
+
       const savedWebhook = localStorage.getItem("closebook_webhook_url");
       if (savedWebhook) setWebhookUrl(savedWebhook);
       const savedSync = localStorage.getItem("closebook_webhook_sync");
       if (savedSync) setIsWebhookSyncEnabled(savedSync === "true");
-      const savedReconciles = localStorage.getItem("closebook_reconciliations");
-      if (savedReconciles) setReconciliations(JSON.parse(savedReconciles));
-      const savedProjects = localStorage.getItem("closebook_projects");
-      if (savedProjects) setProjects(JSON.parse(savedProjects));
-      const savedNotes = localStorage.getItem("closebook_notes");
-      if (savedNotes) setNotes(JSON.parse(savedNotes));
     } catch {
       // fallback to initial
     }
     setIsLoaded(true);
   }, []);
 
-  // ─── Persist Helpers ────────────────────────────────────────────────────────
+  // ─── Persist Helpers (Project-Scoped) ───────────────────────────────────────
+  const getActivePid = () => activeProjectIdRef.current || project.id || "proj-001";
+
   const persistTransactions = (newTx: Transaction[]) => {
     setTransactions(newTx);
-    try { localStorage.setItem("closebook_tx", JSON.stringify(newTx)); } catch {}
+    try { localStorage.setItem(getProjectStorageKey(getActivePid(), "tx"), JSON.stringify(newTx)); } catch {}
   };
 
   const persistPockets = (newPockets: Pocket[]) => {
     setPockets(newPockets);
-    try { localStorage.setItem("closebook_pockets", JSON.stringify(newPockets)); } catch {}
+    try { localStorage.setItem(getProjectStorageKey(getActivePid(), "pockets"), JSON.stringify(newPockets)); } catch {}
   };
 
   const persistTransfers = (newTransfers: PocketTransfer[]) => {
     setTransfers(newTransfers);
-    try { localStorage.setItem("closebook_transfers", JSON.stringify(newTransfers)); } catch {}
+    try { localStorage.setItem(getProjectStorageKey(getActivePid(), "transfers"), JSON.stringify(newTransfers)); } catch {}
   };
 
   const persistTasks = (newTasks: Task[]) => {
     setTasks(newTasks);
-    try { localStorage.setItem("closebook_tasks", JSON.stringify(newTasks)); } catch {}
+    try { localStorage.setItem(getProjectStorageKey(getActivePid(), "tasks"), JSON.stringify(newTasks)); } catch {}
   };
 
   const persistDepartments = (newDepts: Department[]) => {
     setDepartments(newDepts);
-    try { localStorage.setItem("closebook_depts", JSON.stringify(newDepts)); } catch {}
+    try { localStorage.setItem(getProjectStorageKey(getActivePid(), "depts"), JSON.stringify(newDepts)); } catch {}
   };
 
   const persistCallSheet = (newCallSheet: DailyCallSheet) => {
     setCallSheet(newCallSheet);
-    try { localStorage.setItem("closebook_callsheet", JSON.stringify(newCallSheet)); } catch {}
+    try { localStorage.setItem(getProjectStorageKey(getActivePid(), "callsheet"), JSON.stringify(newCallSheet)); } catch {}
   };
 
   const persistEquipment = (newEquipment: EquipmentRental[]) => {
     setEquipment(newEquipment);
-    try { localStorage.setItem("closebook_equipment", JSON.stringify(newEquipment)); } catch {}
+    try { localStorage.setItem(getProjectStorageKey(getActivePid(), "equipment"), JSON.stringify(newEquipment)); } catch {}
   };
 
   const persistAlerts = (newAlerts: SystemAlert[]) => {
     setAlerts(newAlerts);
-    try { localStorage.setItem("closebook_alerts", JSON.stringify(newAlerts)); } catch {}
+    try { localStorage.setItem(getProjectStorageKey(getActivePid(), "alerts"), JSON.stringify(newAlerts)); } catch {}
   };
 
   const persistComments = (newComments: ContextComment[]) => {
     setComments(newComments);
-    try { localStorage.setItem("closebook_comments", JSON.stringify(newComments)); } catch {}
+    try { localStorage.setItem(getProjectStorageKey(getActivePid(), "comments"), JSON.stringify(newComments)); } catch {}
   };
 
   const persistReconciliations = (newRecs: DailyReconcile[]) => {
     setReconciliations(newRecs);
-    try { localStorage.setItem("closebook_reconciliations", JSON.stringify(newRecs)); } catch {}
+    try { localStorage.setItem(getProjectStorageKey(getActivePid(), "reconciliations"), JSON.stringify(newRecs)); } catch {}
   };
 
   const persistProjects = (newProjects: ProjectShell[]) => {
@@ -343,7 +414,7 @@ export function useClosebookStore() {
 
   const persistNotes = (newNotes: ProjectNote[]) => {
     setNotes(newNotes);
-    try { localStorage.setItem("closebook_notes", JSON.stringify(newNotes)); } catch {}
+    try { localStorage.setItem(getProjectStorageKey(getActivePid(), "notes"), JSON.stringify(newNotes)); } catch {}
   };
 
   // ─── 1. Transactions ────────────────────────────────────────────────────────
@@ -890,27 +961,145 @@ export function useClosebookStore() {
       createdAt: new Date().toISOString(),
       isActive: false,
     };
+
+    // Initialize sensible fresh defaults for the new project
+    const defaultDepts: Department[] = [
+      { id: `dept-${id}-1`, name: "Camera & Lighting", code: "CAM", allocatedBudget: Math.round(totalBudget * 0.35), spentAmount: 0, color: "#3b82f6" },
+      { id: `dept-${id}-2`, name: "Art & Production Design", code: "ART", allocatedBudget: Math.round(totalBudget * 0.25), spentAmount: 0, color: "#10b981" },
+      { id: `dept-${id}-3`, name: "Catering & Craft Services", code: "CAT", allocatedBudget: Math.round(totalBudget * 0.15), spentAmount: 0, color: "#f59e0b" },
+      { id: `dept-${id}-4`, name: "Sound & Post-Audio", code: "SND", allocatedBudget: Math.round(totalBudget * 0.15), spentAmount: 0, color: "#8b5cf6" },
+      { id: `dept-${id}-5`, name: "Locations & Logistics", code: "LOC", allocatedBudget: Math.round(totalBudget * 0.10), spentAmount: 0, color: "#ec4899" },
+    ];
+    const defaultPockets: Pocket[] = [
+      { id: `poc-${id}-1`, name: "Production Petty Cash", type: "operational_pocket", custodian: "Devon Reed (UPM)", balance: Math.round(totalBudget * 0.1), allocated: Math.round(totalBudget * 0.1) },
+      { id: `poc-${id}-2`, name: "Locations Emergency Cash", type: "field_cash", custodian: "Maya Lin (Location Mgr)", balance: Math.round(totalBudget * 0.05), allocated: Math.round(totalBudget * 0.05) },
+      { id: `poc-${id}-3`, name: "Master Production Vault", type: "master_vault", custodian: "Elena Rostova (LP)", balance: Math.round(totalBudget * 0.85), allocated: Math.round(totalBudget * 0.85) },
+    ];
+    const defaultCallSheet: DailyCallSheet = {
+      id: `cs-${id}-1`,
+      dayNumber: 1,
+      totalDays: shootDays,
+      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      callTime: "07:00 AM",
+      estimatedWrap: "19:00 PM",
+      locationName: "Main Production Location",
+      locationAddress: "Studio A, Production Base",
+      weather: "Clear / 25°C",
+      scenesScheduled: "Day 1 Principal Photography Setup & Key Scenes",
+      emergencyContact: "Production Office: (555) 019-2834",
+      directorNotes: `Welcome to Day 1 of ${name}! Safety briefing at call time.`,
+    };
+
+    try {
+      localStorage.setItem(getProjectStorageKey(id, "depts"), JSON.stringify(defaultDepts));
+      localStorage.setItem(getProjectStorageKey(id, "pockets"), JSON.stringify(defaultPockets));
+      localStorage.setItem(getProjectStorageKey(id, "callsheet"), JSON.stringify(defaultCallSheet));
+      localStorage.setItem(getProjectStorageKey(id, "tx"), JSON.stringify([]));
+      localStorage.setItem(getProjectStorageKey(id, "transfers"), JSON.stringify([]));
+      localStorage.setItem(getProjectStorageKey(id, "tasks"), JSON.stringify([]));
+      localStorage.setItem(getProjectStorageKey(id, "equipment"), JSON.stringify([]));
+      localStorage.setItem(getProjectStorageKey(id, "alerts"), JSON.stringify([]));
+      localStorage.setItem(getProjectStorageKey(id, "comments"), JSON.stringify([]));
+      localStorage.setItem(getProjectStorageKey(id, "reconciliations"), JSON.stringify([]));
+      localStorage.setItem(getProjectStorageKey(id, "notes"), JSON.stringify([]));
+    } catch {}
+
     persistProjects([...projects, newShell]);
     return id;
   };
 
-  const switchProject = (projectId: string) => {
-    // Mark selected as active; rest inactive
-    persistProjects(projects.map((p) => ({ ...p, isActive: p.id === projectId })));
-    // Update the active project display info from shell
-    const shell = projects.find((p) => p.id === projectId);
-    if (shell) {
-      setProject((prev) => ({
-        ...prev,
-        id: shell.id,
-        name: shell.name,
-        slug: shell.slug,
-        totalBudget: shell.totalBudget,
-        shootDays: shell.shootDays,
-        startDate: shell.startDate,
-        director: shell.director,
+  const switchProject = (targetProjectId: string) => {
+    if (targetProjectId === project.id) return;
+    const targetShell = projects.find((p) => p.id === targetProjectId);
+    if (!targetShell) return;
+
+    // 1. Flush/save current in-memory state to current active project storage keys
+    const curId = activeProjectIdRef.current || project.id;
+    try {
+      localStorage.setItem(getProjectStorageKey(curId, "tx"), JSON.stringify(transactions));
+      localStorage.setItem(getProjectStorageKey(curId, "pockets"), JSON.stringify(pockets));
+      localStorage.setItem(getProjectStorageKey(curId, "transfers"), JSON.stringify(transfers));
+      localStorage.setItem(getProjectStorageKey(curId, "tasks"), JSON.stringify(tasks));
+      localStorage.setItem(getProjectStorageKey(curId, "depts"), JSON.stringify(departments));
+      localStorage.setItem(getProjectStorageKey(curId, "callsheet"), JSON.stringify(callSheet));
+      localStorage.setItem(getProjectStorageKey(curId, "equipment"), JSON.stringify(equipment));
+      localStorage.setItem(getProjectStorageKey(curId, "alerts"), JSON.stringify(alerts));
+      localStorage.setItem(getProjectStorageKey(curId, "comments"), JSON.stringify(comments));
+      localStorage.setItem(getProjectStorageKey(curId, "reconciliations"), JSON.stringify(reconciliations));
+      localStorage.setItem(getProjectStorageKey(curId, "notes"), JSON.stringify(notes));
+    } catch {}
+
+    // 2. Load target project's data from localStorage (or fallback to defaults if proj-001)
+    try {
+      const loadSlice = <T>(slice: string, fallback: T): T => {
+        const item = localStorage.getItem(getProjectStorageKey(targetProjectId, slice));
+        if (item) {
+          try { return JSON.parse(item); } catch {}
+        }
+        return fallback;
+      };
+
+      setTransactions(loadSlice("tx", targetProjectId === "proj-001" ? INITIAL_TRANSACTIONS : []));
+      setPockets(loadSlice("pockets", targetProjectId === "proj-001" ? INITIAL_POCKETS : []));
+      setTransfers(loadSlice("transfers", targetProjectId === "proj-001" ? INITIAL_TRANSFERS : []));
+      setTasks(loadSlice("tasks", targetProjectId === "proj-001" ? INITIAL_TASKS : []));
+      setDepartments(loadSlice("depts", targetProjectId === "proj-001" ? INITIAL_DEPARTMENTS : []));
+      setCallSheet(loadSlice("callsheet", targetProjectId === "proj-001" ? INITIAL_CALLSHEET : {
+        id: `cs-${targetProjectId}-1`,
+        dayNumber: 1,
+        totalDays: targetShell.shootDays,
+        date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+        callTime: "07:00 AM",
+        estimatedWrap: "19:00 PM",
+        locationName: "Main Production Location",
+        locationAddress: "Studio A, Production Base",
+        weather: "Clear / 25°C",
+        scenesScheduled: "Day 1 Principal Photography Setup & Key Scenes",
+        emergencyContact: "Production Office: (555) 019-2834",
+        directorNotes: `Day 1 of ${targetShell.name}`,
       }));
+      setEquipment(loadSlice("equipment", targetProjectId === "proj-001" ? INITIAL_EQUIPMENT : []));
+      setAlerts(loadSlice("alerts", targetProjectId === "proj-001" ? INITIAL_ALERTS : []));
+      setComments(loadSlice("comments", targetProjectId === "proj-001" ? INITIAL_COMMENTS : []));
+      setReconciliations(loadSlice("reconciliations", targetProjectId === "proj-001" ? INITIAL_RECONCILIATIONS : []));
+      setNotes(loadSlice("notes", []));
+    } catch {}
+
+    // 3. Mark active in projects list
+    const updatedProjects = projects.map((p) => ({ ...p, isActive: p.id === targetProjectId }));
+    persistProjects(updatedProjects);
+
+    // 4. Update ref and active project metadata
+    activeProjectIdRef.current = targetShell.id;
+    setProject({
+      id: targetShell.id,
+      name: targetShell.name,
+      slug: targetShell.slug,
+      currency: "USD",
+      totalBudget: targetShell.totalBudget,
+      currentDisbursed: 0,
+      driveFolderId: "",
+      sheetId: "",
+      shootDays: targetShell.shootDays,
+      startDate: targetShell.startDate,
+      director: targetShell.director,
+      createdAt: targetShell.createdAt,
+    });
+  };
+
+  const deleteProject = (projectId: string) => {
+    if (projects.length <= 1) return false;
+    const remaining = projects.filter((p) => p.id !== projectId);
+    if (project.id === projectId) {
+      const fallback = remaining[0];
+      switchProject(fallback.id);
     }
+    persistProjects(remaining);
+    const slices = ["tx", "pockets", "transfers", "tasks", "depts", "callsheet", "equipment", "alerts", "comments", "reconciliations", "notes"];
+    try {
+      slices.forEach((s) => localStorage.removeItem(getProjectStorageKey(projectId, s)));
+    } catch {}
+    return true;
   };
 
   // ─── 10. BYOS Exports ───────────────────────────────────────────────────────
@@ -952,6 +1141,7 @@ export function useClosebookStore() {
       alerts,
       comments,
       reconciliations,
+      notes,
     };
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(vaultData, null, 2));
     const link = document.createElement("a");
@@ -1077,6 +1267,7 @@ export function useClosebookStore() {
     // Multi-project
     createProject,
     switchProject,
+    deleteProject,
     // Webhook
     persistWebhookConfig,
     syncTransactionToWebhook,
