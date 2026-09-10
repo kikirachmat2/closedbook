@@ -1304,7 +1304,14 @@ export default function WorkspacePage() {
             </div>
 
             {/* Online / Offline Status Pill */}
-            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#121212] border border-white/[0.06] text-xs text-[#a3a3a3] min-h-[36px]">
+            <div
+              id="workspace-network-status"
+              className={`items-center gap-2 px-3 py-1.5 rounded-full border text-xs min-h-[36px] transition-colors ${
+                isOnline
+                  ? "hidden lg:flex bg-[#121212] border-white/[0.06] text-[#a3a3a3]"
+                  : "flex bg-amber-500/15 border-amber-500/40 text-amber-400 font-medium"
+              }`}
+            >
               {isOnline ? (
                 <>
                   <Wifi className="w-3.5 h-3.5 text-emerald-400" />
@@ -1312,8 +1319,8 @@ export default function WorkspacePage() {
                 </>
               ) : (
                 <>
-                  <WifiOff className="w-3.5 h-3.5 text-amber-400" />
-                  <span className="text-amber-400 font-medium text-[11px]">{t("offlineStatus")}</span>
+                  <WifiOff className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                  <span className="text-amber-400 font-medium text-[11px]">{t("offlineMode")}</span>
                 </>
               )}
             </div>

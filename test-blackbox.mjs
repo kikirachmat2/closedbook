@@ -915,6 +915,82 @@ async function runBlackboxTests() {
     });
     await delay(300);
 
+    // TEST 20: OFFLINE-FIRST PWA & SERVICE WORKER INFRASTRUCTURE
+    console.log("\n--- TEST 20: Offline-First PWA & Service Worker ---");
+
+    // 20.a: Service worker asset exists and is accessible
+    const swResponse = await page.goto("http://localhost:3000/sw.js");
+    const swStatus = swResponse.status();
+    const swContent = await swResponse.text();
+    assert(
+      "Service Worker File Served Correctly",
+      swStatus === 200 && swContent.includes("closedbook-pwa"),
+      `Status: ${swStatus}, contains precache logic`
+    );
+
+    // Return to workspace for UI assertions
+    await page.goto("http://localhost:3000/workspace", { waitUntil: "networkidle0" });
+    await page.waitForSelector("header");
+    await delay(400);
+
+    // 20.b: Simulate offline connectivity event
+    await page.evaluate(() => {
+      window.dispatchEvent(new Event("offline"));
+    });
+    await delay(300);
+
+    const offlineIndicatorRendered = await page.evaluate(() => {
+      const topPill = document.getElementById("pwa-offline-indicator");
+      const headerPill = document.getElementById("workspace-network-status");
+      const topText = topPill ? topPill.textContent : "";
+      const headerText = headerPill ? headerPill.textContent : "";
+      return (
+        (topText.includes("Offline") || topText.includes("offline")) &&
+        (headerText.includes("Offline") || headerText.includes("offline"))
+      );
+    });
+    assert(
+      "Offline Mode Indicator Activates on Disconnect",
+      offlineIndicatorRendered,
+      "Dual indicator (top floating pill + header badge) reflects offline state"
+    );
+
+    // 20.c: Simulate reconnect (back online) event
+    await page.evaluate(() => {
+      window.dispatchEvent(new Event("online"));
+    });
+    await delay(300);
+
+    const backOnlineRendered = await page.evaluate(() => {
+      const el = document.getElementById("pwa-back-online-indicator");
+      return !!el && (el.textContent.includes("Online") || el.textContent.includes("online"));
+    });
+    assert(
+      "Back Online Toast Fires on Reconnect",
+      backOnlineRendered,
+      "Transient reassurance badge displayed upon connection restoration"
+    );
+
+    // 20.d: Simulate PWA Install prompt trigger
+    await page.evaluate(() => {
+      const evt = new Event("beforeinstallprompt");
+      evt.prompt = () => Promise.resolve();
+      evt.userChoice = Promise.resolve({ outcome: "accepted", platform: "web" });
+      window.dispatchEvent(evt);
+    });
+    await delay(300);
+
+    const installBannerRendered = await page.evaluate(() => {
+      const banner = document.getElementById("pwa-install-banner");
+      const btn = document.getElementById("btn-install-pwa");
+      return !!banner && !!btn && banner.textContent.includes("Install");
+    });
+    assert(
+      "Custom PWA Install Prompt Captured & Rendered",
+      installBannerRendered,
+      "App install banner ready with manual install action"
+    );
+
     await page.close();
 
     // =========================================================================

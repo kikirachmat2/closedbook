@@ -347,6 +347,17 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     ocrRateLimitError: "Gemini free rate limit reached (15 RPM). Please wait 30s or enter manually.",
     ocrParseError: "Could not detect clear details from receipt. Please enter manually.",
     ocrNetworkError: "Network connection lost. Check connection or enter manually.",
+
+    // PWA & Offline
+    installApp: "Install App",
+    installAppDesc: "Install ClosedBook as a desktop or mobile application for instant offline access.",
+    offlineMode: "Offline Mode",
+    offlineModeDesc: "Working offline. Changes are saved locally.",
+    backOnline: "Back Online",
+    backOnlineDesc: "Connection restored.",
+    updateAvailable: "Update Available",
+    updateAvailableDesc: "A new version of ClosedBook is available.",
+    reloadToUpdate: "Reload to Update",
   },
   id: {
     // Brand & System
@@ -576,6 +587,17 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     ocrRateLimitError: "Batas rate limit gratis Gemini tercapai (15 RPM). Tunggu 30 detik atau isi manual.",
     ocrParseError: "Detail struk tidak terbaca jelas. Silakan masukkan secara manual.",
     ocrNetworkError: "Koneksi jaringan terputus. Periksa koneksi atau isi manual.",
+
+    // PWA & Offline
+    installApp: "Instal Aplikasi",
+    installAppDesc: "Instal ClosedBook sebagai aplikasi desktop atau mobile untuk akses offline instan.",
+    offlineMode: "Mode Offline",
+    offlineModeDesc: "Bekerja offline. Perubahan tersimpan lokal.",
+    backOnline: "Kembali Online",
+    backOnlineDesc: "Koneksi internet pulih.",
+    updateAvailable: "Pembaruan Tersedia",
+    updateAvailableDesc: "Versi baru ClosedBook telah tersedia.",
+    reloadToUpdate: "Muat Ulang",
   },
   es: {
     // Brand & System
@@ -805,6 +827,17 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     ocrRateLimitError: "Límite de tasa alcanzado (15 RPM). Espera 30 segundos o ingresa manualmente.",
     ocrParseError: "No se pudieron detectar detalles claros. Ingresa manualmente.",
     ocrNetworkError: "Conexión de red perdida. Verifica tu conexión o ingresa manualmente.",
+
+    // PWA & Offline
+    installApp: "Instalar App",
+    installAppDesc: "Instala ClosedBook como aplicación para acceso sin conexión instantáneo.",
+    offlineMode: "Modo Sin Conexión",
+    offlineModeDesc: "Trabajando sin conexión. Guardado localmente.",
+    backOnline: "En Línea",
+    backOnlineDesc: "Conexión a internet restaurada.",
+    updateAvailable: "Actualización Disponible",
+    updateAvailableDesc: "Una nueva versión de ClosedBook está disponible.",
+    reloadToUpdate: "Recargar",
   },
   ja: {
     // Brand & System
@@ -1037,6 +1070,17 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     ocrRateLimitError: "Gemini無料レート制限に達しました (15 RPM)。30秒待つか手動入力してください。",
     ocrParseError: "明瞭な詳細を検出できませんでした。手動で入力してください。",
     ocrNetworkError: "ネットワーク接続が切れました。確認するか手動で入力してください。",
+
+    // PWA & Offline
+    installApp: "アプリをインストール",
+    installAppDesc: "ClosedBookをインストールしてオフラインでも高速起動。",
+    offlineMode: "オフラインモード",
+    offlineModeDesc: "オフラインで作業中。変更はローカルに保存されます。",
+    backOnline: "オンライン復帰",
+    backOnlineDesc: "インターネット接続が復旧しました。",
+    updateAvailable: "アップデート利用可能",
+    updateAvailableDesc: "ClosedBookの新しいバージョンが利用可能です。",
+    reloadToUpdate: "再読み込み",
   },
 };
 

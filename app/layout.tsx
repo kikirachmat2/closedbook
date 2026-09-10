@@ -49,6 +49,7 @@ export const viewport: Viewport = {
 import { PreferencesProvider } from "@/lib/preferences";
 import PreferencesModal from "@/components/PreferencesModal";
 import { MotionProvider } from "@/components/MotionProvider";
+import PwaManager from "@/components/PwaManager";
 
 export default function RootLayout({
   children,
@@ -74,6 +75,7 @@ export default function RootLayout({
           <MotionProvider>
             {children}
             <PreferencesModal />
+            <PwaManager />
           </MotionProvider>
         </PreferencesProvider>
       </body>
