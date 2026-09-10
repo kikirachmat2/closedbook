@@ -8,6 +8,7 @@ import { usePreferences } from "@/lib/preferences";
 import PreferencesControls from "@/components/PreferencesControls";
 import ReconciliationTab from "@/components/workspace/ReconciliationTab";
 import OverviewTab from "@/components/workspace/OverviewTab";
+import CommentDrawer from "@/components/CommentDrawer";
 import { Transaction, EquipmentStatus, Department } from "@/lib/types";
 import { m, AnimatePresence } from "@/components/MotionProvider";
 import CountUp from "@/components/CountUp";
@@ -211,7 +212,7 @@ export default function WorkspacePage() {
   const [isEquipmentModalOpen, setIsEquipmentModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Department | null>(null);
-  const [activeCommentTxId, setActiveCommentTxId] = useState<string | null>(null);
+  const [activeCommentEntity, setActiveCommentEntity] = useState<{ id: string; title: string } | null>(null);
   const [previewReceiptTx, setPreviewReceiptTx] = useState<Transaction | null>(null);
 
   // Form states - Expense
@@ -1201,13 +1202,37 @@ export default function WorkspacePage() {
                                   </button>
                                 </>
                               )}
-                              <button
-                                onClick={() => setActiveCommentTxId(activeCommentTxId === tx.id ? null : tx.id)}
-                                className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[#737373] hover:text-[#fdfdfd] hover:bg-white/[0.05] rounded-full"
-                                title="Context Discussion"
-                              >
-                                <MessageSquare className="w-5 h-5" />
-                              </button>
+                              {(() => {
+                                const commentCount = store.comments.filter((c) => c.entityId === tx.id).length;
+                                return (
+                                  <button
+                                    onClick={() =>
+                                      setActiveCommentEntity(
+                                        activeCommentEntity?.id === tx.id
+                                          ? null
+                                          : { id: tx.id, title: `${tx.description} (${formatMoney(tx.amount)})` }
+                                      )
+                                    }
+                                    className={`min-h-[44px] min-w-[44px] px-2 flex items-center justify-center gap-1.5 rounded-full transition-colors relative ${
+                                      commentCount > 0
+                                        ? "text-[var(--color-primary,#ff1e42)] bg-[var(--accent-badge-bg,rgba(255,30,66,0.12))] hover:bg-[var(--accent-badge-bg,rgba(255,30,66,0.2))]"
+                                        : "text-[#737373] hover:text-[#fdfdfd] hover:bg-white/[0.05]"
+                                    }`}
+                                    title="Context Discussion"
+                                    data-testid={`tx-comment-btn-${tx.id}`}
+                                  >
+                                    <MessageSquare className="w-4 h-4" />
+                                    {commentCount > 0 && (
+                                      <span
+                                        className="text-[10px] font-mono font-bold leading-none px-1 py-0.5 rounded bg-[var(--color-primary,#ff1e42)] text-white"
+                                        data-testid={`tx-comment-count-${tx.id}`}
+                                      >
+                                        {commentCount}
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })()}
                               <button
                                 onClick={() => store.deleteTransaction(tx.id)}
                                 className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[#737373] hover:text-[var(--color-primary,#ff1e42)] hover:bg-white/[0.05] rounded-full"
@@ -1223,57 +1248,6 @@ export default function WorkspacePage() {
                   </table>
                 </div>
               </div>
-
-              {/* Contextual Discussion Drawer */}
-              {activeCommentTxId && (
-                <div className="surface-panel p-5 sm:p-6 border border-[var(--color-primary,#ff1e42)]/30 animate-fade-in">
-                  <div className="flex items-center justify-between pb-3 mb-4 border-b border-white/[0.06]">
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
-                      <span className="text-xs font-medium text-[#fdfdfd]">
-                        Context Discussion on {activeCommentTxId}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => setActiveCommentTxId(null)}
-                      className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[#737373] hover:text-[#fdfdfd]"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  <div className="space-y-3 mb-4">
-                    {store.comments
-                      .filter((c) => c.entityId === activeCommentTxId)
-                      .map((comm) => (
-                        <div key={comm.id} className="surface-overlay p-3 text-xs">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-medium text-[#fdfdfd]">{comm.author}</span>
-                            <span className="text-[10px] text-[#737373]">{comm.timestamp}</span>
-                          </div>
-                          <p className="text-[#a3a3a3]">{comm.message}</p>
-                        </div>
-                      ))}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      placeholder="Add a contextual comment regarding this expense..."
-                      value={commentText}
-                      onChange={(e) => setCommentText(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleSendComment(activeCommentTxId)}
-                      className="flex-1 bg-[#121212] border border-white/[0.08] rounded-full px-4 min-h-[44px] text-xs text-[#fdfdfd] focus:outline-none focus:border-[var(--color-primary,#ff1e42)]"
-                    />
-                    <button
-                      onClick={() => handleSendComment(activeCommentTxId)}
-                      className="btn-primary-crimson min-h-[44px] min-w-[44px] px-4"
-                    >
-                      <Send className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
@@ -1440,6 +1414,38 @@ export default function WorkspacePage() {
                             <span>{task.assignee}</span>
                             <div className="flex items-center gap-2">
                               <span>{task.dueDate}</span>
+                              {(() => {
+                                const count = store.comments.filter((c) => c.entityId === task.id).length;
+                                return (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setActiveCommentEntity(
+                                        activeCommentEntity?.id === task.id
+                                          ? null
+                                          : { id: task.id, title: `Task: ${task.title}` }
+                                      );
+                                    }}
+                                    className={`p-1 rounded flex items-center gap-1 transition-colors ${
+                                      count > 0
+                                        ? "text-[var(--color-primary,#ff1e42)] bg-[var(--accent-badge-bg,rgba(255,30,66,0.12))]"
+                                        : "text-[#737373] hover:text-[#fdfdfd] hover:bg-white/[0.05]"
+                                    }`}
+                                    title="Task Discussion"
+                                    data-testid={`task-comment-btn-${task.id}`}
+                                  >
+                                    <MessageSquare className="w-3.5 h-3.5" />
+                                    {count > 0 && (
+                                      <span
+                                        className="text-[9px] font-mono font-bold leading-none px-1 py-0.5 rounded bg-[var(--color-primary,#ff1e42)] text-white"
+                                        data-testid={`task-comment-count-${task.id}`}
+                                      >
+                                        {count}
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })()}
                               <button
                                 onClick={() => store.deleteTask(task.id)}
                                 className="opacity-0 group-hover:opacity-100 text-[#737373] hover:text-[var(--color-primary,#ff1e42)] transition-opacity"
@@ -1486,6 +1492,38 @@ export default function WorkspacePage() {
                             <span>{task.assignee}</span>
                             <div className="flex items-center gap-2">
                               <span>{task.dueDate}</span>
+                              {(() => {
+                                const count = store.comments.filter((c) => c.entityId === task.id).length;
+                                return (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setActiveCommentEntity(
+                                        activeCommentEntity?.id === task.id
+                                          ? null
+                                          : { id: task.id, title: `Task: ${task.title}` }
+                                      );
+                                    }}
+                                    className={`p-1 rounded flex items-center gap-1 transition-colors ${
+                                      count > 0
+                                        ? "text-[var(--color-primary,#ff1e42)] bg-[var(--accent-badge-bg,rgba(255,30,66,0.12))]"
+                                        : "text-[#737373] hover:text-[#fdfdfd] hover:bg-white/[0.05]"
+                                    }`}
+                                    title="Task Discussion"
+                                    data-testid={`task-comment-btn-${task.id}`}
+                                  >
+                                    <MessageSquare className="w-3.5 h-3.5" />
+                                    {count > 0 && (
+                                      <span
+                                        className="text-[9px] font-mono font-bold leading-none px-1 py-0.5 rounded bg-[var(--color-primary,#ff1e42)] text-white"
+                                        data-testid={`task-comment-count-${task.id}`}
+                                      >
+                                        {count}
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })()}
                               <button
                                 onClick={() => store.deleteTask(task.id)}
                                 className="opacity-0 group-hover:opacity-100 text-[#737373] hover:text-[var(--color-primary,#ff1e42)] transition-opacity"
@@ -1530,6 +1568,38 @@ export default function WorkspacePage() {
                             <span>{task.assignee}</span>
                             <div className="flex items-center gap-2">
                               <span>{task.dueDate}</span>
+                              {(() => {
+                                const count = store.comments.filter((c) => c.entityId === task.id).length;
+                                return (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setActiveCommentEntity(
+                                        activeCommentEntity?.id === task.id
+                                          ? null
+                                          : { id: task.id, title: `Task: ${task.title}` }
+                                      );
+                                    }}
+                                    className={`p-1 rounded flex items-center gap-1 transition-colors ${
+                                      count > 0
+                                        ? "text-[var(--color-primary,#ff1e42)] bg-[var(--accent-badge-bg,rgba(255,30,66,0.12))]"
+                                        : "text-[#737373] hover:text-[#fdfdfd] hover:bg-white/[0.05]"
+                                    }`}
+                                    title="Task Discussion"
+                                    data-testid={`task-comment-btn-${task.id}`}
+                                  >
+                                    <MessageSquare className="w-3.5 h-3.5" />
+                                    {count > 0 && (
+                                      <span
+                                        className="text-[9px] font-mono font-bold leading-none px-1 py-0.5 rounded bg-[var(--color-primary,#ff1e42)] text-white"
+                                        data-testid={`task-comment-count-${task.id}`}
+                                      >
+                                        {count}
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })()}
                               <button
                                 onClick={() => store.deleteTask(task.id)}
                                 className="opacity-0 group-hover:opacity-100 text-[#737373] hover:text-[var(--color-primary,#ff1e42)] transition-opacity"
@@ -2802,6 +2872,18 @@ export default function WorkspacePage() {
           </div>
         </div>
       )}
+
+      {/* Contextual Comment Drawer (Transactions & Tasks) */}
+      <CommentDrawer
+        isOpen={Boolean(activeCommentEntity)}
+        onClose={() => setActiveCommentEntity(null)}
+        entityId={activeCommentEntity?.id || null}
+        entityTitle={activeCommentEntity?.title || ""}
+        comments={store.comments}
+        onAddComment={(entityId, author, message) => {
+          store.addComment(entityId, author, message);
+        }}
+      />
 
       {/* ========================================================================= */}
       {/* PRINT-ONLY PRODUCTION WRAP REPORT (AUDIT PDF & PHYSICAL SIGN-OFF) */}

@@ -279,6 +279,49 @@ async function runBlackboxTests() {
     });
     assert("Reject Button Found", rejectedViaEval, "Reject action available");
 
+    // TEST 5B: CONTEXTUAL COMMENTS — LEDGER DRAWER & THREAD
+    console.log("\n--- TEST 5B: Contextual Comments (Ledger) ---");
+    const openedTxDrawer = await page.evaluate(() => {
+      const commentBtns = Array.from(document.querySelectorAll("button[data-testid^='tx-comment-btn-']"));
+      if (commentBtns.length > 0) {
+        commentBtns[0].click();
+        return true;
+      }
+      return false;
+    });
+    await delay(600);
+    assert("Comment Drawer Opens From Ledger", openedTxDrawer, "Ledger comment button opened drawer");
+
+    // Type and send comment in drawer
+    const drawerInput = await page.$("input[data-testid='comment-drawer-input']");
+    if (drawerInput) {
+      await clearAndType(page, drawerInput, "Audited invoice and verified vendor payment terms.");
+      await delay(300);
+      const sendBtn = await page.$("button[data-testid='comment-drawer-send']");
+      if (sendBtn) await sendBtn.click();
+    }
+    await delay(800);
+
+    const threadContent = await page.evaluate(() => {
+      const drawer = document.querySelector("aside[data-testid='comment-drawer']");
+      return drawer ? drawer.textContent : "";
+    });
+    assert("Comment Added to Thread", threadContent.includes("payment terms"), "New comment rendered in drawer");
+
+    // Close drawer
+    await page.evaluate(() => {
+      const closeBtn = document.querySelector("button[data-testid='close-comment-drawer']");
+      if (closeBtn) closeBtn.click();
+    });
+    await delay(500);
+
+    // Verify counter badge rendered on row
+    const counterBadgeExists = await page.evaluate(() => {
+      const badges = Array.from(document.querySelectorAll("span[data-testid^='tx-comment-count-']"));
+      return badges.length > 0;
+    });
+    assert("Comment Counter Badge Updated", counterBadgeExists, "Comment counter badge visible on ledger row");
+
     // TEST 6: MULTI-POCKET CASHFLOW & OVERDRAFT
     console.log("\n--- TEST 6: Multi-Pocket Transfer & Overdraft Guard ---");
     await clickNavButton(page, "Multi-Pocket", "Hierarki Kantong", "Cashflow", "Pockets");
@@ -327,6 +370,25 @@ async function runBlackboxTests() {
     const tasksContent = await page.evaluate(() => document.body.textContent);
     assert("Task Created in Kanban", tasksContent.includes("walkthrough") || tasksContent.includes("Raka"), "Task appears in board");
     await page.screenshot({ path: path.join(ARTIFACT_DIR, "audit_05_tasks_kanban.png") });
+
+    // Open Drawer from Task card
+    const openedTaskDrawer = await page.evaluate(() => {
+      const taskCommentBtns = Array.from(document.querySelectorAll("button[data-testid^='task-comment-btn-']"));
+      if (taskCommentBtns.length > 0) {
+        taskCommentBtns[0].click();
+        return true;
+      }
+      return false;
+    });
+    await delay(600);
+    assert("Comment Drawer Opens From Task", openedTaskDrawer, "Task card comment button opened drawer");
+
+    // Close task drawer
+    await page.evaluate(() => {
+      const closeBtn = document.querySelector("button[data-testid='close-comment-drawer']");
+      if (closeBtn) closeBtn.click();
+    });
+    await delay(400);
 
     // TEST 8: SCHEDULE & DAY ADVANCE
     console.log("\n--- TEST 8: Schedule & Day Advance ---");

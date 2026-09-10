@@ -263,6 +263,12 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     categoryColor: "Color Accent",
     saveCategory: "Save Category",
     confirmDeleteCategory: "Are you sure you want to delete this category?",
+    commentThreadTitle: "Thread",
+    commentsCount: "Comments",
+    addCommentPlaceholder: "Write a contextual update or note...",
+    sendComment: "Send",
+    noCommentsYet: "No comments recorded yet for this item.",
+    postingAs: "Posting as",
   },
   id: {
     // Brand & System
@@ -424,6 +430,12 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     categoryColor: "Aksen Warna",
     saveCategory: "Simpan Kategori",
     confirmDeleteCategory: "Yakin ingin menghapus kategori ini?",
+    commentThreadTitle: "Thread Komentar",
+    commentsCount: "Komentar",
+    addCommentPlaceholder: "Tulis pembaruan atau catatan kontekstual...",
+    sendComment: "Kirim",
+    noCommentsYet: "Belum ada komentar yang dicatat untuk item ini.",
+    postingAs: "Kirim sebagai",
   },
   es: {
     // Brand & System
@@ -585,6 +597,12 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     categoryColor: "Color de Acento",
     saveCategory: "Guardar Categoría",
     confirmDeleteCategory: "¿Seguro que desea eliminar esta categoría?",
+    commentThreadTitle: "Hilo de Discusión",
+    commentsCount: "Comentarios",
+    addCommentPlaceholder: "Escribe una actualización o nota contextual...",
+    sendComment: "Enviar",
+    noCommentsYet: "Aún no hay comentarios registrados para este elemento.",
+    postingAs: "Publicando como",
   },
   ja: {
     // Brand & System
@@ -749,6 +767,12 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     categoryColor: "アクセントカラー",
     saveCategory: "カテゴリー保存",
     confirmDeleteCategory: "このカテゴリーを削除してもよろしいですか？",
+    commentThreadTitle: "スレッド",
+    commentsCount: "件のコメント",
+    addCommentPlaceholder: "状況やコンテキストのメモを入力...",
+    sendComment: "送信",
+    noCommentsYet: "このアイテムにはまだコメントがありません。",
+    postingAs: "投稿者",
   },
 };
 
