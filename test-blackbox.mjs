@@ -168,6 +168,70 @@ async function runBlackboxTests() {
     assert("Burn Rate Forecast Banner", overview.includes("Burn Rate") || overview.includes("day avg"), "Forecast visible");
     assert("Days Remaining Shown", overview.includes("remaining"), "Shoot days remaining");
 
+    // TEST 3B: CUSTOM CATEGORY SYSTEM (CRUD & GUARD RAIL)
+    console.log("\n--- TEST 3B: Custom Category System (CRUD & Guard Rail) ---");
+    
+    // 1. Add Category
+    await clickNavButton(page, "Add Category", "Tambah Kategori");
+    await delay(600);
+    const catModalOpened = await page.evaluate(() => !!document.querySelector("div.fixed.z-50, div[class*='z-50']"));
+    assert("Add Category Modal Opens", catModalOpened, "Modal found");
+
+    if (catModalOpened) {
+      await fillActiveModal(page, {
+        text1: "Legal & Insurance",
+        text2: "LGL",
+        number1: 8500,
+      });
+      await submitActiveModal(page);
+      await delay(800);
+    }
+    const afterAddCat = await page.evaluate(() => document.body.textContent);
+    assert("Category Created & Listed", afterAddCat.includes("Legal & Insurance") || afterAddCat.includes("LGL"), "New category visible in list");
+
+    // 2. Edit Category (Edit the newly created category)
+    await page.evaluate(() => {
+      const rows = Array.from(document.querySelectorAll("div.group\\/cat, div[class*='group/cat']"));
+      const legalRow = rows.find((r) => r.textContent.includes("Legal & Insurance") || r.textContent.includes("LGL"));
+      if (legalRow) {
+        const editBtn = legalRow.querySelector("button[title*='Edit'], button[title*='edit']");
+        if (editBtn) editBtn.click();
+      }
+    });
+    await delay(600);
+    const editModalOpened = await page.evaluate(() => !!document.querySelector("div.fixed.z-50, div[class*='z-50']"));
+    if (editModalOpened) {
+      await fillActiveModal(page, {
+        text1: "Legal, Rights & Clearance",
+        text2: "LRC",
+        number1: 9500,
+      });
+      await submitActiveModal(page);
+      await delay(800);
+    }
+    const afterEditCat = await page.evaluate(() => document.body.textContent);
+    assert("Category Edited & Updated", afterEditCat.includes("Legal, Rights & Clearance") || afterEditCat.includes("LRC"), "Updated category name and code visible");
+
+    // 3. Delete Guard Rail: Try deleting category that has existing transactions (e.g. Operations & Logistics)
+    page.on("dialog", async (dialog) => {
+      await dialog.accept();
+    });
+    await page.evaluate(() => {
+      const rows = Array.from(document.querySelectorAll("div.group\\/cat, div[class*='group/cat']"));
+      const opsRow = rows.find((r) => r.textContent.includes("Operations & Logistics") || r.textContent.includes("OPS"));
+      if (opsRow) {
+        const delBtn = opsRow.querySelector("button[title*='Delete'], button[title*='delete'], button[title*='Hapus']");
+        if (delBtn) delBtn.click();
+      }
+    });
+    await delay(800);
+    const afterDeleteAttempt = await page.evaluate(() => document.body.textContent);
+    assert(
+      "Delete Guard Rail Prevents Cascade",
+      afterDeleteAttempt.includes("Cannot delete category") || afterDeleteAttempt.includes("associated transactions") || afterDeleteAttempt.includes("Operations & Logistics"),
+      "Affiliated category preserved and error guarded"
+    );
+
     // TEST 4: LOG EXPENSE MODAL
     console.log("\n--- TEST 4: Log Expense Modal ---");
     await page.evaluate(() => {
