@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { usePreferences, CurrencyCode, LanguageCode, ThemeCode } from "@/lib/preferences";
-import { X, Check, Globe, DollarSign, Palette, Sparkles, Bell } from "lucide-react";
+import { X, Check, Globe, DollarSign, Palette, Sparkles, Bell, ExternalLink, Eye, EyeOff, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react";
 
 export default function PreferencesModal() {
   const {
@@ -18,11 +18,47 @@ export default function PreferencesModal() {
     setIsRemindersEnabled,
     isWebNotificationsEnabled,
     setIsWebNotificationsEnabled,
+    geminiApiKey,
+    setGeminiApiKey,
     currencies,
     languages,
     themes,
     t,
   } = usePreferences();
+
+  const [tempKey, setTempKey] = useState(geminiApiKey || "");
+  const [showKey, setShowKey] = useState(false);
+  const [testStatus, setTestStatus] = useState<"idle" | "testing" | "success" | "invalid" | "network_error">("idle");
+  const [testErrorMsg, setTestErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    setTempKey(geminiApiKey || "");
+    setTestStatus("idle");
+    setTestErrorMsg(null);
+  }, [geminiApiKey, isSettingsOpen]);
+
+  const handleTestConnection = async () => {
+    const keyToTest = (tempKey || geminiApiKey).trim();
+    if (!keyToTest) return;
+    setTestStatus("testing");
+    setTestErrorMsg(null);
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash?key=${encodeURIComponent(keyToTest)}`
+      );
+      if (res.ok) {
+        setTestStatus("success");
+      } else {
+        const data = await res.json().catch(() => null);
+        const msg = data?.error?.message || t("keyInvalid");
+        setTestStatus("invalid");
+        setTestErrorMsg(msg);
+      }
+    } catch {
+      setTestStatus("network_error");
+      setTestErrorMsg(t("keyNetworkError"));
+    }
+  };
 
   if (!isSettingsOpen) return null;
 
@@ -278,13 +314,130 @@ export default function PreferencesModal() {
               </div>
             </div>
           </div>
+
+          {/* 5. AI RECEIPT SCANNER (GEMINI VISION BYOK) */}
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-stone,#737373)]">
+                {t("geminiScanner")}
+              </h3>
+            </div>
+            <p className="text-[11px] text-[var(--color-stone,#737373)] leading-relaxed mb-2.5">
+              {t("geminiApiKeyDesc")}
+            </p>
+
+            <a
+              href="https://aistudio.google.com/app/apikey"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-[var(--color-primary,#ff1e42)] hover:underline mb-3 font-medium"
+            >
+              <span>{t("getFreeGeminiKey")}</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+
+            <div className="surface-overlay p-3.5 sm:p-4 rounded-[14px] border border-white/[0.06] space-y-3">
+              <div>
+                <label htmlFor="gemini-api-key-input" className="block text-[11px] font-medium text-[var(--color-paper,#fdfdfd)] mb-1.5">
+                  {t("geminiApiKeyLabel")}
+                </label>
+                <div className="relative">
+                  <input
+                    id="gemini-api-key-input"
+                    type={showKey ? "text" : "password"}
+                    value={tempKey}
+                    onChange={(e) => {
+                      setTempKey(e.target.value);
+                      setTestStatus("idle");
+                      setTestErrorMsg(null);
+                    }}
+                    placeholder={t("keyPlaceholder")}
+                    className="w-full bg-[#181818] border border-white/[0.1] rounded-xl px-3.5 pr-20 min-h-[44px] text-xs text-[#fdfdfd] placeholder-[#525252] font-mono focus:outline-none focus:border-[var(--color-primary,#ff1e42)] transition-colors"
+                  />
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setShowKey(!showKey)}
+                      className="p-1.5 rounded-lg text-[#737373] hover:text-[#fdfdfd] transition-colors"
+                      aria-label={showKey ? "Hide API key" : "Show API key"}
+                    >
+                      {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                    {tempKey && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTempKey("");
+                          setTestStatus("idle");
+                          setTestErrorMsg(null);
+                        }}
+                        className="p-1.5 rounded-lg text-[#737373] hover:text-[#fdfdfd] transition-colors"
+                        aria-label="Clear API key"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action buttons and Status */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                <button
+                  type="button"
+                  id="btn-test-gemini-key"
+                  disabled={!tempKey.trim() || testStatus === "testing"}
+                  onClick={handleTestConnection}
+                  className="btn-ghost-pill text-xs min-h-[38px] px-3.5 flex items-center gap-2 border border-white/[0.1] hover:bg-white/[0.06] disabled:opacity-40 disabled:cursor-not-allowed text-[#fdfdfd]"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 text-[var(--color-primary,#ff1e42)] ${testStatus === "testing" ? "animate-spin" : ""}`} />
+                  <span>{testStatus === "testing" ? t("testingConnection") : t("testConnection")}</span>
+                </button>
+
+                {testStatus === "success" && (
+                  <div id="gemini-key-status-badge" className="flex items-center gap-1.5 text-xs text-[#10b981] font-medium bg-[#10b981]/10 px-2.5 py-1 rounded-full border border-[#10b981]/20">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>{t("keyConnected")}</span>
+                  </div>
+                )}
+
+                {testStatus === "invalid" && (
+                  <div id="gemini-key-status-badge" className="flex items-center gap-1.5 text-xs text-[#ef4444] font-medium bg-[#ef4444]/10 px-2.5 py-1 rounded-full border border-[#ef4444]/20">
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    <span>{testErrorMsg || t("keyInvalid")}</span>
+                  </div>
+                )}
+
+                {testStatus === "network_error" && (
+                  <div id="gemini-key-status-badge" className="flex items-center gap-1.5 text-xs text-[#f59e0b] font-medium bg-[#f59e0b]/10 px-2.5 py-1 rounded-full border border-[#f59e0b]/20">
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    <span>{testErrorMsg || t("keyNetworkError")}</span>
+                  </div>
+                )}
+
+                {testStatus === "idle" && geminiApiKey && tempKey === geminiApiKey && (
+                  <div id="gemini-key-status-badge" className="flex items-center gap-1.5 text-xs text-[#a3a3a3] font-mono">
+                    <span className="w-2 h-2 rounded-full bg-[#10b981]" />
+                    <span>Configured</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Footer */}
         <div className="mt-7 pt-4 border-t border-white/[0.08] flex items-center justify-end">
           <button
-            onClick={() => setIsSettingsOpen(false)}
-            className="btn-primary-crimson text-xs min-h-[44px] px-6 font-medium w-full sm:w-auto"
+            id="btn-save-preferences"
+            onClick={() => {
+              if (tempKey !== geminiApiKey) {
+                setGeminiApiKey(tempKey);
+              }
+              setIsSettingsOpen(false);
+            }}
+            className="btn-primary-crimson text-xs min-h-[44px] px-6 font-medium w-full sm:w-auto cursor-pointer"
           >
             {t("savePreferences")}
           </button>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useClosebookStore } from "@/lib/store";
@@ -54,6 +54,9 @@ import {
   WifiOff,
   ChevronDown,
   ArrowLeftRight,
+  Sparkles,
+  RefreshCw,
+  AlertCircle,
 } from "lucide-react";
 
 type TabId =
@@ -131,6 +134,7 @@ export default function WorkspacePage() {
     currencies,
     isRemindersEnabled,
     isWebNotificationsEnabled,
+    geminiApiKey,
   } = usePreferences();
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [searchQuery, setSearchQuery] = useState("");
@@ -244,6 +248,13 @@ export default function WorkspacePage() {
   const [receiptDataUrl, setReceiptDataUrl] = useState<string | null>(null);
   const [receiptSizeKb, setReceiptSizeKb] = useState<number | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
+
+  // AI OCR States
+  const [isOcrScanning, setIsOcrScanning] = useState(false);
+  const [ocrError, setOcrError] = useState<string | null>(null);
+  const [showOcrNoKeyGuidance, setShowOcrNoKeyGuidance] = useState(false);
+  const [ocrSuccessToast, setOcrSuccessToast] = useState<string | null>(null);
+  const ocrFileInputRef = useRef<HTMLInputElement>(null);
 
   // Form states - Transfer
   const [transferSource, setTransferSource] = useState("pkt-master");
@@ -429,6 +440,187 @@ export default function WorkspacePage() {
     reader.readAsDataURL(file);
   };
 
+  // Trigger AI Scan (checks BYOK presence)
+  const handleTriggerAiScan = () => {
+    if (!geminiApiKey) {
+      setShowOcrNoKeyGuidance(true);
+      return;
+    }
+    setShowOcrNoKeyGuidance(false);
+    setOcrError(null);
+    if (ocrFileInputRef.current) {
+      ocrFileInputRef.current.value = "";
+      ocrFileInputRef.current.click();
+    }
+  };
+
+  // Send compressed base64 to Gemini 1.5 Flash Vision API
+  const processOcrImage = async (base64DataUrl: string) => {
+    if (!geminiApiKey) return;
+    setIsOcrScanning(true);
+    setOcrError(null);
+    setOcrSuccessToast(null);
+
+    const mimeMatch = base64DataUrl.match(/^data:([^;]+);base64,/);
+    const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
+    const base64Data = base64DataUrl.replace(/^data:[^;]+;base64,/, "");
+
+    const prompt = `Analyze this receipt image for a film/project production expense. Return ONLY a valid, raw JSON object (strictly no markdown formatting, no code blocks, no backticks, no explanatory text). Use these exact keys:
+{
+  "vendor": "Merchant or store name (or 'Local Vendor' if unknown)",
+  "amount": numeric total amount paid (number only, no currency symbols or commas, e.g. 240.00),
+  "date": "YYYY-MM-DD" formatted date if visible, otherwise empty string,
+  "categoryHint": "one of: 'OPS' (Operations/Logistics), 'CRT' (Camera/Creative), 'VND' (Vendors/Art/Wardrobe), 'ADM' (Office/Administrative)",
+  "notes": "Brief summary of purchased items"
+}`;
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(geminiApiKey)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  { text: prompt },
+                  {
+                    inlineData: {
+                      mimeType: mimeType,
+                      data: base64Data,
+                    },
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.1,
+              responseMimeType: "application/json",
+            },
+          }),
+        }
+      );
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        if (res.status === 400 || res.status === 403) {
+          setOcrError(t("keyInvalid"));
+        } else if (res.status === 429) {
+          setOcrError(t("ocrRateLimitError"));
+        } else {
+          setOcrError(`Gemini API error (HTTP ${res.status}). Please enter details manually.`);
+        }
+        setIsOcrScanning(false);
+        return;
+      }
+
+      const data = await res.json();
+      const textOutput = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!textOutput) {
+        setOcrError(t("ocrParseError"));
+        setIsOcrScanning(false);
+        return;
+      }
+
+      let parsed: { vendor?: string; amount?: number; date?: string; categoryHint?: string; notes?: string };
+      try {
+        const cleaned = textOutput.replace(/```json/g, "").replace(/```/g, "").trim();
+        parsed = JSON.parse(cleaned);
+      } catch {
+        setOcrError(t("ocrParseError"));
+        setIsOcrScanning(false);
+        return;
+      }
+
+      // Autofill fields without auto-submitting
+      if (parsed.vendor) {
+        setNewVendor(parsed.vendor);
+      }
+      if (parsed.amount && !isNaN(parsed.amount) && parsed.amount > 0) {
+        setNewAmount(String(parsed.amount));
+      }
+      if (parsed.notes) {
+        setNewDesc(parsed.notes);
+      } else if (parsed.vendor) {
+        setNewDesc(`${parsed.vendor} Purchase`);
+      }
+
+      if (parsed.categoryHint) {
+        const hint = parsed.categoryHint.toUpperCase().trim();
+        const matched = store.departments.find(
+          (d) => d.code.toUpperCase() === hint || d.id.toUpperCase().includes(hint) || d.name.toUpperCase().includes(hint)
+        );
+        if (matched) {
+          setNewDept(matched.id);
+        }
+      }
+
+      setOcrSuccessToast(
+        t("ocrSuccessToast", {
+          vendor: parsed.vendor || "Receipt",
+          amount: parsed.amount ? `${currencies[currency]?.symbol || "$"}${parsed.amount}` : "",
+        })
+      );
+    } catch (err: any) {
+      if (err?.name === "AbortError") {
+        setOcrError("Gemini request timed out (20s). Please enter details manually.");
+      } else if (typeof navigator !== "undefined" && !navigator.onLine) {
+        setOcrError(t("ocrNetworkError"));
+      } else {
+        setOcrError("Network or connection error while contacting Gemini API. Please enter details manually.");
+      }
+    } finally {
+      setIsOcrScanning(false);
+    }
+  };
+
+  const handleAiReceiptFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsCompressing(true);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = document.createElement("img");
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const maxDim = 1200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height && width > maxDim) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else if (height > maxDim) {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL("image/jpeg", 0.78);
+          setReceiptDataUrl(compressed);
+          setReceiptSizeKb(Math.round((compressed.length * 0.75) / 1024));
+          setMissingReceiptCheck(false);
+
+          processOcrImage(compressed);
+        }
+        setIsCompressing(false);
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
   // Filtered transactions
   const filteredTransactions = store.transactions.filter((tx) => {
     const matchesSearch =
@@ -467,6 +659,9 @@ export default function WorkspacePage() {
     setMissingReceiptCheck(false);
     setReceiptDataUrl(null);
     setReceiptSizeKb(null);
+    setOcrError(null);
+    setOcrSuccessToast(null);
+    setShowOcrNoKeyGuidance(false);
     setIsLogModalOpen(false);
   };
 
@@ -2789,6 +2984,152 @@ export default function WorkspacePage() {
             </div>
 
             <form onSubmit={handleCreateTransaction} className="space-y-4">
+              {/* AI RECEIPT SCANNER ACTION CARD */}
+              <div className="p-3.5 rounded-[16px] bg-gradient-to-r from-white/[0.04] to-white/[0.02] border border-white/[0.08] relative overflow-hidden">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-full bg-[var(--color-primary,#ff1e42)]/15 border border-[var(--color-primary,#ff1e42)]/30 flex items-center justify-center text-[var(--color-primary,#ff1e42)] shrink-0">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-[#fdfdfd] truncate">
+                          {t("scanReceiptAi")}
+                        </span>
+                        {!geminiApiKey && (
+                          <span className="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 shrink-0">
+                            BYOK
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-[#737373] truncate mt-0.5 font-mono">
+                        {geminiApiKey ? "Gemini 1.5 Flash Vision Active" : "Requires free Gemini key"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    id="btn-scan-receipt-ai"
+                    onClick={handleTriggerAiScan}
+                    disabled={isOcrScanning}
+                    className="btn-primary-crimson text-xs min-h-[38px] px-3.5 flex items-center gap-1.5 shrink-0 shadow-sm disabled:opacity-50 cursor-pointer"
+                  >
+                    {isOcrScanning ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        <span>Analyzing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Camera className="w-3.5 h-3.5" />
+                        <span>{t("scanReceiptAi")}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Hidden file input for OCR */}
+                <input
+                  ref={ocrFileInputRef}
+                  id="ocr-receipt-file-input"
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleAiReceiptFileChange}
+                  className="hidden"
+                />
+
+                {/* Non-blocking Guidance Popover/Banner when key is missing */}
+                {showOcrNoKeyGuidance && !geminiApiKey && (
+                  <div
+                    id="ocr-no-key-guidance"
+                    className="mt-3 p-3 rounded-xl bg-[#121212] border border-amber-500/30 text-xs space-y-2 animate-in fade-in duration-150"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-1.5 text-amber-400 font-medium">
+                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        <span>{t("ocrKeyRequiredTitle")}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowOcrNoKeyGuidance(false)}
+                        className="text-[#737373] hover:text-[#fdfdfd] p-0.5"
+                        aria-label="Dismiss guidance"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-[#a3a3a3] leading-relaxed">
+                      {t("ocrKeyRequiredDesc")}
+                    </p>
+                    <div className="flex items-center gap-2 pt-1">
+                      <button
+                        type="button"
+                        id="btn-open-pref-from-ocr"
+                        onClick={() => {
+                          setIsLogModalOpen(false);
+                          setIsSettingsOpen(true);
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-[var(--color-primary,#ff1e42)] text-white text-[11px] font-medium hover:opacity-90 transition-opacity"
+                      >
+                        {t("openPreferences")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowOcrNoKeyGuidance(false)}
+                        className="px-3 py-1.5 rounded-lg bg-white/[0.05] text-[#a3a3a3] hover:text-white text-[11px] transition-colors"
+                      >
+                        {t("continueManual")}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Scanning in progress banner */}
+                {isOcrScanning && (
+                  <div className="mt-3 p-2.5 rounded-xl bg-[var(--color-primary,#ff1e42)]/10 border border-[var(--color-primary,#ff1e42)]/20 text-xs flex items-center gap-2 text-[var(--color-primary,#ff1e42)] animate-pulse">
+                    <Sparkles className="w-4 h-4 animate-spin" />
+                    <span>{t("scanningAi")}</span>
+                  </div>
+                )}
+
+                {/* OCR Error Banner */}
+                {ocrError && (
+                  <div id="ocr-error-banner" className="mt-3 p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-xs flex items-start gap-2 text-red-400">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <span className="font-medium block">{ocrError}</span>
+                      <span className="text-[10px] text-red-400/80 mt-0.5 block">You can continue logging manually below.</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setOcrError(null)}
+                      className="text-red-400 hover:text-white p-0.5"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+
+                {/* OCR Success Toast */}
+                {ocrSuccessToast && (
+                  <div id="ocr-success-banner" className="mt-3 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs flex items-center justify-between gap-2 text-emerald-400">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <CheckCircle2 className="w-4 h-4 shrink-0" />
+                      <span className="truncate">{ocrSuccessToast}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setOcrSuccessToast(null)}
+                      className="text-emerald-400 hover:text-white p-0.5"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <div>
                 <label className="block text-xs text-[#737373] mb-1.5">{t("formDesc")}</label>
                 <input
@@ -3704,7 +4045,7 @@ export default function WorkspacePage() {
           </div>
           <div className="text-right text-xs font-mono">
             <div className="font-bold">ClosedBook Accounting Audit</div>
-            <div>Generated: {new Date().toLocaleDateString()}</div>
+            <div suppressHydrationWarning>Generated: {new Date().toLocaleDateString()}</div>
           </div>
         </div>
 

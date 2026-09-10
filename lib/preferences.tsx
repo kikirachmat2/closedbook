@@ -99,6 +99,22 @@ export const THEMES: Record<ThemeCode, ThemeConfig> = {
   },
 };
 
+export const encodeApiKey = (key: string): string => {
+  try {
+    return btoa(key.trim());
+  } catch {
+    return key.trim();
+  }
+};
+
+export const decodeApiKey = (encoded: string): string => {
+  try {
+    return atob(encoded).trim();
+  } catch {
+    return encoded.trim();
+  }
+};
+
 export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
   en: {
     // Brand & System
@@ -308,6 +324,29 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     cancel: "Cancel",
     activeBadge: "Active",
     createProjectButton: "Create Production",
+
+    // AI OCR (Gemini Vision)
+    geminiScanner: "AI Receipt Scanner (Gemini Vision)",
+    geminiApiKeyLabel: "Gemini API Key (BYOK)",
+    geminiApiKeyDesc: "Bring Your Own Key: stored locally in your browser. Never sent to third-party servers.",
+    getFreeGeminiKey: "Get Free Gemini API Key (Google AI Studio) ↗",
+    testConnection: "Test Connection",
+    testingConnection: "Testing...",
+    keyConnected: "Active & Connected (Gemini 1.5 Flash)",
+    keyInvalid: "Invalid or Expired API Key",
+    keyNetworkError: "Connection Failed (Check Network)",
+    keyCleared: "Remove Key",
+    keyPlaceholder: "Paste AIzaSy... API key",
+    scanReceiptAi: "Scan Receipt with AI",
+    scanningAi: "Analyzing receipt with Gemini 1.5 Flash...",
+    ocrKeyRequiredTitle: "Gemini API Key Required",
+    ocrKeyRequiredDesc: "To automatically scan receipts, enter your free Gemini API key in Preferences. Or continue logging manually below.",
+    openPreferences: "Open Preferences",
+    continueManual: "Continue Manually",
+    ocrSuccessToast: "Receipt scanned: {vendor} ({amount})",
+    ocrRateLimitError: "Gemini free rate limit reached (15 RPM). Please wait 30s or enter manually.",
+    ocrParseError: "Could not detect clear details from receipt. Please enter manually.",
+    ocrNetworkError: "Network connection lost. Check connection or enter manually.",
   },
   id: {
     // Brand & System
@@ -514,6 +553,29 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     cancel: "Batal",
     activeBadge: "Aktif",
     createProjectButton: "Buat Produksi",
+
+    // AI OCR (Gemini Vision)
+    geminiScanner: "Pemindai Struk AI (Gemini Vision)",
+    geminiApiKeyLabel: "Kunci API Gemini (BYOK)",
+    geminiApiKeyDesc: "Kunci Anda sendiri: disimpan lokal di browser Anda. Tidak pernah dikirim ke server pihak ketiga.",
+    getFreeGeminiKey: "Dapatkan Kunci API Gemini Gratis (Google AI Studio) ↗",
+    testConnection: "Uji Koneksi",
+    testingConnection: "Menguji...",
+    keyConnected: "Aktif & Terhubung (Gemini 1.5 Flash)",
+    keyInvalid: "Kunci API Tidak Valid atau Kedaluwarsa",
+    keyNetworkError: "Gagal Terhubung (Periksa Jaringan)",
+    keyCleared: "Hapus Kunci",
+    keyPlaceholder: "Tempel kunci API AIzaSy...",
+    scanReceiptAi: "Pindai Struk dengan AI",
+    scanningAi: "Menganalisis struk dengan Gemini 1.5 Flash...",
+    ocrKeyRequiredTitle: "Perlu Kunci API Gemini",
+    ocrKeyRequiredDesc: "Untuk memindai struk otomatis, masukkan kunci API Gemini gratis di Pengaturan. Atau lanjutkan pencatatan manual di bawah.",
+    openPreferences: "Buka Pengaturan",
+    continueManual: "Lanjut Manual",
+    ocrSuccessToast: "Struk terpindai: {vendor} ({amount})",
+    ocrRateLimitError: "Batas rate limit gratis Gemini tercapai (15 RPM). Tunggu 30 detik atau isi manual.",
+    ocrParseError: "Detail struk tidak terbaca jelas. Silakan masukkan secara manual.",
+    ocrNetworkError: "Koneksi jaringan terputus. Periksa koneksi atau isi manual.",
   },
   es: {
     // Brand & System
@@ -720,6 +782,29 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     cancel: "Cancelar",
     activeBadge: "Activo",
     createProjectButton: "Crear Producción",
+
+    // AI OCR (Gemini Vision)
+    geminiScanner: "Escáner de Recibos IA (Gemini Vision)",
+    geminiApiKeyLabel: "Clave API Gemini (BYOK)",
+    geminiApiKeyDesc: "Usa tu propia clave: almacenada localmente en tu navegador. Nunca se envía a servidores de terceros.",
+    getFreeGeminiKey: "Obtener clave API Gemini gratis (Google AI Studio) ↗",
+    testConnection: "Probar Conexión",
+    testingConnection: "Probando...",
+    keyConnected: "Activo y Conectado (Gemini 1.5 Flash)",
+    keyInvalid: "Clave API inválida o expirada",
+    keyNetworkError: "Fallo de conexión (Verifica la red)",
+    keyCleared: "Eliminar Clave",
+    keyPlaceholder: "Pega la clave API AIzaSy...",
+    scanReceiptAi: "Escanear Recibo con IA",
+    scanningAi: "Analizando recibo con Gemini 1.5 Flash...",
+    ocrKeyRequiredTitle: "Clave API Gemini Requerida",
+    ocrKeyRequiredDesc: "Para escanear recibos automáticamente, ingresa tu clave API gratuita en Preferencias. O continúa manualmente abajo.",
+    openPreferences: "Abrir Preferencias",
+    continueManual: "Continuar Manualmente",
+    ocrSuccessToast: "Recibo escaneado: {vendor} ({amount})",
+    ocrRateLimitError: "Límite de tasa alcanzado (15 RPM). Espera 30 segundos o ingresa manualmente.",
+    ocrParseError: "No se pudieron detectar detalles claros. Ingresa manualmente.",
+    ocrNetworkError: "Conexión de red perdida. Verifica tu conexión o ingresa manualmente.",
   },
   ja: {
     // Brand & System
@@ -925,10 +1010,33 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     projectDirector: "監督 / プロデューサー",
     switchConfirmTitle: "制作コンテキストを切り替えますか？",
     switchConfirmDesc: "「{name}」に切り替えます。現在の進捗は安全に保存されています。",
-    confirmSwitch: "確認して切替",
+    confirmSwitch: "確認して切り替え",
     cancel: "キャンセル",
     activeBadge: "アクティブ",
     createProjectButton: "制作を作成",
+
+    // AI OCR (Gemini Vision)
+    geminiScanner: "AIレシートスキャナー (Gemini Vision)",
+    geminiApiKeyLabel: "Gemini APIキー (BYOK)",
+    geminiApiKeyDesc: "ユーザー独自のキー: ブラウザにローカル保存され、外部サーバーに送信されることはありません。",
+    getFreeGeminiKey: "無料のGemini APIキーを取得 (Google AI Studio) ↗",
+    testConnection: "接続テスト",
+    testingConnection: "テスト中...",
+    keyConnected: "有効・接続済み (Gemini 1.5 Flash)",
+    keyInvalid: "無効または期限切れのAPIキー",
+    keyNetworkError: "接続失敗 (ネットワークを確認)",
+    keyCleared: "キーを削除",
+    keyPlaceholder: "AIzaSy... APIキーを貼り付け",
+    scanReceiptAi: "AIでレシートをスキャン",
+    scanningAi: "Gemini 1.5 Flashでレシートを解析中...",
+    ocrKeyRequiredTitle: "Gemini APIキーが必要です",
+    ocrKeyRequiredDesc: "レシートを自動スキャンするには、環境設定で無料のGemini APIキーを入力してください。または以下の手動入力を続行してください。",
+    openPreferences: "環境設定を開く",
+    continueManual: "手動で続行",
+    ocrSuccessToast: "レシート解析完了: {vendor} ({amount})",
+    ocrRateLimitError: "Gemini無料レート制限に達しました (15 RPM)。30秒待つか手動入力してください。",
+    ocrParseError: "明瞭な詳細を検出できませんでした。手動で入力してください。",
+    ocrNetworkError: "ネットワーク接続が切れました。確認するか手動で入力してください。",
   },
 };
 
@@ -947,6 +1055,8 @@ interface PreferencesContextType {
   setIsRemindersEnabled: (enabled: boolean) => void;
   isWebNotificationsEnabled: boolean;
   setIsWebNotificationsEnabled: (enabled: boolean) => void;
+  geminiApiKey: string;
+  setGeminiApiKey: (key: string) => void;
   currencies: Record<CurrencyCode, CurrencyConfig>;
   languages: Record<LanguageCode, LanguageConfig>;
   themes: Record<ThemeCode, ThemeConfig>;
@@ -959,8 +1069,9 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
   const [language, setLanguageState] = useState<LanguageCode>("en");
   const [theme, setThemeState] = useState<ThemeCode>("signature");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isRemindersEnabled, setIsRemindersEnabledState] = useState(true);
-  const [isWebNotificationsEnabled, setIsWebNotificationsEnabledState] = useState(false);
+  const [isRemindersEnabled, setIsRemindersEnabledState] = useState<boolean>(true);
+  const [isWebNotificationsEnabled, setIsWebNotificationsEnabledState] = useState<boolean>(false);
+  const [geminiApiKey, setGeminiApiKeyState] = useState<string>("");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -972,6 +1083,10 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       const savedWebNotifs = localStorage.getItem("closebook_web_notifications_enabled");
       if (savedWebNotifs !== null) {
         setIsWebNotificationsEnabledState(savedWebNotifs === "true");
+      }
+      const savedGeminiKey = localStorage.getItem("closebook_gemini_api_key");
+      if (savedGeminiKey) {
+        setGeminiApiKeyState(decodeApiKey(savedGeminiKey));
       }
       const savedCurrency = localStorage.getItem("closebook_currency") as CurrencyCode;
       if (savedCurrency && CURRENCIES[savedCurrency]) {
@@ -1027,6 +1142,18 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
     setIsWebNotificationsEnabledState(enabled);
     try {
       localStorage.setItem("closebook_web_notifications_enabled", String(enabled));
+    } catch {}
+  };
+
+  const setGeminiApiKey = (key: string) => {
+    const clean = key.trim();
+    setGeminiApiKeyState(clean);
+    try {
+      if (clean) {
+        localStorage.setItem("closebook_gemini_api_key", encodeApiKey(clean));
+      } else {
+        localStorage.removeItem("closebook_gemini_api_key");
+      }
     } catch {}
   };
 
@@ -1093,6 +1220,8 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
         setIsRemindersEnabled,
         isWebNotificationsEnabled,
         setIsWebNotificationsEnabled,
+        geminiApiKey,
+        setGeminiApiKey,
         currencies: CURRENCIES,
         languages: LANGUAGES,
         themes: THEMES,

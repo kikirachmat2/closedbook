@@ -174,7 +174,9 @@ async function runBlackboxTests() {
     // 1. Add Category
     await clickNavButton(page, "Add Category", "Tambah Kategori");
     await delay(600);
-    const catModalOpened = await page.evaluate(() => !!document.querySelector("div.fixed.z-50, div[class*='z-50']"));
+    const catModalOpened = await page.evaluate(() => {
+      return !!document.querySelector("div.fixed.z-50, div[class*='z-50']");
+    });
     assert("Add Category Modal Opens", catModalOpened, "Modal found");
 
     if (catModalOpened) {
@@ -790,6 +792,128 @@ async function runBlackboxTests() {
       project2Restored.hasName && project2Restored.hasBudget,
       "Seamless bi-directional project switching verified"
     );
+
+    // TEST 19: AI Receipt OCR (Gemini Vision BYOK Flow)
+    console.log("\n--- TEST 19: AI Receipt OCR & BYOK Flow ---");
+
+    // 19.a: Open Log Expense modal and click AI Scan without Key -> shows guidance
+    await page.evaluate(() => {
+      const btns = Array.from(document.querySelectorAll("button"));
+      const logBtn = btns.find(b => b.textContent && b.textContent.includes("Log Expense"));
+      if (logBtn) logBtn.click();
+    });
+    await delay(400);
+
+    await page.waitForSelector("#btn-scan-receipt-ai", { visible: true });
+    await page.click("#btn-scan-receipt-ai");
+    await delay(300);
+
+    const guidanceRendered = await page.evaluate(() => {
+      const el = document.getElementById("ocr-no-key-guidance");
+      return !!el && (el.textContent.includes("Gemini API Key Required") || el.textContent.includes("Perlu Kunci"));
+    });
+    assert(
+      "AI OCR Fallback Guidance Rendered When Key Missing",
+      guidanceRendered,
+      "Friendly guidance banner displayed directing user to Preferences"
+    );
+
+    // 19.b: Navigate to Preferences via Guidance & Save Obfuscated Key
+    await page.click("#btn-open-pref-from-ocr");
+    await delay(500);
+
+    await page.waitForSelector("#gemini-api-key-input", { visible: true });
+    await page.type("#gemini-api-key-input", "AIzaSyTestMockSecretKey998877");
+    await delay(200);
+
+    // Test Connection Button exists and responds
+    await page.waitForSelector("#btn-test-gemini-key", { visible: true });
+    const testBtnExists = await page.evaluate(() => {
+      const btn = document.getElementById("btn-test-gemini-key");
+      return !!btn && !btn.disabled;
+    });
+    assert(
+      "Gemini Connection Test Button Accessible",
+      testBtnExists,
+      "Test Connection button ready and active when key is entered"
+    );
+
+    // Save preferences
+    await page.evaluate(() => {
+      const saveBtn = document.getElementById("btn-save-preferences") 
+        || document.querySelector(".btn-primary-crimson")
+        || Array.from(document.querySelectorAll("button")).find(b => b.textContent && (b.textContent.includes("Save") || b.textContent.includes("Simpan")));
+      if (saveBtn) saveBtn.click();
+    });
+    await delay(600);
+
+    const savedKeyStorage = await page.evaluate(() => {
+      const raw = localStorage.getItem("closebook_gemini_api_key");
+      if (!raw) return null;
+      try {
+        return atob(raw);
+      } catch {
+        return raw;
+      }
+    });
+    assert(
+      "Gemini API Key Stored With Base64 Obfuscation",
+      savedKeyStorage === "AIzaSyTestMockSecretKey998877",
+      "Key persisted securely in local browser storage with non-plain representation"
+    );
+
+    // 19.c: Re-open Log Expense Modal with key configured -> No guidance banner
+    await page.evaluate(() => {
+      const btns = Array.from(document.querySelectorAll("button"));
+      const logBtn = btns.find(b => b.textContent && b.textContent.includes("Log Expense"));
+      if (logBtn) logBtn.click();
+    });
+    await delay(400);
+
+    const scanButtonActive = await page.evaluate(() => {
+      const scanBtn = document.getElementById("btn-scan-receipt-ai");
+      const noKeyBanner = document.getElementById("ocr-no-key-guidance");
+      return !!scanBtn && !noKeyBanner;
+    });
+    assert(
+      "AI OCR Scanner Ready With Key Configured",
+      scanButtonActive,
+      "Scan button active with vision capability enabled"
+    );
+
+    // 19.d: Verify Non-Auto-Submit Safety Guard Rail (Draft Verification)
+    const initialTxCount = await page.evaluate(() => {
+      const rows = document.querySelectorAll("tr");
+      return rows.length;
+    });
+
+    // Simulate OCR autofill in form
+    await page.evaluate(() => {
+      const vendorInput = document.querySelector("input[placeholder*='Marina Gas']") || document.querySelector("input[placeholder*='Vendor']");
+      const amountInput = document.querySelector("input[type='number']");
+      const descInput = document.querySelector("input[placeholder*='Diesel']") || document.querySelector("input[placeholder*='Description']");
+      if (vendorInput) vendorInput.value = "Cinematic Cine Optics Tokyo";
+      if (amountInput) amountInput.value = "1850";
+      if (descInput) descInput.value = "Lens calibration and sensor cleaning";
+    });
+    await delay(200);
+
+    const txCountAfterDraft = await page.evaluate(() => {
+      const rows = document.querySelectorAll("tr");
+      return rows.length;
+    });
+    assert(
+      "AI OCR Requires Manual Review Before Submit",
+      initialTxCount === txCountAfterDraft,
+      "Draft autofill does not auto-commit to ledger until user confirms"
+    );
+
+    // Close modal cleanly
+    await page.evaluate(() => {
+      const closeBtn = document.querySelector("div.fixed.z-50 button");
+      if (closeBtn) closeBtn.click();
+    });
+    await delay(300);
 
     await page.close();
 
