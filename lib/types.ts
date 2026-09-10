@@ -173,3 +173,15 @@ export interface BurnRateForecast {
   projectedSpend: number;
   actualSpend?: number;
 }
+
+export type NoteCategory = "general" | "finance" | "logistics" | "creative" | "urgent";
+
+/** A project-scoped freeform note with optional category and pin support */
+export interface ProjectNote {
+  id: string;
+  author: string;
+  content: string;
+  category?: NoteCategory;
+  createdAt: string;   // ISO timestamp
+  isPinned: boolean;
+}

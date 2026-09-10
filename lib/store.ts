@@ -18,6 +18,8 @@ import {
   DailyReconcile,
   ReconcileEntry,
   ProjectShell,
+  ProjectNote,
+  NoteCategory,
 } from "./types";
 
 const INITIAL_PROJECT: Project = {
@@ -236,6 +238,7 @@ export function useClosebookStore() {
       isActive: true,
     },
   ]);
+  const [notes, setNotes] = useState<ProjectNote[]>([]);
   const [webhookUrl, setWebhookUrl] = useState<string>("");
   const [isWebhookSyncEnabled, setIsWebhookSyncEnabled] = useState<boolean>(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -269,6 +272,8 @@ export function useClosebookStore() {
       if (savedReconciles) setReconciliations(JSON.parse(savedReconciles));
       const savedProjects = localStorage.getItem("closebook_projects");
       if (savedProjects) setProjects(JSON.parse(savedProjects));
+      const savedNotes = localStorage.getItem("closebook_notes");
+      if (savedNotes) setNotes(JSON.parse(savedNotes));
     } catch {
       // fallback to initial
     }
@@ -329,6 +334,11 @@ export function useClosebookStore() {
   const persistProjects = (newProjects: ProjectShell[]) => {
     setProjects(newProjects);
     try { localStorage.setItem("closebook_projects", JSON.stringify(newProjects)); } catch {}
+  };
+
+  const persistNotes = (newNotes: ProjectNote[]) => {
+    setNotes(newNotes);
+    try { localStorage.setItem("closebook_notes", JSON.stringify(newNotes)); } catch {}
   };
 
   // ─── 1. Transactions ────────────────────────────────────────────────────────
@@ -837,7 +847,29 @@ export function useClosebookStore() {
     ));
   };
 
-  // ─── 9. Multi-Project ───────────────────────────────────────────────────────
+  // ─── 9. Project Notes ────────────────────────────────────────────────────────
+  const addNote = (content: string, author: string, category?: NoteCategory): ProjectNote => {
+    const newNote: ProjectNote = {
+      id: `note-${Date.now()}`,
+      author: author || "Current User",
+      content: content.trim(),
+      category,
+      createdAt: new Date().toISOString(),
+      isPinned: false,
+    };
+    persistNotes([newNote, ...notes]);
+    return newNote;
+  };
+
+  const togglePinNote = (noteId: string): void => {
+    persistNotes(notes.map((n) => n.id === noteId ? { ...n, isPinned: !n.isPinned } : n));
+  };
+
+  const deleteNote = (noteId: string): void => {
+    persistNotes(notes.filter((n) => n.id !== noteId));
+  };
+
+  // ─── 10. Multi-Project ───────────────────────────────────────────────────────
   const createProject = (name: string, totalBudget: number, shootDays: number, director: string) => {
     const id = `proj-${Date.now()}`;
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
@@ -1003,6 +1035,7 @@ export function useClosebookStore() {
     alerts,
     comments,
     reconciliations,
+    notes,
     projects,
     webhookUrl,
     isWebhookSyncEnabled,
@@ -1045,6 +1078,10 @@ export function useClosebookStore() {
     // Exports
     exportLedgerCSV,
     exportProductionVaultJSON,
+    // Notes
+    addNote,
+    togglePinNote,
+    deleteNote,
     // Computed
     getBurnRateForecast,
   };

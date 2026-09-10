@@ -146,6 +146,15 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     resolve: "Resolve",
     resolved: "Resolved",
     acknowledgeResolve: "Acknowledge & Resolve",
+    projectNotes: "Project Notes",
+    addNote: "Add Note",
+    noteContentPlaceholder: "Write a project note, decision, or directive...",
+    pinNote: "Pin",
+    unpinNote: "Unpin",
+    deleteNote: "Delete",
+    noNotesYet: "No project notes yet. Add the first one.",
+    pinnedNotes: "Pinned",
+    notesCount: "notes",
 
     // Ledger
     ledgerTitle: "Petty Cash Audit Ledger",
@@ -316,6 +325,15 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     resolve: "Selesaikan",
     resolved: "Terselesaikan",
     acknowledgeResolve: "Verifikasi & Selesaikan",
+    projectNotes: "Catatan Proyek",
+    addNote: "Tambah Catatan",
+    noteContentPlaceholder: "Tulis catatan, keputusan, atau arahan proyek...",
+    pinNote: "Sematkan",
+    unpinNote: "Lepas Sematan",
+    deleteNote: "Hapus",
+    noNotesYet: "Belum ada catatan proyek. Tambahkan yang pertama.",
+    pinnedNotes: "Disematkan",
+    notesCount: "catatan",
 
     // Ledger
     ledgerTitle: "Buku Kas Lapangan & Audit Nota",
@@ -483,6 +501,15 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     resolve: "Resolver",
     resolved: "Resuelto",
     acknowledgeResolve: "Verificar y Resolver",
+    projectNotes: "Notas del Proyecto",
+    addNote: "Agregar Nota",
+    noteContentPlaceholder: "Escribe una nota, decisión o directiva del proyecto...",
+    pinNote: "Fijar",
+    unpinNote: "Desfijar",
+    deleteNote: "Eliminar",
+    noNotesYet: "Aún no hay notas. Agrega la primera.",
+    pinnedNotes: "Fijadas",
+    notesCount: "notas",
 
     // Ledger
     ledgerTitle: "Libro de Auditoría de Caja Chica",
@@ -650,6 +677,15 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     resolve: "解決済みにする",
     resolved: "解決済み",
     acknowledgeResolve: "確認して解決済みにする",
+    projectNotes: "プロジェクトノート",
+    addNote: "ノートを追加",
+    noteContentPlaceholder: "プロジェクトメモ、決定事項、指示を記入...",
+    pinNote: "固定",
+    unpinNote: "固定解除",
+    deleteNote: "削除",
+    noNotesYet: "まだノートがありません。最初の一件を追加してください。",
+    pinnedNotes: "固定済み",
+    notesCount: "件",
 
     // Ledger
     ledgerTitle: "現場小口現金出納帳",

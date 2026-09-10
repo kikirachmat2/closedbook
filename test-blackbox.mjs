@@ -589,6 +589,56 @@ async function runBlackboxTests() {
       assert("Rule 5: Orphan Alert Auto-Resolved on Task Deletion", false, "Could not find task delete button to trigger Rule 5");
     }
 
+    // =========================================================================
+    // TEST 16: PROJECT NOTES MODULE (Overview Panel)
+    // =========================================================================
+    console.log("\n--- TEST 16: Project Notes Module (Overview Panel) ---");
+    await clickNavButton(page, "Executive Overview", "Ringkasan", "Overview");
+    await delay(600);
+
+    // 1. Note Compose & Add
+    await page.waitForSelector("[data-testid='notes-panel']");
+    const noteInput = await page.waitForSelector("[data-testid='note-compose-input']");
+    await clearAndType(page, noteInput, "Emergency generator rented for night shoot on soundstage B.");
+    await delay(300);
+    const addBtn = await page.waitForSelector("[data-testid='add-note-btn']");
+    await addBtn.click();
+    await delay(800);
+
+    const createdNoteCard = await page.waitForSelector("[data-testid^='note-card-']", { timeout: 3000 });
+    const noteCardText = await page.evaluate(el => el.textContent || "", createdNoteCard);
+    assert(
+      "Note Added to Panel",
+      noteCardText.includes("Emergency generator rented"),
+      "New note card rendered with content in notes panel"
+    );
+
+    // Extract note ID from testid
+    const noteTestId = await page.evaluate(el => el.getAttribute("data-testid") || "", createdNoteCard);
+    const noteId = noteTestId.replace("note-card-", "");
+
+    // 2. Note Pin & Unpin Toggle
+    await page.click(`button[data-testid='pin-note-btn-${noteId}']`);
+    await delay(500);
+
+    const isPinnedActive = await page.evaluate((id) => {
+      const card = document.querySelector(`div[data-testid='note-card-${id}']`);
+      if (!card) return false;
+      const hasAmber = card.classList.contains("border-amber-400/20") || card.className.includes("amber-400");
+      const pinBtn = document.querySelector(`button[data-testid='pin-note-btn-${id}']`);
+      const btnText = pinBtn ? pinBtn.textContent || "" : "";
+      return hasAmber || btnText.includes("Unpin") || btnText.includes("Lepas");
+    }, noteId);
+    assert("Note Pin State Toggled", isPinnedActive, "Note card displays pinned styling and toggle state");
+
+    // 3. Note Delete
+    const preDeleteCount = await page.evaluate(() => document.querySelectorAll("[data-testid^='note-card-']").length);
+    await page.click(`button[data-testid='delete-note-btn-${noteId}']`);
+    await delay(500);
+
+    const postDeleteCount = await page.evaluate(() => document.querySelectorAll("[data-testid^='note-card-']").length);
+    assert("Note Deleted Successfully", postDeleteCount === preDeleteCount - 1, "Note card removed from panel after deletion");
+
     await page.close();
 
     // =========================================================================

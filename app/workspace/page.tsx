@@ -267,6 +267,19 @@ export default function WorkspacePage() {
   // Comment state
   const [commentText, setCommentText] = useState("");
 
+  // Notes panel state
+  const [noteText, setNoteText] = useState("");
+  const [noteAuthor, setNoteAuthor] = useState("Current User");
+  const [isNotesPanelOpen, setIsNotesPanelOpen] = useState(true);
+
+  // Load shared comment author for notes (reuse CommentDrawer mechanism)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("closebook_comment_author");
+      if (saved && saved.trim()) setNoteAuthor(saved.trim());
+    } catch {}
+  }, []);
+
   // Client-Side Photo Compression & EXIF Stripping
   const handleReceiptFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1064,6 +1077,152 @@ export default function WorkspacePage() {
                     ))}
                   </div>
                 </div>
+              </div>
+
+              {/* ── Project Notes Panel ── */}
+              <div className="surface-panel p-5 sm:p-6" data-testid="notes-panel">
+                {/* Panel Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-lg bg-[var(--accent-badge-bg,rgba(255,30,66,0.12))] flex items-center justify-center text-[var(--color-primary,#ff1e42)]">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-[#fdfdfd]">{t("projectNotes")}</h3>
+                      <p className="text-[10px] text-[#737373] font-mono">{store.notes.length} {t("notesCount")}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsNotesPanelOpen((v) => !v)}
+                    className="min-h-[36px] min-w-[36px] flex items-center justify-center text-[#737373] hover:text-[#fdfdfd] hover:bg-white/[0.05] rounded-lg transition-colors"
+                    aria-label="Toggle notes panel"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className={`w-4 h-4 transition-transform duration-200 ${isNotesPanelOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                  </button>
+                </div>
+
+                <AnimatePresence>
+                  {isNotesPanelOpen && (
+                    <m.div
+                      key="notes-body"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.22, ease: "easeInOut" }}
+                      className="overflow-hidden"
+                    >
+                      {/* Note Cards */}
+                      {store.notes.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-8 text-[#737373] text-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 stroke-1 mb-2 opacity-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                          <p className="text-xs">{t("noNotesYet")}</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2.5 mb-4">
+                          {store.notes.some((n) => n.isPinned) && (
+                            <span className="text-[9px] font-mono uppercase tracking-widest text-amber-400 font-semibold flex items-center gap-1 mb-1">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
+                              {t("pinnedNotes")}
+                            </span>
+                          )}
+                          <AnimatePresence mode="popLayout">
+                            {[...store.notes]
+                              .sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0))
+                              .map((note) => (
+                                <m.div
+                                  key={note.id}
+                                  layout
+                                  initial={{ opacity: 0, y: 8 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  exit={{ opacity: 0, x: -16, transition: { duration: 0.18 } }}
+                                  transition={{ type: "spring", damping: 28, stiffness: 300 }}
+                                  data-testid={`note-card-${note.id}`}
+                                  className={`surface-overlay p-3.5 rounded-lg border transition-all ${
+                                    note.isPinned
+                                      ? "border-amber-400/20 bg-amber-400/[0.03]"
+                                      : "border-white/[0.06] hover:border-white/[0.12]"
+                                  }`}
+                                >
+                                  <div className="flex items-start justify-between gap-3 mb-2">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      {note.isPinned && (
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
+                                      )}
+                                      <span className="text-xs font-semibold text-[#fdfdfd] truncate">{note.author}</span>
+                                      {note.category && (
+                                        <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-white/[0.06] text-[#a3a3a3] uppercase shrink-0">{note.category}</span>
+                                      )}
+                                    </div>
+                                    <span className="text-[10px] font-mono text-[#737373] shrink-0 tabular-nums">
+                                      {new Date(note.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-[#d4d4d4] leading-relaxed whitespace-pre-wrap mb-3">{note.content}</p>
+                                  <div className="flex items-center gap-2 justify-end">
+                                    <button
+                                      onClick={() => store.togglePinNote(note.id)}
+                                      data-testid={`pin-note-btn-${note.id}`}
+                                      className="text-[10px] font-medium text-[#737373] hover:text-amber-400 transition-colors min-h-[28px] px-2 flex items-center gap-1 rounded hover:bg-amber-400/[0.08]"
+                                    >
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" viewBox="0 0 24 24" fill={note.isPinned ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
+                                      {note.isPinned ? t("unpinNote") : t("pinNote")}
+                                    </button>
+                                    <button
+                                      onClick={() => store.deleteNote(note.id)}
+                                      data-testid={`delete-note-btn-${note.id}`}
+                                      className="text-[10px] font-medium text-[#737373] hover:text-[var(--color-primary,#ff1e42)] transition-colors min-h-[28px] px-2 flex items-center gap-1 rounded hover:bg-[var(--accent-badge-bg,rgba(255,30,66,0.08))]"
+                                    >
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                                      {t("deleteNote")}
+                                    </button>
+                                  </div>
+                                </m.div>
+                              ))}
+                          </AnimatePresence>
+                        </div>
+                      )}
+
+                      {/* Compose Area */}
+                      <div className="space-y-2 pt-3 border-t border-white/[0.06]">
+                        <div className="flex items-center gap-2 text-[10px] text-[#a3a3a3]">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-[#737373]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                          <span>{t("postingAs")}:</span>
+                          <span className="font-medium text-[#fdfdfd]">{noteAuthor}</span>
+                        </div>
+                        <textarea
+                          value={noteText}
+                          onChange={(e) => setNoteText(e.target.value)}
+                          placeholder={t("noteContentPlaceholder")}
+                          rows={2}
+                          className="w-full bg-[#161616] border border-white/[0.1] rounded-lg px-4 py-3 text-xs text-[#fdfdfd] placeholder:text-[#666666] focus:outline-none focus:border-[var(--color-primary,#ff1e42)] transition-colors resize-none"
+                          data-testid="note-compose-input"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                              e.preventDefault();
+                              if (noteText.trim()) { store.addNote(noteText, noteAuthor); setNoteText(""); }
+                            }
+                          }}
+                        />
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!noteText.trim()) return;
+                              store.addNote(noteText, noteAuthor);
+                              setNoteText("");
+                            }}
+                            disabled={!noteText.trim()}
+                            className="btn-primary-crimson text-xs px-4 min-h-[36px] disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+                            data-testid="add-note-btn"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                            {t("addNote")}
+                          </button>
+                        </div>
+                      </div>
+                    </m.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           )}
