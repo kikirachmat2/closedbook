@@ -150,11 +150,11 @@ const INITIAL_TRANSFERS: PocketTransfer[] = [
 ];
 
 const INITIAL_TASKS: Task[] = [
-  { id: "tsk-1", departmentId: "cat-ops", departmentName: "Operations & Logistics", title: "Confirm security escort for convoy to coastal site", assignee: "Rizal Pratama", priority: "high", status: "completed", dueDate: "Day 4" },
-  { id: "tsk-2", departmentId: "cat-crt", departmentName: "Production & Creative", title: "Complete distressing on hero boat cabin props", assignee: "Dina Kartika", priority: "urgent", status: "in_progress", dueDate: "Day 4" },
-  { id: "tsk-3", departmentId: "cat-ops", departmentName: "Operations & Logistics", title: "Prep warm refreshment station for rain setup", assignee: "Sarah Lin", priority: "medium", status: "todo", dueDate: "Day 5" },
-  { id: "tsk-4", departmentId: "cat-crt", departmentName: "Production & Creative", title: "Optical sensor calibration and waterproof protection check", assignee: "Budi Santoso", priority: "high", status: "in_progress", dueDate: "Day 4" },
-  { id: "tsk-5", departmentId: "cat-vnd", departmentName: "Vendors & External Services", title: "Coordinate 18K backlight generator delivery with rental provider", assignee: "Leo Hardi", priority: "urgent", status: "todo", dueDate: "Day 4" },
+  { id: "tsk-1", departmentId: "cat-ops", departmentName: "Operations & Logistics", title: "Site walkthrough & safety compliance check", assignee: "Rizal Pratama", priority: "high", status: "completed", dueDate: "Day 4" },
+  { id: "tsk-2", departmentId: "cat-crt", departmentName: "Production & Creative", title: "Finalize presentation deck & spatial branding assets", assignee: "Dina Kartika", priority: "urgent", status: "in_progress", dueDate: "Day 4" },
+  { id: "tsk-3", departmentId: "cat-ops", departmentName: "Operations & Logistics", title: "Prep attendee catering & refreshment station", assignee: "Sarah Lin", priority: "medium", status: "todo", dueDate: "Day 5" },
+  { id: "tsk-4", departmentId: "cat-crt", departmentName: "Production & Creative", title: "Audio-visual display calibration and network test", assignee: "Budi Santoso", priority: "high", status: "in_progress", dueDate: "Day 4" },
+  { id: "tsk-5", departmentId: "cat-vnd", departmentName: "Vendors & External Services", title: "Confirm vendor contract for staging and power backup", assignee: "Leo Hardi", priority: "urgent", status: "todo", dueDate: "Day 4" },
 ];
 
 const INITIAL_CALLSHEET: DailyCallSheet = {
@@ -167,16 +167,16 @@ const INITIAL_CALLSHEET: DailyCallSheet = {
   locationName: "Cove Harbor Dock 4 & Old Warehouse",
   locationAddress: "Pier 14, Marina Coastline Blvd, Sector B",
   weather: "Overcast / 24°C, Low Tide at 14:00, 30% evening drizzle",
-  scenesScheduled: "Scene 12 (EXT. DOCK - DAY), Scene 14 (INT. CABIN - SUNSET), Scene 15 (EXT. HARBOR - DUSK)",
+  scenesScheduled: "Keynote Hall A (Morning), Workshop Lab 2 (Afternoon), Partner Showcase (Evening)",
   emergencyContact: "Medic: Dr. Aris (+62 812-3344-5566) / Production Coordinator: +62 811-9988-77",
-  directorNotes: "Scene 14 requires real water reflection on actor's face. Grip check dimmer boards before 16:30.",
+  directorNotes: "Stage 2 audio rig needs live mic check before 16:30. Ensure backup streaming link active.",
 };
 
 const INITIAL_EQUIPMENT: EquipmentRental[] = [
-  { id: "eq-1", itemName: "ARRI Alexa 35 Camera Package (A-Cam)", vendor: "CamTek Rentals", department: "Production & Creative", dailyRate: 1200, returnDate: "Oct 28", daysRemaining: 14, status: "on_set" },
-  { id: "eq-2", itemName: "Cooke Anamorphic /i Prime Lens Set (5 Lenses)", vendor: "CamTek Rentals", department: "Production & Creative", dailyRate: 850, returnDate: "Oct 28", daysRemaining: 14, status: "on_set" },
-  { id: "eq-3", itemName: "120kW Super-Silent Trailer Generator", vendor: "GripMaster Indo", department: "Operations & Logistics", dailyRate: 400, returnDate: "Oct 20", daysRemaining: 6, status: "on_set" },
-  { id: "eq-4", itemName: "Technocrane 30ft Telescopic Jib", vendor: "MotionDynamics", department: "Vendors & External Services", dailyRate: 1500, returnDate: "Oct 16", daysRemaining: 2, status: "rented" },
+  { id: "eq-1", itemName: "High-Lumen Laser Projector & Screen Kit", vendor: "AVTech Pro Indo", department: "Production & Creative", dailyRate: 1200, returnDate: "Oct 28", daysRemaining: 14, status: "on_set" },
+  { id: "eq-2", itemName: "Concert Digital Sound Console & Mic Array", vendor: "AVTech Pro Indo", department: "Production & Creative", dailyRate: 850, returnDate: "Oct 28", daysRemaining: 14, status: "on_set" },
+  { id: "eq-3", itemName: "50kW Super-Silent Site Backup Generator", vendor: "PowerGrid Indo", department: "Operations & Logistics", dailyRate: 400, returnDate: "Oct 20", daysRemaining: 6, status: "on_set" },
+  { id: "eq-4", itemName: "Modular Aluminium Staging & Truss Rig", vendor: "EventWorks", department: "Vendors & External Services", dailyRate: 1500, returnDate: "Oct 16", daysRemaining: 2, status: "rented" },
 ];
 
 const INITIAL_ALERTS: SystemAlert[] = [

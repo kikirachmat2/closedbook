@@ -318,14 +318,14 @@ async function runBlackboxTests() {
     await delay(600);
 
     const taskFilled = await fillActiveModal(page, {
-      text1: "Inspect Steadicam gyro gimbal",
+      text1: "Site walkthrough & safety compliance check",
       text2: "Raka Wijaya",
     });
     await submitActiveModal(page);
     await delay(800);
 
     const tasksContent = await page.evaluate(() => document.body.textContent);
-    assert("Task Created in Kanban", tasksContent.includes("Steadicam") || tasksContent.includes("Raka"), "Task appears in board");
+    assert("Task Created in Kanban", tasksContent.includes("walkthrough") || tasksContent.includes("Raka"), "Task appears in board");
     await page.screenshot({ path: path.join(ARTIFACT_DIR, "audit_05_tasks_kanban.png") });
 
     // TEST 8: SCHEDULE & DAY ADVANCE
@@ -350,21 +350,21 @@ async function runBlackboxTests() {
 
     const eqContent = await page.evaluate(() => document.body.textContent);
     assert("Equipment Burn Rate Displayed", eqContent.includes("Burn") || eqContent.includes("Daily") || eqContent.includes("Harian"), "Burn rate KPI visible");
-    assert("ARRI Camera Listed", eqContent.includes("ARRI") || eqContent.includes("Alexa"), "Camera package present");
+    assert("Laser Projector Listed", eqContent.includes("Laser Projector") || eqContent.includes("Projector"), "Projector package present");
 
     await clickNavButton(page, "Add Rental Gear", "+ Add Equipment", "Add Equipment");
     await delay(600);
 
     await fillActiveModal(page, {
-      text1: "Wireless Teradek Bolt 4K Video Set",
-      text2: "CamTek Rentals",
+      text1: "Portable PA System & Wireless Mic Kit",
+      text2: "SoundCraft Rentals",
       number1: 320,
     });
     await submitActiveModal(page);
     await delay(800);
 
     const eqUpdated = await page.evaluate(() => document.body.textContent);
-    assert("New Equipment Added", eqUpdated.includes("Teradek") || eqUpdated.includes("Wireless"), "Equipment in tracker");
+    assert("New Equipment Added", eqUpdated.includes("Portable PA") || eqUpdated.includes("Wireless Mic"), "Equipment in tracker");
     await page.screenshot({ path: path.join(ARTIFACT_DIR, "audit_07_equipment_tracker.png") });
 
     // TEST 10: GOOGLE SHEET MIRROR & WEBHOOK
