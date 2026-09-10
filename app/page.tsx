@@ -179,13 +179,13 @@ export default function HomePage() {
       <header className="sticky top-0 z-50 w-full bg-[var(--surface-canvas,#050505)]/90 backdrop-blur-md border-b border-white/[0.06]">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full overflow-hidden bg-[#121212] border border-white/[0.08] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center">
               <Image
                 src="/icon.png"
                 alt="ClosedBook Icon"
                 width={32}
                 height={32}
-                className="object-contain p-0.5"
+                className="object-contain"
                 priority
               />
             </div>
@@ -669,8 +669,8 @@ export default function HomePage() {
       <footer className="border-t border-white/[0.06] py-10 text-xs text-[#737373]">
         <div className="max-w-[1200px] mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <div className="w-5 h-5 rounded-full overflow-hidden bg-[#121212] border border-white/[0.08] flex items-center justify-center">
-              <Image src="/icon.png" alt="ClosedBook Logo" width={20} height={20} className="object-contain p-0.5" />
+            <div className="w-5 h-5 rounded-md overflow-hidden flex items-center justify-center">
+              <Image src="/icon.png" alt="ClosedBook Logo" width={20} height={20} className="object-contain" />
             </div>
             <span className="text-[#fdfdfd] font-medium">closedbook.</span>
             <span>— The Zero-Budget Production & Project Management OS</span>

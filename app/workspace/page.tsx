@@ -524,8 +524,8 @@ export default function WorkspacePage() {
           {/* Brand Header */}
           <div className="flex items-center justify-between pb-6 mb-6 border-b border-white/[0.06]">
             <Link href="/" className="flex items-center gap-3 min-h-[44px]">
-              <div className="w-8 h-8 rounded-full overflow-hidden bg-[#121212] border border-white/[0.08] flex items-center justify-center">
-                <Image src="/icon.png" alt="ClosedBook" width={32} height={32} className="object-contain p-0.5" />
+              <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center">
+                <Image src="/icon.png" alt="ClosedBook" width={32} height={32} className="object-contain" />
               </div>
               <span className="text-base font-medium tracking-tight text-[#fdfdfd]">
                 closedbook<span className="text-[var(--color-primary,#ff1e42)]">.</span>
@@ -725,8 +725,8 @@ export default function WorkspacePage() {
           <div className="flex items-center gap-3">
             {/* Mobile Brand Logo */}
             <Link href="/" className="md:hidden flex items-center gap-2 min-h-[44px]">
-              <div className="w-7 h-7 rounded-full overflow-hidden bg-[#121212] border border-white/[0.08] flex items-center justify-center">
-                <Image src="/icon.png" alt="ClosedBook" width={28} height={28} className="object-contain p-0.5" />
+              <div className="w-7 h-7 rounded-lg overflow-hidden flex items-center justify-center">
+                <Image src="/icon.png" alt="ClosedBook" width={28} height={28} className="object-contain" />
               </div>
               <span className="text-sm font-medium tracking-tight text-[#fdfdfd]">
                 closedbook<span className="text-[var(--color-primary,#ff1e42)]">.</span>
