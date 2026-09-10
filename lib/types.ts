@@ -65,6 +65,7 @@ export interface Transaction {
   status: TransactionStatus;
   loggedBy: string;
   loggedAt: string;
+  createdAt: string;
   receiptUrl?: string;
   isMissingReceipt?: boolean;
   notes?: string;

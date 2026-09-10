@@ -155,6 +155,19 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     noNotesYet: "No project notes yet. Add the first one.",
     pinnedNotes: "Pinned",
     notesCount: "notes",
+    notificationsAndReminders: "Notifications & Reminders",
+    enableInAppReminders: "In-App Reminders",
+    inAppRemindersDesc: "Proactive banners for pending daily reconciliation, overdue tasks, and pending approvals",
+    enableWebNotifications: "Browser Push Notifications",
+    webNotificationsDesc: "Native system notifications when the tab is in background",
+    reminderPendingItems: "action items requiring attention",
+    reminderReconIncomplete: "Day {day} reconciliation pending",
+    reminderOverdueTasks: "{count} overdue task",
+    reminderOverdueTasksPlural: "{count} overdue tasks",
+    reminderPendingApprovals: "{count} pending approval (>1 day)",
+    reminderPendingApprovalsPlural: "{count} pending approvals (>1 day)",
+    dismissReminder: "Dismiss",
+    resolveNow: "Review Now",
 
     // Ledger
     ledgerTitle: "Petty Cash Audit Ledger",
@@ -334,6 +347,19 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     noNotesYet: "Belum ada catatan proyek. Tambahkan yang pertama.",
     pinnedNotes: "Disematkan",
     notesCount: "catatan",
+    notificationsAndReminders: "Notifikasi & Pengingat",
+    enableInAppReminders: "Pengingat Dalam Aplikasi",
+    inAppRemindersDesc: "Banner proaktif untuk rekonsiliasi harian, tugas lewat tenggat, dan persetujuan tertunda",
+    enableWebNotifications: "Notifikasi Browser",
+    webNotificationsDesc: "Notifikasi sistem saat tab berada di latar belakang",
+    reminderPendingItems: "item membutuhkan perhatian",
+    reminderReconIncomplete: "Rekonsiliasi Hari {day} belum selesai",
+    reminderOverdueTasks: "{count} tugas lewat tenggat",
+    reminderOverdueTasksPlural: "{count} tugas lewat tenggat",
+    reminderPendingApprovals: "{count} persetujuan tertunda (>1 hari)",
+    reminderPendingApprovalsPlural: "{count} persetujuan tertunda (>1 hari)",
+    dismissReminder: "Tutup",
+    resolveNow: "Tinjau Sekarang",
 
     // Ledger
     ledgerTitle: "Buku Kas Lapangan & Audit Nota",
@@ -510,6 +536,19 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     noNotesYet: "Aún no hay notas. Agrega la primera.",
     pinnedNotes: "Fijadas",
     notesCount: "notas",
+    notificationsAndReminders: "Notificaciones y Recordatorios",
+    enableInAppReminders: "Recordatorios en la App",
+    inAppRemindersDesc: "Banners proactivos para reconciliación pendiente, tareas vencidas y aprobaciones",
+    enableWebNotifications: "Notificaciones del Navegador",
+    webNotificationsDesc: "Notificaciones de sistema cuando la pestaña está en segundo plano",
+    reminderPendingItems: "elementos requieren atención",
+    reminderReconIncomplete: "Reconciliación del Día {day} pendiente",
+    reminderOverdueTasks: "{count} tarea vencida",
+    reminderOverdueTasksPlural: "{count} tareas vencidas",
+    reminderPendingApprovals: "{count} aprobación pendiente (>1 día)",
+    reminderPendingApprovalsPlural: "{count} aprobaciones pendientes (>1 día)",
+    dismissReminder: "Descartar",
+    resolveNow: "Revisar Ahora",
 
     // Ledger
     ledgerTitle: "Libro de Auditoría de Caja Chica",
@@ -686,6 +725,19 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     noNotesYet: "まだノートがありません。最初の一件を追加してください。",
     pinnedNotes: "固定済み",
     notesCount: "件",
+    notificationsAndReminders: "通知とリマインダー",
+    enableInAppReminders: "アプリ内リマインダー",
+    inAppRemindersDesc: "日次照合、期限切れタスク、保留中の承認についてバナーを表示します",
+    enableWebNotifications: "ブラウザ通知",
+    webNotificationsDesc: "タブがバックグラウンドにあるときにシステム通知を送信します",
+    reminderPendingItems: "件の対応が必要な項目",
+    reminderReconIncomplete: "第{day}日の照合が未完了です",
+    reminderOverdueTasks: "{count}件の期限切れタスク",
+    reminderOverdueTasksPlural: "{count}件の期限切れタスク",
+    reminderPendingApprovals: "{count}件の保留中の承認 (>1日)",
+    reminderPendingApprovalsPlural: "{count}件の保留中の承認 (>1日)",
+    dismissReminder: "閉じる",
+    resolveNow: "今すぐ確認",
 
     // Ledger
     ledgerTitle: "現場小口現金出納帳",
@@ -823,6 +875,10 @@ interface PreferencesContextType {
   t: (key: string, replacements?: Record<string, string | number>) => string;
   isSettingsOpen: boolean;
   setIsSettingsOpen: (open: boolean) => void;
+  isRemindersEnabled: boolean;
+  setIsRemindersEnabled: (enabled: boolean) => void;
+  isWebNotificationsEnabled: boolean;
+  setIsWebNotificationsEnabled: (enabled: boolean) => void;
   currencies: Record<CurrencyCode, CurrencyConfig>;
   languages: Record<LanguageCode, LanguageConfig>;
   themes: Record<ThemeCode, ThemeConfig>;
@@ -835,10 +891,20 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
   const [language, setLanguageState] = useState<LanguageCode>("en");
   const [theme, setThemeState] = useState<ThemeCode>("signature");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isRemindersEnabled, setIsRemindersEnabledState] = useState(true);
+  const [isWebNotificationsEnabled, setIsWebNotificationsEnabledState] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     try {
+      const savedReminders = localStorage.getItem("closebook_reminders_enabled");
+      if (savedReminders !== null) {
+        setIsRemindersEnabledState(savedReminders === "true");
+      }
+      const savedWebNotifs = localStorage.getItem("closebook_web_notifications_enabled");
+      if (savedWebNotifs !== null) {
+        setIsWebNotificationsEnabledState(savedWebNotifs === "true");
+      }
       const savedCurrency = localStorage.getItem("closebook_currency") as CurrencyCode;
       if (savedCurrency && CURRENCIES[savedCurrency]) {
         setCurrencyState(savedCurrency);
@@ -880,6 +946,20 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       localStorage.setItem("closebook_theme", th);
     } catch {}
     document.documentElement.setAttribute("data-theme", th);
+  };
+
+  const setIsRemindersEnabled = (enabled: boolean) => {
+    setIsRemindersEnabledState(enabled);
+    try {
+      localStorage.setItem("closebook_reminders_enabled", String(enabled));
+    } catch {}
+  };
+
+  const setIsWebNotificationsEnabled = (enabled: boolean) => {
+    setIsWebNotificationsEnabledState(enabled);
+    try {
+      localStorage.setItem("closebook_web_notifications_enabled", String(enabled));
+    } catch {}
   };
 
   // Convert and format monetary amounts with international localization
@@ -941,6 +1021,10 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
         t,
         isSettingsOpen,
         setIsSettingsOpen,
+        isRemindersEnabled,
+        setIsRemindersEnabled,
+        isWebNotificationsEnabled,
+        setIsWebNotificationsEnabled,
         currencies: CURRENCIES,
         languages: LANGUAGES,
         themes: THEMES,

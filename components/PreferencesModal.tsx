@@ -2,7 +2,7 @@
 
 import React from "react";
 import { usePreferences, CurrencyCode, LanguageCode, ThemeCode } from "@/lib/preferences";
-import { X, Check, Globe, DollarSign, Palette, Sparkles } from "lucide-react";
+import { X, Check, Globe, DollarSign, Palette, Sparkles, Bell } from "lucide-react";
 
 export default function PreferencesModal() {
   const {
@@ -14,6 +14,10 @@ export default function PreferencesModal() {
     setLanguage,
     theme,
     setTheme,
+    isRemindersEnabled,
+    setIsRemindersEnabled,
+    isWebNotificationsEnabled,
+    setIsWebNotificationsEnabled,
     currencies,
     languages,
     themes,
@@ -195,6 +199,83 @@ export default function PreferencesModal() {
                   </button>
                 );
               })}
+            </div>
+          </div>
+
+          {/* 4. NOTIFICATIONS & REMINDERS */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Bell className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-stone,#737373)]">
+                {t("notificationsAndReminders")}
+              </h3>
+            </div>
+            <div className="space-y-3">
+              {/* In-app reminder toggle */}
+              <div className="surface-overlay p-3.5 sm:p-4 rounded-[14px] border border-white/[0.06] flex items-center justify-between gap-4">
+                <div>
+                  <div className="text-xs font-semibold text-[var(--color-paper,#fdfdfd)]">
+                    {t("enableInAppReminders")}
+                  </div>
+                  <div className="text-[11px] text-[var(--color-stone,#737373)] mt-0.5 leading-relaxed">
+                    {t("inAppRemindersDesc")}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  data-testid="toggle-reminders-btn"
+                  onClick={() => setIsRemindersEnabled(!isRemindersEnabled)}
+                  className={`w-12 h-6 rounded-full transition-colors relative shrink-0 p-0.5 ${
+                    isRemindersEnabled ? "bg-[var(--color-primary,#ff1e42)]" : "bg-white/10"
+                  }`}
+                  aria-label="Toggle in-app reminders"
+                >
+                  <span
+                    className={`block w-5 h-5 rounded-full bg-white transition-transform ${
+                      isRemindersEnabled ? "translate-x-6" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Native web notifications toggle */}
+              <div className="surface-overlay p-3.5 sm:p-4 rounded-[14px] border border-white/[0.06] flex items-center justify-between gap-4">
+                <div>
+                  <div className="text-xs font-semibold text-[var(--color-paper,#fdfdfd)]">
+                    {t("enableWebNotifications")}
+                  </div>
+                  <div className="text-[11px] text-[var(--color-stone,#737373)] mt-0.5 leading-relaxed">
+                    {t("webNotificationsDesc")}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  data-testid="toggle-web-notifications-btn"
+                  onClick={() => {
+                    if (!isWebNotificationsEnabled && typeof window !== "undefined" && "Notification" in window) {
+                      Notification.requestPermission().then((perm) => {
+                        if (perm === "granted") {
+                          setIsWebNotificationsEnabled(true);
+                        } else {
+                          setIsWebNotificationsEnabled(false);
+                        }
+                      });
+                    } else {
+                      setIsWebNotificationsEnabled(!isWebNotificationsEnabled);
+                    }
+                  }}
+                  className={`w-12 h-6 rounded-full transition-colors relative shrink-0 p-0.5 ${
+                    isWebNotificationsEnabled ? "bg-[var(--color-primary,#ff1e42)]" : "bg-white/10"
+                  }`}
+                  aria-label="Toggle web push notifications"
+                >
+                  <span
+                    className={`block w-5 h-5 rounded-full bg-white transition-transform ${
+                      isWebNotificationsEnabled ? "translate-x-6" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -36,6 +36,7 @@ import {
   CloudRain,
   Phone,
   ArrowLeft,
+  ArrowRight,
   X,
   Settings,
   Download,
@@ -126,6 +127,8 @@ export default function WorkspacePage() {
     t,
     setIsSettingsOpen,
     currencies,
+    isRemindersEnabled,
+    isWebNotificationsEnabled,
   } = usePreferences();
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [searchQuery, setSearchQuery] = useState("");
@@ -279,6 +282,95 @@ export default function WorkspacePage() {
       if (saved && saved.trim()) setNoteAuthor(saved.trim());
     } catch {}
   }, []);
+
+  // ── Heartbeat Reminder Engine ─────────────────────────────────────────────
+  const currentShootDay = store.callSheet.dayNumber || 1;
+  const [dismissedReminders, setDismissedReminders] = useState<string[]>([]);
+
+  // Load dismissed reminders for current shoot day from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`closebook_dismissed_reminders_day_${currentShootDay}`);
+      if (saved) {
+        setDismissedReminders(JSON.parse(saved));
+      } else {
+        setDismissedReminders([]);
+      }
+    } catch {}
+  }, [currentShootDay]);
+
+  // Periodic and on-focus heartbeat re-evaluation
+  const [, setHeartbeatTick] = useState(0);
+  useEffect(() => {
+    const onFocus = () => setHeartbeatTick((v) => v + 1);
+    window.addEventListener("focus", onFocus);
+    const interval = setInterval(() => setHeartbeatTick((v) => v + 1), 30000);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Heartbeat criteria:
+  // a. Daily reconciliation for today is not completed
+  const isReconDone = store.reconciliations.some((r) => r.dayNumber === currentShootDay);
+  // b. Tasks overdue (due Day < current shoot day)
+  const overdueTasks = store.tasks.filter((task) => {
+    if (task.status === "completed") return false;
+    const match = task.dueDate.match(/Day\s*(\d+)/i);
+    if (!match) return false;
+    return currentShootDay - parseInt(match[1], 10) > 0;
+  });
+  // c. Stale pending approvals (>24 hours old)
+  const stalePendingTx = store.transactions.filter((tx) => {
+    if (tx.status !== "pending") return false;
+    if (!tx.createdAt) return false;
+    return Date.now() - new Date(tx.createdAt).getTime() > 24 * 3600 * 1000;
+  });
+
+  const activeReminderKeys: string[] = [];
+  if (!isReconDone) activeReminderKeys.push(`recon_day_${currentShootDay}`);
+  if (overdueTasks.length > 0) activeReminderKeys.push(`overdue_tasks_day_${currentShootDay}`);
+  if (stalePendingTx.length > 0) activeReminderKeys.push(`stale_tx_day_${currentShootDay}`);
+
+  const activeNonDismissed = activeReminderKeys.filter((k) => !dismissedReminders.includes(k));
+  const showReminderBanner = isRemindersEnabled && activeNonDismissed.length > 0;
+  const totalActiveItems =
+    (!isReconDone ? 1 : 0) + overdueTasks.length + stalePendingTx.length;
+
+  const handleDismissReminder = () => {
+    const updated = Array.from(new Set([...dismissedReminders, ...activeReminderKeys]));
+    setDismissedReminders(updated);
+    try {
+      localStorage.setItem(
+        `closebook_dismissed_reminders_day_${currentShootDay}`,
+        JSON.stringify(updated)
+      );
+    } catch {}
+  };
+
+  // Progressive Web Notifications (opt-in)
+  useEffect(() => {
+    if (
+      isWebNotificationsEnabled &&
+      typeof window !== "undefined" &&
+      "Notification" in window &&
+      Notification.permission === "granted" &&
+      activeNonDismissed.length > 0
+    ) {
+      const notifKey = `closebook_web_notif_sent_day_${currentShootDay}`;
+      const alreadySent = sessionStorage.getItem(notifKey);
+      if (!alreadySent) {
+        try {
+          new Notification("ClosedBook — Operational Reminder", {
+            body: `Day ${currentShootDay}: ${totalActiveItems} operational item(s) require review.`,
+            icon: "/icon.png",
+          });
+          sessionStorage.setItem(notifKey, "true");
+        } catch {}
+      }
+    }
+  }, [isWebNotificationsEnabled, activeNonDismissed.length, currentShootDay, totalActiveItems]);
 
   // Client-Side Photo Compression & EXIF Stripping
   const handleReceiptFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -795,6 +887,79 @@ export default function WorkspacePage() {
 
         {/* Tab Content Panels with AnimatePresence Transitions */}
         <div className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8 flex-1">
+          {/* Proactive Heartbeat Reminder Banner */}
+          <AnimatePresence>
+            {showReminderBanner && (
+              <m.div
+                key="heartbeat-reminder-banner"
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, height: 0, overflow: "hidden", marginBottom: 0, transition: { duration: 0.18 } }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                data-testid="reminder-heartbeat-banner"
+                className="surface-overlay p-3.5 sm:p-4 rounded-xl border border-amber-500/30 bg-amber-500/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md mb-6"
+              >
+                <div className="flex items-start sm:items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                    <Bell className="w-4 h-4 animate-pulse" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-amber-200">
+                        {totalActiveItems} {t("reminderPendingItems")}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-[#a3a3a3] mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                      {!isReconDone && (
+                        <span className="text-amber-300/90 font-medium">
+                          • {t("reminderReconIncomplete", { day: currentShootDay })}
+                        </span>
+                      )}
+                      {overdueTasks.length > 0 && (
+                        <span className="text-amber-300/90 font-medium">
+                          • {overdueTasks.length === 1
+                            ? t("reminderOverdueTasks", { count: overdueTasks.length })
+                            : t("reminderOverdueTasksPlural", { count: overdueTasks.length })}
+                        </span>
+                      )}
+                      {stalePendingTx.length > 0 && (
+                        <span className="text-amber-300/90 font-medium">
+                          • {stalePendingTx.length === 1
+                            ? t("reminderPendingApprovals", { count: stalePendingTx.length })
+                            : t("reminderPendingApprovalsPlural", { count: stalePendingTx.length })}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!isReconDone) setActiveTab("reconcile");
+                      else if (overdueTasks.length > 0) setActiveTab("tasks");
+                      else setActiveTab("transactions");
+                    }}
+                    className="text-xs font-medium px-3.5 py-1.5 rounded-lg bg-amber-400 text-black hover:bg-amber-300 transition-colors flex items-center gap-1.5"
+                    data-testid="resolve-reminder-btn"
+                  >
+                    {t("resolveNow")}
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDismissReminder}
+                    data-testid="dismiss-reminder-btn"
+                    className="text-xs text-[#a3a3a3] hover:text-[#fdfdfd] p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                    aria-label="Dismiss reminder"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </m.div>
+            )}
+          </AnimatePresence>
           <AnimatePresence mode="wait">
             <m.div
               key={activeTab}

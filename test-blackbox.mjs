@@ -639,6 +639,58 @@ async function runBlackboxTests() {
     const postDeleteCount = await page.evaluate(() => document.querySelectorAll("[data-testid^='note-card-']").length);
     assert("Note Deleted Successfully", postDeleteCount === preDeleteCount - 1, "Note card removed from panel after deletion");
 
+    // =========================================================================
+    // TEST 17: CLIENT-SIDE HEARTBEAT REMINDER ENGINE
+    // =========================================================================
+    console.log("\n--- TEST 17: Client-Side Heartbeat Reminders ---");
+
+    // 1. Reminder Banner Rendered on Active Condition
+    const reminderBannerExists = await page.evaluate(() => {
+      const banner = document.querySelector("[data-testid='reminder-heartbeat-banner']");
+      return !!banner && (banner.textContent.includes("Day") || banner.textContent.includes("reconciliation") || banner.textContent.includes("overdue") || banner.textContent.includes("pending") || banner.textContent.includes("perhatian") || banner.textContent.includes("attention"));
+    });
+    assert("Reminder Banner Rendered on Active Condition", reminderBannerExists, "Heartbeat banner proactively displayed for active items");
+
+    // 2. Reminder Banner Dismissed Successfully
+    await page.click("button[data-testid='dismiss-reminder-btn']");
+    await delay(500);
+
+    const bannerAfterDismiss = await page.evaluate(() => {
+      return !!document.querySelector("[data-testid='reminder-heartbeat-banner']");
+    });
+    assert("Reminder Banner Dismissed Successfully", !bannerAfterDismiss, "Banner dismissed and removed from view");
+
+    // 3. Preferences Toggle Controls Reminders
+    await page.evaluate(() => {
+      const btns = Array.from(document.querySelectorAll("button"));
+      const btn = btns.find(b => b.textContent && (b.textContent.includes("Preferences") || b.textContent.includes("Pengaturan")));
+      if (btn) btn.click();
+    });
+    await delay(500);
+
+    const toggleFound = await page.evaluate(() => {
+      const toggleBtn = document.querySelector("button[data-testid='toggle-reminders-btn']");
+      if (toggleBtn) {
+        toggleBtn.click();
+        return true;
+      }
+      return false;
+    });
+    await delay(300);
+
+    const prefRemindersState = await page.evaluate(() => {
+      return localStorage.getItem("closebook_reminders_enabled");
+    });
+    assert("Preferences Toggle Controls Reminders", toggleFound && prefRemindersState === "false", "Reminder preferences switch successfully toggles state");
+
+    // Close preferences modal
+    await page.evaluate(() => {
+      const btns = Array.from(document.querySelectorAll("div.fixed.z-50 button, div[class*='z-50'] button"));
+      const saveBtn = btns.find(b => b.textContent && (b.textContent.includes("Save") || b.textContent.includes("Terapkan") || b.textContent.includes("Close") || b.textContent.includes("Tutup")));
+      if (saveBtn) saveBtn.click();
+    });
+    await delay(400);
+
     await page.close();
 
     // =========================================================================
