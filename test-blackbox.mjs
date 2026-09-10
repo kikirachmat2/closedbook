@@ -250,7 +250,7 @@ async function runBlackboxTests() {
     await clickNavButton(page, "Department Tasks", "Tasks");
     await delay(600);
 
-    await clickNavButton(page, "New Department Task", "+ New Task", "Add Task");
+    await clickNavButton(page, "New Department Task", "+ New Task", "Add Task", "Create Task");
     await delay(600);
 
     const taskFilled = await fillActiveModal(page, {
@@ -264,20 +264,20 @@ async function runBlackboxTests() {
     assert("Task Created in Kanban", tasksContent.includes("Steadicam") || tasksContent.includes("Raka"), "Task appears in board");
     await page.screenshot({ path: path.join(ARTIFACT_DIR, "audit_05_tasks_kanban.png") });
 
-    // TEST 8: CALL SHEET & DAY ADVANCE
-    console.log("\n--- TEST 8: Call Sheet & Day Advance ---");
-    await clickNavButton(page, "Digital Call Sheet", "Call Sheet Digital", "Schedule", "Call Sheet");
+    // TEST 8: SCHEDULE & DAY ADVANCE
+    console.log("\n--- TEST 8: Schedule & Day Advance ---");
+    await clickNavButton(page, "Project Schedule", "Schedule", "Digital Call Sheet", "Call Sheet");
     await delay(600);
 
-    const callsheetContent = await page.evaluate(() => document.body.textContent);
-    assert("Call Sheet Tab Loaded", callsheetContent.includes("06:00") || callsheetContent.includes("Call Time") || callsheetContent.includes("callsheet"), "Call sheet visible");
+    const scheduleContent = await page.evaluate(() => document.body.textContent);
+    assert("Schedule Tab Loaded", scheduleContent.includes("06:00") || scheduleContent.includes("Call Time") || scheduleContent.includes("Schedule") || scheduleContent.includes("callsheet"), "Schedule visible");
 
-    await clickNavButton(page, "Advance Shoot Day", "Maju ke Hari", "Advance Day");
+    await clickNavButton(page, "Advance Project Day", "Advance Day", "Advance Shoot Day", "Maju ke Hari");
     await delay(600);
 
     const afterAdvance = await page.evaluate(() => document.body.textContent);
-    assert("Shoot Day Advanced", afterAdvance.includes("Day 5") || afterAdvance.includes("Hari 5") || afterAdvance.includes("5 of 16"), "Day incremented");
-    await page.screenshot({ path: path.join(ARTIFACT_DIR, "audit_06_callsheet_advanced.png") });
+    assert("Project Day Advanced", afterAdvance.includes("Day 5") || afterAdvance.includes("Hari 5") || afterAdvance.includes("5 of 16"), "Day incremented");
+    await page.screenshot({ path: path.join(ARTIFACT_DIR, "audit_06_schedule_advanced.png") });
 
     // TEST 9: EQUIPMENT TRACKER
     console.log("\n--- TEST 9: Equipment Rental Tracker ---");

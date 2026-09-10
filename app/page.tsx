@@ -234,7 +234,7 @@ export default function HomePage() {
           </div>
 
           <h1 className="display-headline mb-8">
-            Your production.
+            Your projects.
             <br />
             Your Google Drive.
             <br />
@@ -242,13 +242,13 @@ export default function HomePage() {
           </h1>
 
           <p className="subhead-caption max-w-2xl mx-auto mb-10">
-            Field crews log expenses and snap receipts on set. Files stream directly into your personal
+            Field teams log expenses and snap receipts on site. Files stream directly into your personal
             Google Drive; ledgers mirror in Google Sheets. No monthly subscription, no vendor lock-in.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/workspace" className="btn-primary-crimson text-sm px-8 py-3.5">
-              Launch Production Workspace
+              Launch Project Workspace
               <ArrowRight className="w-4 h-4" />
             </Link>
             <a href="#security" className="btn-ghost-pill text-sm px-6 py-3.5">
@@ -502,7 +502,7 @@ export default function HomePage() {
                 <span className="font-mono text-xs text-[#ff1e42] block mb-4">STEP 03</span>
                 <h3 className="text-base font-medium text-[#fdfdfd] mb-2">Client Compression</h3>
                 <p className="text-xs text-[#a3a3a3] leading-relaxed">
-                  Crew members snap receipts on mobile. The PWA compresses photos locally to ~300KB and scrubs
+                  Team members snap receipts on mobile. The PWA compresses photos locally to ~300KB and scrubs
                   GPS/EXIF data before transmission.
                 </p>
               </div>
@@ -554,7 +554,7 @@ export default function HomePage() {
                 <p className="text-sm text-[#a3a3a3] leading-relaxed">
                   ClosedBook does not host, duplicate, or store your project files, invoices, or accounting records.
                   All physical assets reside strictly in your personal Google Workspace. If ClosedBook ceases
-                  operations, 100% of your production ledger remains intact in your Drive.
+                  operations, 100% of your project ledger remains intact in your Drive.
                 </p>
               </div>
               <div className="mt-6 pt-4 border-t border-white/[0.06] flex items-center gap-2 text-xs text-[#ff1e42]">
@@ -592,9 +592,9 @@ export default function HomePage() {
                   Client-Side EXIF & Location Stripping
                 </h3>
                 <p className="text-sm text-[#a3a3a3] leading-relaxed">
-                  Before a photo leaves a crew member&apos;s phone, our WebAssembly compression pipeline strips GPS
+                  Before a photo leaves a team member&apos;s phone, our WebAssembly compression pipeline strips GPS
                   coordinates, camera serial numbers, and device telemetry directly in browser memory, protecting
-                  confidential set locations.
+                  confidential site locations.
                 </p>
               </div>
               <div className="mt-6 pt-4 border-t border-white/[0.06] flex items-center gap-2 text-xs text-[#ff1e42]">
@@ -630,12 +630,12 @@ export default function HomePage() {
             The Free-Tier Manifesto
           </span>
           <p className="editorial-copy mb-6">
-            Traditional production software charges $20 per crew member per month to rent cloud storage you already
+            Traditional enterprise software charges $20 per member per month to rent cloud storage you already
             own. ClosedBook eliminates the toll booth.
           </p>
           <p className="text-base text-[#a3a3a3] leading-relaxed">
-            By turning your existing Google Workspace quota into a native production operating system, we allow
-            independent filmmakers, creative studios, and event coordinators to scale infinitely with zero overhead.
+            By turning your existing Google Workspace quota into a native operational system, we allow
+            independent studios, creative agencies, and event coordinators to scale infinitely with zero overhead.
           </p>
         </section>
 
@@ -645,11 +645,11 @@ export default function HomePage() {
             Take command of your field operations.
           </h2>
           <p className="text-[#a3a3a3] text-sm md:text-base max-w-lg mx-auto mb-8">
-            Connect your Google account and deploy your production ledger in less than 60 seconds.
+            Connect your Google account and deploy your project ledger in less than 60 seconds.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/workspace" className="btn-primary-crimson text-sm px-8 py-3.5">
-              Launch Production Workspace
+              Launch Project Workspace
               <ArrowRight className="w-4 h-4" />
             </Link>
             <a
