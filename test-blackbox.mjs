@@ -1122,6 +1122,191 @@ async function runBlackboxTests() {
       "App install banner ready with manual install action"
     );
 
+    // TEST 21: ONBOARDING DEMO BANNER & ACTIONABLE EMPTY STATES (Fase F.2)
+    console.log("\n--- TEST 21: Onboarding Demo Banner & Actionable Empty States ---");
+
+    // 21.a: Switch context back to Seed Project (proj-001) to verify Demo Banner
+    await page.evaluate(() => {
+      localStorage.setItem("closebook_active_project_id", "proj-001");
+      localStorage.removeItem("closebook_demo_banner_dismissed_proj-001");
+      const projects = JSON.parse(localStorage.getItem("closebook_projects") || "[]");
+      const updated = projects.map(p => ({ ...p, isActive: p.id === "proj-001" }));
+      localStorage.setItem("closebook_projects", JSON.stringify(updated));
+    });
+    await page.goto("http://localhost:3000/workspace", { waitUntil: "networkidle0" });
+    await page.waitForSelector("header");
+    await delay(500);
+
+    const demoBannerState = await page.evaluate(() => {
+      const banner = document.getElementById("workspace-demo-banner");
+      const ctaBtn = document.getElementById("btn-demo-create-project");
+      const dismissBtn = document.getElementById("btn-dismiss-demo-banner");
+      return {
+        hasBanner: !!banner,
+        hasCta: !!ctaBtn,
+        hasDismiss: !!dismissBtn,
+      };
+    });
+    assert(
+      "Demo Project Banner Displayed on Seed Project (proj-001)",
+      demoBannerState.hasBanner && demoBannerState.hasCta && demoBannerState.hasDismiss,
+      "Banner visible with '#btn-demo-create-project' and '#btn-dismiss-demo-banner'"
+    );
+
+    // 21.b: Click Demo CTA -> Opens Create New Project Modal
+    await page.click("#btn-demo-create-project");
+    await delay(400);
+
+    const newProjectModalOpen = await page.evaluate(() => {
+      const input = document.getElementById("new-project-name");
+      return !!input;
+    });
+    assert(
+      "Demo Banner CTA Opens New Project Modal Directly",
+      newProjectModalOpen,
+      "New project modal rendered with active #new-project-name"
+    );
+
+    // Close modal
+    await page.evaluate(() => {
+      const closeBtn = document.querySelector("div.fixed.z-50 button");
+      if (closeBtn) closeBtn.click();
+    });
+    await delay(300);
+
+    // 21.c: Dismiss Demo Banner & Verify Persistence
+    await page.click("#btn-dismiss-demo-banner");
+    await delay(300);
+
+    const bannerDismissed = await page.evaluate(() => {
+      const banner = document.getElementById("workspace-demo-banner");
+      const storageFlag = localStorage.getItem("closebook_demo_banner_dismissed_proj-001");
+      return !banner && storageFlag === "true";
+    });
+    assert(
+      "Demo Banner Dismissible with Persistent LocalStorage Flag",
+      bannerDismissed,
+      "Banner dismissed and persisted via closebook_demo_banner_dismissed_proj-001"
+    );
+
+    // 21.d: Ledger Empty Search State & Reset Filter CTA
+    await page.evaluate(() => {
+      const btns = Array.from(document.querySelectorAll("button"));
+      const ledgerTab = btns.find(b => b.textContent && b.textContent.includes("Ledger"));
+      if (ledgerTab) ledgerTab.click();
+    });
+    await delay(300);
+
+    // Type query that returns 0 matches
+    await page.type("input[placeholder*='Search']", "ZZZ_NON_EXISTENT_VENDOR_QUERY_999");
+    await delay(300);
+
+    const filterEmptyState = await page.evaluate(() => {
+      const resetBtn = document.getElementById("btn-reset-ledger-filter");
+      const emptyText = document.body.textContent.includes("No Matching Transactions") ||
+                        document.body.textContent.includes("Tidak Ada Transaksi") ||
+                        document.body.textContent.includes("No records match");
+      return { hasResetBtn: !!resetBtn, emptyText };
+    });
+    assert(
+      "Actionable Search Empty State Rendered with Reset CTA",
+      filterEmptyState.hasResetBtn && filterEmptyState.emptyText,
+      "Filtered empty state presents #btn-reset-ledger-filter"
+    );
+
+    // Click Reset Filter button
+    await page.click("#btn-reset-ledger-filter");
+    await delay(300);
+
+    const searchResetDone = await page.evaluate(() => {
+      const searchInput = document.querySelector("input[placeholder*='Search']");
+      const rows = document.querySelectorAll("tbody tr");
+      return (searchInput ? searchInput.value === "" : false) && rows.length > 0;
+    });
+    assert(
+      "Reset Filters Restores Full Ledger View",
+      searchResetDone,
+      "Search input cleared and transactions re-rendered"
+    );
+
+    // 21.e: Tasks Kanban Empty Column State
+    await page.evaluate(() => {
+      const btns = Array.from(document.querySelectorAll("button"));
+      const tasksTab = btns.find(b => b.textContent && b.textContent.includes("Tasks"));
+      if (tasksTab) tasksTab.click();
+    });
+    await delay(300);
+
+    // Filter to a department with no tasks or check column empty states
+    await page.evaluate(() => {
+      const selects = Array.from(document.querySelectorAll("select"));
+      const deptSelect = selects.find(s => Array.from(s.options).some(o => o.text.includes("All Departments") || o.text.includes("Semua Departemen")));
+      if (deptSelect && deptSelect.options.length > 1) {
+        deptSelect.value = deptSelect.options[1].value;
+        deptSelect.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    });
+    await delay(300);
+
+    const kanbanEmptyState = await page.evaluate(() => {
+      const emptyCols = Array.from(document.querySelectorAll("p")).filter(p =>
+        p.textContent && (p.textContent.includes("No tasks in this column") || p.textContent.includes("Belum ada tugas"))
+      );
+      return emptyCols.length > 0;
+    });
+    assert(
+      "Tasks Kanban Displays Clear Empty Column State",
+      kanbanEmptyState,
+      "Dashed empty column indicator rendered when column has no tasks"
+    );
+
+    // Reset task filter
+    await page.evaluate(() => {
+      const selects = Array.from(document.querySelectorAll("select"));
+      const deptSelect = selects.find(s => Array.from(s.options).some(o => o.text.includes("All Departments") || o.text.includes("Semua Departemen")));
+      if (deptSelect) {
+        deptSelect.value = "all";
+        deptSelect.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    });
+    await delay(300);
+
+    // 21.f: Alerts Tab All-Clear State
+    await page.evaluate(() => {
+      const btns = Array.from(document.querySelectorAll("button"));
+      const alertsTab = btns.find(b => b.textContent && (b.textContent.includes("Alerts") || b.textContent.includes("Peringatan")));
+      if (alertsTab) alertsTab.click();
+    });
+    await delay(400);
+
+    // Resolve all alerts via clicking buttons sequentially across ticks
+    for (let i = 0; i < 10; i++) {
+      const clicked = await page.evaluate(() => {
+        const btn = document.querySelector("button[data-testid^='resolve-alert-btn']");
+        if (btn) {
+          btn.click();
+          return true;
+        }
+        return false;
+      });
+      if (!clicked) break;
+      await delay(250);
+    }
+    await delay(400);
+
+    const allClearState = await page.evaluate(() => {
+      const banner = document.getElementById("alerts-all-clear-banner") || document.getElementById("alerts-all-clear");
+      const hasAllClear = document.body.textContent.includes("All Systems Clear") || 
+                          document.body.textContent.includes("Semua Aman") ||
+                          document.body.textContent.includes("Optimal");
+      return !!banner || hasAllClear;
+    });
+    assert(
+      "Alerts Tab Renders 'All Clear' State When Resolved",
+      allClearState,
+      "Emerald All-Clear state displayed with confirmation badge"
+    );
+
     await page.close();
 
     // =========================================================================

@@ -238,6 +238,24 @@ export default function WorkspacePage() {
   const [newProjDirector, setNewProjDirector] = useState("");
   const [newProjError, setNewProjError] = useState<string | null>(null);
 
+  // Demo Seed Banner state (Dismissible, persisted per proj-001)
+  const [isDemoBannerDismissed, setIsDemoBannerDismissed] = useState(true);
+  useEffect(() => {
+    try {
+      const dismissed = localStorage.getItem("closebook_demo_banner_dismissed_proj-001");
+      setIsDemoBannerDismissed(dismissed === "true");
+    } catch {}
+  }, []);
+
+  const handleDismissDemoBanner = () => {
+    setIsDemoBannerDismissed(true);
+    try {
+      localStorage.setItem("closebook_demo_banner_dismissed_proj-001", "true");
+    } catch {}
+  };
+
+  const showDemoBanner = store.project.id === "proj-001" && !isDemoBannerDismissed;
+
   // Form states - Expense
   const [newDesc, setNewDesc] = useState("");
   const [newAmount, setNewAmount] = useState("");
@@ -1468,6 +1486,58 @@ export default function WorkspacePage() {
             )}
           </AnimatePresence>
 
+          {/* Dismissible Demo Banner for Seed Data */}
+          <AnimatePresence>
+            {showDemoBanner && (
+              <m.div
+                key="workspace-demo-banner"
+                id="workspace-demo-banner"
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, height: 0, overflow: "hidden", marginBottom: 0, transition: { duration: 0.18 } }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="surface-overlay p-3.5 sm:p-4 rounded-xl border border-sky-500/30 bg-sky-500/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md mb-6"
+              >
+                <div className="flex items-start sm:items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-sky-400 shrink-0">
+                    <Film className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-sky-200">
+                        {t("demoBannerTitle")}
+                      </span>
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 uppercase tracking-wider">
+                        Demo
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-sky-300/80 mt-0.5">
+                      {t("demoBannerDesc")}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                  <button
+                    id="btn-demo-create-project"
+                    onClick={() => setIsNewProjectModalOpen(true)}
+                    className="px-3.5 py-1.5 rounded-full bg-sky-500 hover:bg-sky-600 text-white text-xs font-medium flex items-center gap-1.5 shadow-sm transition-colors min-h-[36px]"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>{t("createMyProject")}</span>
+                  </button>
+                  <button
+                    id="btn-dismiss-demo-banner"
+                    onClick={handleDismissDemoBanner}
+                    className="p-1.5 rounded-full hover:bg-white/10 text-sky-300 hover:text-white transition-colors"
+                    title={t("dismissReminder")}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </m.div>
+            )}
+          </AnimatePresence>
+
           {/* Proactive Heartbeat Reminder Banner */}
           <AnimatePresence>
             {showReminderBanner && (
@@ -2043,7 +2113,51 @@ export default function WorkspacePage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/[0.04]">
-                      {filteredTransactions.map((tx) => (
+                      {filteredTransactions.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="p-0">
+                            <div className="p-8 sm:p-12 flex flex-col items-center justify-center text-center">
+                              {store.transactions.length === 0 ? (
+                                <>
+                                  <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-[#737373] mb-3">
+                                    <Receipt className="w-6 h-6 opacity-60" />
+                                  </div>
+                                  <h3 className="text-sm font-semibold text-[#fdfdfd]">{t("noExpensesYet")}</h3>
+                                  <p className="text-xs text-[#737373] max-w-sm mt-1 mb-4">{t("noExpensesYetDesc")}</p>
+                                  <button
+                                    id="btn-empty-log-expense"
+                                    onClick={openLogModal}
+                                    className="btn-primary-crimson text-xs min-h-[38px] px-4 flex items-center gap-1.5"
+                                  >
+                                    <Plus className="w-3.5 h-3.5" />
+                                    <span>{t("logFirstExpense")}</span>
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-[#737373] mb-3">
+                                    <Search className="w-6 h-6 opacity-60" />
+                                  </div>
+                                  <h3 className="text-sm font-semibold text-[#fdfdfd]">{t("noMatchingTransactions")}</h3>
+                                  <p className="text-xs text-[#737373] max-w-sm mt-1 mb-4">{t("noMatchingTransactionsDesc")}</p>
+                                  <button
+                                    id="btn-reset-ledger-filter"
+                                    onClick={() => {
+                                      setSearchQuery("");
+                                      setSelectedDeptFilter("all");
+                                    }}
+                                    className="btn-ghost-pill text-xs min-h-[38px] px-4 text-[#a3a3a3] hover:text-white flex items-center gap-1.5"
+                                  >
+                                    <RefreshCw className="w-3.5 h-3.5" />
+                                    <span>{t("resetFilters")}</span>
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredTransactions.map((tx) => (
                         <tr key={tx.id} className="hover:bg-white/[0.01] transition-colors">
                           <td className="p-4 font-mono text-[#737373]">{tx.id}</td>
                           <td className="p-4">
@@ -2078,32 +2192,33 @@ export default function WorkspacePage() {
                             <span
                               className={`text-[10px] font-mono px-2.5 py-1 rounded-full uppercase ${
                                 tx.status === "approved"
-                                  ? "bg-[#10b981]/15 text-[#10b981] font-semibold"
-                                  : tx.status === "rejected"
-                                  ? "bg-[var(--color-primary,#ff1e42)]/15 text-[var(--color-primary,#ff1e42)] font-semibold"
-                                  : "bg-amber-400/15 text-amber-400 font-semibold"
+                                  ? "bg-[#10b981]/15 text-[#10b981]"
+                                  : tx.status === "pending"
+                                  ? "bg-amber-500/15 text-amber-400"
+                                  : "bg-[var(--color-primary,#ff1e42)]/15 text-[var(--color-primary,#ff1e42)]"
                               }`}
                             >
                               {tx.status}
                             </span>
                           </td>
                           <td className="p-4 text-right">
-                            <div className="inline-flex items-center gap-1">
+                            <div className="flex items-center justify-end gap-1">
                               {tx.status === "pending" && (
                                 <>
                                   <button
                                     onClick={() => store.updateTransactionStatus(tx.id, "approved")}
-                                    className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[#10b981] hover:bg-white/[0.05] rounded-full"
+                                    className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[#737373] hover:text-[#10b981] hover:bg-white/[0.05] rounded-full"
                                     title="Approve Transaction"
                                   >
-                                    <CheckCircle2 className="w-5 h-5" />
+                                    <CheckCircle2 className="w-4 h-4" />
                                   </button>
                                   <button
                                     onClick={() => store.updateTransactionStatus(tx.id, "rejected")}
-                                    className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[var(--color-primary,#ff1e42)] hover:bg-white/[0.05] rounded-full"
-                                    title="Reject Transaction (Refunds Pocket)"
+                                    className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[#737373] hover:text-[var(--color-primary,#ff1e42)] hover:bg-white/[0.05] rounded-full"
+                                    title="Reject & Refund Transaction"
+                                    data-testid="reject-tx-btn"
                                   >
-                                    <XCircle className="w-5 h-5" />
+                                    <XCircle className="w-4 h-4" />
                                   </button>
                                 </>
                               )}
@@ -2148,7 +2263,7 @@ export default function WorkspacePage() {
                             </div>
                           </td>
                         </tr>
-                      ))}
+                      )))}
                     </tbody>
                   </table>
                 </div>
@@ -2229,19 +2344,41 @@ export default function WorkspacePage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/[0.04]">
-                      {store.transfers.map((tr) => (
-                        <tr key={tr.id} className="hover:bg-white/[0.01]">
-                          <td className="p-3 font-mono text-[#737373]">{tr.id}</td>
-                          <td className="p-3 text-[#fdfdfd] font-medium">{tr.sourcePocketName}</td>
-                          <td className="p-3 text-[#10b981] font-medium">{tr.destPocketName}</td>
-                          <td className="p-3 font-mono font-semibold text-[#fdfdfd]">
-                            {formatMoney(tr.amount)}
+                      {store.transfers.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="p-0">
+                            <div className="p-8 flex flex-col items-center justify-center text-center text-[#737373]">
+                              <div className="w-10 h-10 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-[#737373] mb-2.5">
+                                <ArrowLeftRight className="w-5 h-5 opacity-60" />
+                              </div>
+                              <h4 className="text-xs font-semibold text-[#fdfdfd]">{t("noTransfersYet")}</h4>
+                              <p className="text-[11px] text-[#737373] max-w-xs mt-1 mb-3">{t("noTransfersYetDesc")}</p>
+                              <button
+                                id="btn-empty-transfer-funds"
+                                onClick={openTransferModal}
+                                className="btn-ghost-pill text-xs min-h-[36px] px-3.5 text-[#a3a3a3] hover:text-white flex items-center gap-1.5"
+                              >
+                                <ArrowUpRight className="w-3.5 h-3.5 text-[var(--color-primary,#ff1e42)]" />
+                                <span>{t("transferFunds")}</span>
+                              </button>
+                            </div>
                           </td>
-                          <td className="p-3 text-[#a3a3a3]">{tr.authorizedBy}</td>
-                          <td className="p-3 text-[#737373]">{tr.timestamp}</td>
-                          <td className="p-3 text-[#737373] italic">{tr.notes}</td>
                         </tr>
-                      ))}
+                      ) : (
+                        store.transfers.map((tr) => (
+                          <tr key={tr.id} className="hover:bg-white/[0.01]">
+                            <td className="p-3 font-mono text-[#737373]">{tr.id}</td>
+                            <td className="p-3 text-[#fdfdfd] font-medium">{tr.sourcePocketName}</td>
+                            <td className="p-3 text-[#10b981] font-medium">{tr.destPocketName}</td>
+                            <td className="p-3 font-mono font-semibold text-[#fdfdfd]">
+                              {formatMoney(tr.amount)}
+                            </td>
+                            <td className="p-3 text-[#a3a3a3]">{tr.authorizedBy}</td>
+                            <td className="p-3 text-[#737373]">{tr.timestamp}</td>
+                            <td className="p-3 text-[#737373] italic">{tr.notes}</td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -2293,9 +2430,24 @@ export default function WorkspacePage() {
                     </span>
                   </div>
                   <div className="space-y-3">
-                    {filteredTasks
-                      .filter((t) => t.status === "todo")
-                      .map((task) => (
+                    {filteredTasks.filter((t) => t.status === "todo").length === 0 ? (
+                      <div className="p-6 rounded-[14px] border border-dashed border-white/10 text-center flex flex-col items-center justify-center">
+                        <CheckSquare className="w-6 h-6 text-[#737373] mb-2 opacity-50" />
+                        <p className="text-xs text-[#a3a3a3] mb-3">{t("noTasksInColumn")}</p>
+                        <button
+                          id="btn-empty-new-task"
+                          data-testid="btn-empty-new-task"
+                          onClick={openTaskModal}
+                          className="btn-ghost-pill text-xs min-h-[36px] px-3 flex items-center gap-1.5 text-[var(--color-primary,#ff1e42)] border-[var(--color-primary,#ff1e42)]/30 hover:bg-[var(--color-primary,#ff1e42)]/10"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>{t("addTask")}</span>
+                        </button>
+                      </div>
+                    ) : (
+                      filteredTasks
+                        .filter((t) => t.status === "todo")
+                        .map((task) => (
                         <div
                           key={task.id}
                           data-testid={`task-card-${task.id}`}
@@ -2360,7 +2512,8 @@ export default function WorkspacePage() {
                             </div>
                           </div>
                         </div>
-                      ))}
+                      ))
+                    )}
                   </div>
                 </div>
 
@@ -2373,9 +2526,15 @@ export default function WorkspacePage() {
                     </span>
                   </div>
                   <div className="space-y-3">
-                    {filteredTasks
-                      .filter((t) => t.status === "in_progress")
-                      .map((task) => (
+                    {filteredTasks.filter((t) => t.status === "in_progress").length === 0 ? (
+                      <div className="p-6 rounded-[14px] border border-dashed border-white/10 text-center flex flex-col items-center justify-center">
+                        <CheckSquare className="w-6 h-6 text-[#737373] mb-2 opacity-50" />
+                        <p className="text-xs text-[#a3a3a3]">{t("noTasksInColumn")}</p>
+                      </div>
+                    ) : (
+                      filteredTasks
+                        .filter((t) => t.status === "in_progress")
+                        .map((task) => (
                         <div
                           key={task.id}
                           data-testid={`task-card-${task.id}`}
@@ -2440,7 +2599,8 @@ export default function WorkspacePage() {
                             </div>
                           </div>
                         </div>
-                      ))}
+                      ))
+                    )}
                   </div>
                 </div>
 
@@ -2453,9 +2613,15 @@ export default function WorkspacePage() {
                     </span>
                   </div>
                   <div className="space-y-3">
-                    {filteredTasks
-                      .filter((t) => t.status === "completed")
-                      .map((task) => (
+                    {filteredTasks.filter((t) => t.status === "completed").length === 0 ? (
+                      <div className="p-6 rounded-[14px] border border-dashed border-white/10 text-center flex flex-col items-center justify-center">
+                        <CheckSquare className="w-6 h-6 text-[#737373] mb-2 opacity-50" />
+                        <p className="text-xs text-[#a3a3a3]">{t("noTasksInColumn")}</p>
+                      </div>
+                    ) : (
+                      filteredTasks
+                        .filter((t) => t.status === "completed")
+                        .map((task) => (
                         <div
                           key={task.id}
                           data-testid={`task-card-${task.id}`}
@@ -2518,7 +2684,8 @@ export default function WorkspacePage() {
                             </div>
                           </div>
                         </div>
-                      ))}
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
@@ -2644,87 +2811,106 @@ export default function WorkspacePage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {store.equipment.map((eq) => (
-                  <div key={eq.id} className="surface-panel p-5 sm:p-6 flex flex-col justify-between group">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] font-mono text-[#737373] uppercase">{eq.department}</span>
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`text-[10px] font-mono px-2.5 py-1 rounded-full uppercase ${
-                              eq.status === "returned"
-                                ? "bg-[#10b981]/15 text-[#10b981]"
+              {store.equipment.length === 0 ? (
+                <div className="surface-panel p-8 sm:p-12 text-center flex flex-col items-center justify-center border border-dashed border-white/10">
+                  <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-[#737373] mb-3">
+                    <Package className="w-6 h-6 opacity-60" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-[#fdfdfd]">{t("noEquipmentYet")}</h3>
+                  <p className="text-xs text-[#737373] max-w-sm mt-1 mb-5">{t("noEquipmentYetDesc")}</p>
+                  <button
+                    id="btn-empty-add-equipment"
+                    data-testid="btn-empty-add-equipment"
+                    onClick={() => setIsEquipmentModalOpen(true)}
+                    className="btn-primary-crimson text-xs min-h-[42px] px-5 flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>{t("addEquipment")}</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {store.equipment.map((eq) => (
+                    <div key={eq.id} className="surface-panel p-5 sm:p-6 flex flex-col justify-between group">
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-mono text-[#737373] uppercase">{eq.department}</span>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`text-[10px] font-mono px-2.5 py-1 rounded-full uppercase ${
+                                eq.status === "returned"
+                                  ? "bg-[#10b981]/15 text-[#10b981]"
+                                  : eq.status === "damaged"
+                                  ? "bg-red-600/20 text-red-400 font-bold"
+                                  : eq.daysRemaining <= 2
+                                  ? "bg-[var(--color-primary,#ff1e42)]/15 text-[var(--color-primary,#ff1e42)] font-bold"
+                                  : "bg-[#10b981]/15 text-[#10b981] font-semibold"
+                              }`}
+                            >
+                              {eq.status === "returned"
+                                ? t("statusReturned")
                                 : eq.status === "damaged"
-                                ? "bg-red-600/20 text-red-400 font-bold"
-                                : eq.daysRemaining <= 2
-                                ? "bg-[var(--color-primary,#ff1e42)]/15 text-[var(--color-primary,#ff1e42)] font-bold"
-                                : "bg-[#10b981]/15 text-[#10b981] font-semibold"
+                                ? t("statusDamaged")
+                                : `${eq.daysRemaining} Days Left`}
+                            </span>
+
+                            <button
+                              onClick={() => store.deleteEquipment(eq.id)}
+                              className="opacity-0 group-hover:opacity-100 text-[#737373] hover:text-[var(--color-primary,#ff1e42)] transition-opacity"
+                              title="Delete equipment"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                        <h3 className="text-sm font-medium text-[#fdfdfd] mb-1">{eq.itemName}</h3>
+                        <span className="text-xs text-[#a3a3a3] block mb-4">Vendor: {eq.vendor}</span>
+                      </div>
+
+                      <div className="pt-4 border-t border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[#737373]">Due: {eq.returnDate}</span>
+                          <span>•</span>
+                          <span className="font-mono font-medium text-[#fdfdfd]">{formatMoney(eq.dailyRate)}/day</span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() =>
+                              store.updateEquipmentStatus(
+                                eq.id,
+                                eq.status === "returned" ? "on_set" : "returned"
+                              )
+                            }
+                            className={`text-[11px] px-2.5 py-1 rounded-full border transition-all ${
+                              eq.status === "returned"
+                                ? "border-[#10b981] text-[#10b981]"
+                                : "border-white/[0.08] text-[#a3a3a3] hover:text-white"
                             }`}
                           >
-                            {eq.status === "returned"
-                              ? t("statusReturned")
-                              : eq.status === "damaged"
-                              ? t("statusDamaged")
-                              : `${eq.daysRemaining} Days Left`}
-                          </span>
-
+                            {eq.status === "returned" ? "Mark On-Set" : t("markReturned")}
+                          </button>
                           <button
-                            onClick={() => store.deleteEquipment(eq.id)}
-                            className="opacity-0 group-hover:opacity-100 text-[#737373] hover:text-[var(--color-primary,#ff1e42)] transition-opacity"
-                            title="Delete equipment"
+                            onClick={() =>
+                              store.updateEquipmentStatus(
+                                eq.id,
+                                eq.status === "damaged" ? "on_set" : "damaged"
+                              )
+                            }
+                            className={`text-[11px] px-2.5 py-1 rounded-full border transition-all ${
+                              eq.status === "damaged"
+                                ? "border-red-500 text-red-400 font-bold"
+                                : "border-white/[0.08] text-[#a3a3a3] hover:text-red-400"
+                            }`}
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            {eq.status === "damaged" ? "Repaired" : t("markDamaged")}
                           </button>
                         </div>
                       </div>
-                      <h3 className="text-sm font-medium text-[#fdfdfd] mb-1">{eq.itemName}</h3>
-                      <span className="text-xs text-[#a3a3a3] block mb-4">Vendor: {eq.vendor}</span>
                     </div>
-
-                    <div className="pt-4 border-t border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[#737373]">Due: {eq.returnDate}</span>
-                        <span>•</span>
-                        <span className="font-mono font-medium text-[#fdfdfd]">{formatMoney(eq.dailyRate)}/day</span>
-                      </div>
-
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() =>
-                            store.updateEquipmentStatus(
-                              eq.id,
-                              eq.status === "returned" ? "on_set" : "returned"
-                            )
-                          }
-                          className={`text-[11px] px-2.5 py-1 rounded-full border transition-all ${
-                            eq.status === "returned"
-                              ? "border-[#10b981] text-[#10b981]"
-                              : "border-white/[0.08] text-[#a3a3a3] hover:text-white"
-                          }`}
-                        >
-                          {eq.status === "returned" ? "Mark On-Set" : t("markReturned")}
-                        </button>
-                        <button
-                          onClick={() =>
-                            store.updateEquipmentStatus(
-                              eq.id,
-                              eq.status === "damaged" ? "on_set" : "damaged"
-                            )
-                          }
-                          className={`text-[11px] px-2.5 py-1 rounded-full border transition-all ${
-                            eq.status === "damaged"
-                              ? "border-red-500 text-red-400 font-bold"
-                              : "border-white/[0.08] text-[#a3a3a3] hover:text-red-400"
-                          }`}
-                        >
-                          {eq.status === "damaged" ? "Repaired" : t("markDamaged")}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -2740,79 +2926,102 @@ export default function WorkspacePage() {
                 </p>
               </div>
 
-              <div className="space-y-3" data-testid="alerts-container">
-                {store.alerts.map((alert) => {
-                  const isCrit = alert.severity === "critical";
-                  const isWarn = alert.severity === "warning";
-                  return (
-                    <div
-                      key={alert.id}
-                      data-testid={`alert-card-${alert.id}`}
-                      data-severity={alert.severity}
-                      data-resolved={alert.isResolved ? "true" : "false"}
-                      className={`surface-panel p-5 flex items-start gap-4 transition-all border ${
-                        alert.isResolved
-                          ? "opacity-40 border-white/[0.04]"
-                          : isCrit
-                          ? "border-[var(--color-primary,#ff1e42)]/40 bg-[var(--color-primary,#ff1e42)]/[0.03]"
-                          : isWarn
-                          ? "border-amber-500/40 bg-amber-500/[0.03]"
-                          : "border-sky-500/40 bg-sky-500/[0.03]"
-                      }`}
-                    >
+              {store.alerts.length === 0 ? (
+                <div id="alerts-all-clear" data-testid="alerts-all-clear" className="surface-panel p-8 sm:p-12 text-center flex flex-col items-center justify-center border border-dashed border-[#10b981]/30 bg-[#10b981]/[0.02]">
+                  <div className="w-12 h-12 rounded-2xl bg-[#10b981]/15 text-[#10b981] flex items-center justify-center mb-3">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-[#fdfdfd]">{t("allClearTitle")}</h3>
+                  <p className="text-xs text-[#737373] max-w-sm mt-1 mb-4">{t("allClearDesc")}</p>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-medium text-[#10b981] bg-[#10b981]/10 border border-[#10b981]/20">
+                    <Check className="w-3.5 h-3.5" />
+                    {t("allClearBadge")}
+                  </span>
+                </div>
+              ) : (
+                <div className="space-y-3" data-testid="alerts-container">
+                  {store.alerts.every((a) => a.isResolved) && (
+                    <div id="alerts-all-clear-banner" data-testid="alerts-all-clear-banner" className="p-3.5 rounded-[14px] bg-[#10b981]/10 border border-[#10b981]/20 flex items-center justify-between text-xs text-[#10b981] mb-2">
+                      <span className="flex items-center gap-2 font-medium">
+                        <CheckCircle2 className="w-4 h-4 shrink-0" />
+                        {t("allClearTitle")}
+                      </span>
+                      <span className="text-[11px] font-mono">{t("allClearBadge")}</span>
+                    </div>
+                  )}
+                  {store.alerts.map((alert) => {
+                    const isCrit = alert.severity === "critical";
+                    const isWarn = alert.severity === "warning";
+                    return (
                       <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                          isCrit
-                            ? "bg-[var(--color-primary,#ff1e42)]/15 text-[var(--color-primary,#ff1e42)]"
+                        key={alert.id}
+                        data-testid={`alert-card-${alert.id}`}
+                        data-severity={alert.severity}
+                        data-resolved={alert.isResolved ? "true" : "false"}
+                        className={`surface-panel p-5 flex items-start gap-4 transition-all border ${
+                          alert.isResolved
+                            ? "opacity-40 border-white/[0.04]"
+                            : isCrit
+                            ? "border-[var(--color-primary,#ff1e42)]/40 bg-[var(--color-primary,#ff1e42)]/[0.03]"
                             : isWarn
-                            ? "bg-amber-500/15 text-amber-400"
-                            : "bg-sky-500/15 text-sky-400"
+                            ? "border-amber-500/40 bg-amber-500/[0.03]"
+                            : "border-sky-500/40 bg-sky-500/[0.03]"
                         }`}
                       >
-                        <AlertTriangle className="w-4 h-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1.5 gap-2">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <h3 className="text-sm font-semibold text-[#fdfdfd] truncate">{alert.title}</h3>
-                            <span
-                              className={`text-[9px] font-mono uppercase px-2 py-0.5 rounded-full font-bold shrink-0 ${
-                                isCrit
-                                  ? "bg-[var(--color-primary,#ff1e42)] text-white"
-                                  : isWarn
-                                  ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                                  : "bg-sky-500/20 text-sky-400 border border-sky-500/30"
-                              }`}
-                            >
-                              {alert.severity}
-                            </span>
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                            isCrit
+                              ? "bg-[var(--color-primary,#ff1e42)]/15 text-[var(--color-primary,#ff1e42)]"
+                              : isWarn
+                              ? "bg-amber-500/15 text-amber-400"
+                              : "bg-sky-500/15 text-sky-400"
+                          }`}
+                        >
+                          <AlertTriangle className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1.5 gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <h3 className="text-sm font-semibold text-[#fdfdfd] truncate">{alert.title}</h3>
+                              <span
+                                className={`text-[9px] font-mono uppercase px-2 py-0.5 rounded-full font-bold shrink-0 ${
+                                  isCrit
+                                    ? "bg-[var(--color-primary,#ff1e42)] text-white"
+                                    : isWarn
+                                    ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                                    : "bg-sky-500/20 text-sky-400 border border-sky-500/30"
+                                }`}
+                              >
+                                {alert.severity}
+                              </span>
+                            </div>
+                            <span className="text-[11px] font-mono text-[#737373] shrink-0">{alert.timestamp}</span>
                           </div>
-                          <span className="text-[11px] font-mono text-[#737373] shrink-0">{alert.timestamp}</span>
-                        </div>
-                        <p className="text-xs text-[#a3a3a3] leading-relaxed mb-3">{alert.message}</p>
-                        <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
-                          <span className="text-[10px] font-mono uppercase text-[#737373]">
-                            Type: {alert.type.replace(/_/g, " ")}
-                          </span>
-                          {!alert.isResolved ? (
-                            <button
-                              onClick={() => store.resolveAlert(alert.id)}
-                              className="btn-ghost-pill text-xs min-h-[38px] px-3.5 text-[var(--color-primary,#ff1e42)] border-[var(--color-primary,#ff1e42)]/30 hover:bg-[var(--color-primary,#ff1e42)]/10"
-                              data-testid={`resolve-alert-btn-${alert.id}`}
-                            >
-                              {t("acknowledgeResolve")}
-                            </button>
-                          ) : (
-                            <span className="text-xs text-[#10b981] flex items-center gap-1.5 font-mono font-medium">
-                              <CheckCircle2 className="w-4 h-4" /> {t("resolved")}
+                          <p className="text-xs text-[#a3a3a3] leading-relaxed mb-3">{alert.message}</p>
+                          <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
+                            <span className="text-[10px] font-mono uppercase text-[#737373]">
+                              Type: {alert.type.replace(/_/g, " ")}
                             </span>
-                          )}
+                            {!alert.isResolved ? (
+                              <button
+                                onClick={() => store.resolveAlert(alert.id)}
+                                className="btn-ghost-pill text-xs min-h-[38px] px-3.5 text-[var(--color-primary,#ff1e42)] border-[var(--color-primary,#ff1e42)]/30 hover:bg-[var(--color-primary,#ff1e42)]/10"
+                                data-testid={`resolve-alert-btn-${alert.id}`}
+                              >
+                                {t("acknowledgeResolve")}
+                              </button>
+                            ) : (
+                              <span className="text-xs text-[#10b981] flex items-center gap-1.5 font-mono font-medium">
+                                <CheckCircle2 className="w-4 h-4" /> {t("resolved")}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 
