@@ -262,6 +262,7 @@ export default function WorkspacePage() {
   const [newDept, setNewDept] = useState("cat-ops");
   const [newPocket, setNewPocket] = useState("pkt-upm");
   const [newVendor, setNewVendor] = useState("");
+  const [expenseError, setExpenseError] = useState<string | null>(null);
   const [missingReceiptCheck, setMissingReceiptCheck] = useState(false);
   const [receiptDataUrl, setReceiptDataUrl] = useState<string | null>(null);
   const [receiptSizeKb, setReceiptSizeKb] = useState<number | null>(null);
@@ -311,6 +312,7 @@ export default function WorkspacePage() {
   const [eqDept, setEqDept] = useState("Camera");
   const [eqDailyRate, setEqDailyRate] = useState("");
   const [eqReturnDate, setEqReturnDate] = useState("Oct 28");
+  const [eqError, setEqError] = useState<string | null>(null);
 
   // Comment state
   const [commentText, setCommentText] = useState("");
@@ -710,10 +712,22 @@ export default function WorkspacePage() {
 
   const handleCreateTransaction = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newDesc || !newAmount) return;
+    setExpenseError(null);
+    if (!newDesc.trim()) {
+      setExpenseError("Description is required");
+      return;
+    }
+    if (!newAmount || isNaN(parseFloat(newAmount)) || parseFloat(newAmount) <= 0) {
+      setExpenseError("Please enter a valid expense amount greater than 0");
+      return;
+    }
 
     const rate = currencies[currency]?.rate || 1;
     const amountInUSD = parseFloat(newAmount) / rate;
+    if (isNaN(amountInUSD) || amountInUSD <= 0) {
+      setExpenseError("Please enter a valid positive amount");
+      return;
+    }
 
     // Resolve project-scoped IDs dynamically to prevent desync
     const resolvedDeptId = store.departments.some((d) => d.id === newDept)
@@ -724,11 +738,11 @@ export default function WorkspacePage() {
       : (store.pockets[0]?.id || newPocket);
 
     store.addTransaction({
-      description: newDesc,
+      description: newDesc.trim(),
       amount: amountInUSD,
       departmentId: resolvedDeptId,
       pocketId: resolvedPocketId,
-      vendor: newVendor || "Local Vendor",
+      vendor: newVendor.trim() || "Local Vendor",
       isMissingReceipt: missingReceiptCheck,
       receiptUrl: receiptDataUrl || (missingReceiptCheck ? undefined : "/icon.png"),
     });
@@ -736,6 +750,7 @@ export default function WorkspacePage() {
     setNewDesc("");
     setNewAmount("");
     setNewVendor("");
+    setExpenseError(null);
     setMissingReceiptCheck(false);
     setReceiptDataUrl(null);
     setReceiptSizeKb(null);
@@ -748,17 +763,29 @@ export default function WorkspacePage() {
   const handleTransfer = (e: React.FormEvent) => {
     e.preventDefault();
     setTransferError(null);
-    if (!transferAmount) return;
-
-    const rate = currencies[currency]?.rate || 1;
-    const amountInUSD = parseFloat(transferAmount) / rate;
+    if (!transferAmount || isNaN(parseFloat(transferAmount)) || parseFloat(transferAmount) <= 0) {
+      setTransferError("Please enter a valid transfer amount greater than 0");
+      return;
+    }
 
     const resolvedSource = store.pockets.some((p) => p.id === transferSource)
       ? transferSource
       : (store.pockets[0]?.id || transferSource);
-    const resolvedDest = store.pockets.some((p) => p.id === transferDest && p.id !== resolvedSource)
+    const resolvedDest = store.pockets.some((p) => p.id === transferDest)
       ? transferDest
       : (store.pockets.find((p) => p.id !== resolvedSource)?.id || store.pockets[0]?.id || transferDest);
+
+    if (resolvedSource === resolvedDest) {
+      setTransferError("Source and Destination pockets cannot be the same");
+      return;
+    }
+
+    const rate = currencies[currency]?.rate || 1;
+    const amountInUSD = parseFloat(transferAmount) / rate;
+    if (isNaN(amountInUSD) || amountInUSD <= 0) {
+      setTransferError("Please enter a valid positive amount");
+      return;
+    }
 
     const result = store.transferFunds(resolvedSource, resolvedDest, amountInUSD, transferNotes);
     if (!result.success) {
@@ -768,6 +795,7 @@ export default function WorkspacePage() {
 
     setTransferAmount("");
     setTransferNotes("");
+    setTransferError(null);
     setIsTransferModalOpen(false);
   };
 
@@ -874,17 +902,29 @@ export default function WorkspacePage() {
 
   const handleAddEquipment = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!eqItemName || !eqDailyRate) return;
+    setEqError(null);
+    if (!eqItemName.trim()) {
+      setEqError("Gear/Item name is required");
+      return;
+    }
+    if (!eqDailyRate || isNaN(parseFloat(eqDailyRate)) || parseFloat(eqDailyRate) <= 0) {
+      setEqError("Please enter a valid daily rate greater than 0");
+      return;
+    }
 
     const rate = currencies[currency]?.rate || 1;
     const dailyInUSD = parseFloat(eqDailyRate) / rate;
+    if (isNaN(dailyInUSD) || dailyInUSD <= 0) {
+      setEqError("Please enter a valid positive daily rate");
+      return;
+    }
 
     store.addEquipment({
-      itemName: eqItemName,
-      vendor: eqVendor || "General Rental House",
-      department: eqDept,
+      itemName: eqItemName.trim(),
+      vendor: eqVendor.trim() || "General Rental House",
+      department: eqDept.trim() || "Production",
       dailyRate: dailyInUSD,
-      returnDate: eqReturnDate,
+      returnDate: eqReturnDate.trim() || `Day ${store.callSheet.dayNumber + 7}`,
       daysRemaining: 14,
       status: "on_set",
     });
@@ -892,6 +932,7 @@ export default function WorkspacePage() {
     setEqItemName("");
     setEqVendor("");
     setEqDailyRate("");
+    setEqError(null);
     setIsEquipmentModalOpen(false);
   };
 
@@ -2420,9 +2461,10 @@ export default function WorkspacePage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
-                {/* Column 1: To Do */}
-                <div className="surface-panel p-5 space-y-4">
+              <div className="overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-thin">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 min-w-[280px] md:min-w-0">
+                  {/* Column 1: To Do */}
+                  <div className="surface-panel p-5 space-y-4">
                   <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
                     <span className="text-xs uppercase tracking-wider text-[#737373] font-medium">{t("todo")}</span>
                     <span className="text-xs font-mono text-[#a3a3a3]">
@@ -2690,7 +2732,8 @@ export default function WorkspacePage() {
                 </div>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
           {/* ========================================================================= */}
           {/* TAB 5: DIGITAL CALL SHEET */}
@@ -3318,6 +3361,13 @@ export default function WorkspacePage() {
             </div>
 
             <form onSubmit={handleCreateTransaction} className="space-y-4">
+              {expenseError && (
+                <div id="expense-error-banner" className="p-3 rounded-lg bg-[var(--color-primary,#ff1e42)]/15 border border-[var(--color-primary,#ff1e42)]/30 text-xs text-[var(--color-primary,#ff1e42)] flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>{expenseError}</span>
+                </div>
+              )}
+
               {/* AI RECEIPT SCANNER ACTION CARD */}
               <div className="p-3.5 rounded-[16px] bg-gradient-to-r from-white/[0.04] to-white/[0.02] border border-white/[0.08] relative overflow-hidden">
                 <div className="flex items-center justify-between gap-3">
@@ -3484,6 +3534,7 @@ export default function WorkspacePage() {
                   <input
                     type="number"
                     step="0.01"
+                    min="0.01"
                     required
                     placeholder={currency === "IDR" ? "e.g. 3500000" : currency === "JPY" ? "e.g. 50000" : "e.g. 240.00"}
                     value={newAmount}
@@ -3919,6 +3970,13 @@ export default function WorkspacePage() {
             </div>
 
             <form onSubmit={handleAddEquipment} className="space-y-4">
+              {eqError && (
+                <div id="eq-error-banner" className="p-3 rounded-lg bg-[var(--color-primary,#ff1e42)]/15 border border-[var(--color-primary,#ff1e42)]/30 text-xs text-[var(--color-primary,#ff1e42)] flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>{eqError}</span>
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs text-[#737373] mb-1.5">Gear / Item Name</label>
                 <input
@@ -3962,6 +4020,7 @@ export default function WorkspacePage() {
                   <input
                     type="number"
                     step="0.01"
+                    min="0.01"
                     required
                     placeholder={currency === "IDR" ? "e.g. 5000000" : "e.g. 350.00"}
                     value={eqDailyRate}

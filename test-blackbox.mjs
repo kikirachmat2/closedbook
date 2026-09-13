@@ -1307,6 +1307,101 @@ async function runBlackboxTests() {
       "Emerald All-Clear state displayed with confirmation badge"
     );
 
+    // TEST 24: FORM VALIDATIONS & RESPONSIVE TABLET KANBAN (F.3 HARDENING)
+    console.log("\n--- TEST 24: Form Validations & Responsive Tablet Kanban (F.3) ---");
+    // 1. Log Expense Amount Guard (< 0 or 0 rejection)
+    await clickNavButton(page, "Log Expense", "Catat Pengeluaran");
+    await delay(500);
+
+    const expenseModalOpened = await page.$("form input[placeholder*='e.g. Extra Generator']");
+    assert("Expense Modal Opens", !!expenseModalOpened, "Log Expense modal active");
+
+    if (expenseModalOpened) {
+      await clearAndType(page, expenseModalOpened, "Negative Amount Test");
+      const amountInput = await page.$("form input[type='number']");
+      if (amountInput) {
+        // Set value to 0 and trigger submit
+        await clearAndType(page, amountInput, 0);
+        await page.evaluate(() => {
+          const form = document.querySelector("div.fixed.z-50 form");
+          if (form) {
+            // Trigger submit event on form
+            form.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+          }
+        });
+        await delay(400);
+
+        const errorVisible = await page.evaluate(() => {
+          const banner = document.getElementById("expense-error-banner");
+          return !!banner && (banner.textContent.includes("greater than 0") || banner.textContent.includes("valid"));
+        });
+        assert("Expense Form Rejects Zero Amount", errorVisible, "Rejection banner shown for zero amount");
+
+        // Close modal
+        await page.evaluate(() => {
+          const closeBtn = document.querySelector("div.fixed.z-50 button:has(svg.lucide-x)");
+          if (closeBtn) closeBtn.click();
+        });
+        await delay(400);
+      }
+    }
+
+    // 2. Pocket Transfer: Prevent Self-Transfer (Navigate to Pockets tab first)
+    await clickNavButton(page, "Multi-Pocket", "Hierarki Kantong", "Cashflow", "Pockets");
+    await delay(600);
+    await clickNavButton(page, "Transfer Funds", "Transfer Dana");
+    await delay(600);
+
+    const transferFormOpened = await page.$("form select");
+    assert("Transfer Modal Opens", !!transferFormOpened, "Transfer modal active");
+
+    if (transferFormOpened) {
+      // Set source and dest to the same pocket
+      await page.evaluate(() => {
+        const selects = document.querySelectorAll("div.fixed.z-50 form select");
+        if (selects.length >= 2) {
+          const firstVal = selects[0].options[0]?.value;
+          selects[0].value = firstVal;
+          selects[1].value = firstVal;
+          selects[0].dispatchEvent(new Event("change", { bubbles: true }));
+          selects[1].dispatchEvent(new Event("change", { bubbles: true }));
+        }
+      });
+      const tAmountInput = await page.$("div.fixed.z-50 form input[type='number']");
+      if (tAmountInput) {
+        await clearAndType(page, tAmountInput, 100);
+        await page.evaluate(() => {
+          const form = document.querySelector("div.fixed.z-50 form");
+          if (form) {
+            form.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+          }
+        });
+        await delay(400);
+
+        const selfTransferError = await page.evaluate(() => {
+          return document.body.textContent.includes("Source and Destination pockets cannot be the same");
+        });
+        assert("Transfer Modal Rejects Self-Transfer", selfTransferError, "Self-transfer prevention active");
+
+        // Close modal
+        await page.evaluate(() => {
+          const closeBtn = document.querySelector("div.fixed.z-50 button:has(svg.lucide-x)");
+          if (closeBtn) closeBtn.click();
+        });
+        await delay(400);
+      }
+    }
+
+    // 3. Responsive Tablet Kanban Horizontal Scroll Wrapper
+    await clickNavButton(page, "Tasks", "Tugas");
+    await delay(500);
+
+    const kanbanScrollContainer = await page.evaluate(() => {
+      const scrollWrapper = document.querySelector(".overflow-x-auto.scrollbar-thin");
+      return !!scrollWrapper;
+    });
+    assert("Kanban Responsive Scroll Container Present", kanbanScrollContainer, "Kanban has responsive overflow-x wrapper");
+
     await page.close();
 
     // =========================================================================

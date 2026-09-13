@@ -28,7 +28,7 @@
   --color-paper: #fdfdfd;
   --color-pearl: #d4d4d4;
   --color-ash: #a3a3a3;
-  --color-stone: #737373;
+  --color-stone: #8a8a8a;
   --border-subtle: rgba(255, 255, 255, 0.07);
   --border-active: rgba(255, 255, 255, 0.16);
   --accent-badge-bg: rgba(255, 42, 77, 0.12);
@@ -44,7 +44,7 @@
   --color-paper: #fdfdfd;
   --color-pearl: #d4d4d4;
   --color-ash: #a3a3a3;
-  --color-stone: #737373;
+  --color-stone: #8a8a8a;
   --border-subtle: rgba(255, 255, 255, 0.06);
   --border-active: rgba(255, 255, 255, 0.16);
   --accent-badge-bg: rgba(255, 30, 66, 0.12);
@@ -61,7 +61,7 @@
   --color-paper: #f8fafc;
   --color-pearl: #cbd5e1;
   --color-ash: #94a3b8;
-  --color-stone: #64748b;
+  --color-stone: #94a3b8;
   --border-subtle: rgba(59, 130, 246, 0.12);
   --border-active: rgba(59, 130, 246, 0.28);
   --accent-badge-bg: rgba(59, 130, 246, 0.14);
@@ -112,7 +112,7 @@
   --color-paper: #0f172a;
   --color-pearl: #334155;
   --color-ash: #475569;
-  --color-stone: #64748b;
+  --color-stone: #475569;
   --border-subtle: rgba(0, 0, 0, 0.08);
   --border-active: rgba(0, 0, 0, 0.2);
   --accent-badge-bg: rgba(225, 29, 72, 0.08);
