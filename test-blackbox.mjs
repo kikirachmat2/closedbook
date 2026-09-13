@@ -1412,6 +1412,37 @@ async function runBlackboxTests() {
     await mobilePage.close();
     await mobileContext.close();
 
+    // =========================================================================
+    console.log("\n>>> STARTING SUITE 4: Accessibility & Tooling Audit (axe-core)");
+    const a11yContext = await browser.createBrowserContext();
+    const a11yPage = await a11yContext.newPage();
+    await a11yPage.setViewport({ width: 1440, height: 900 });
+    await a11yPage.goto("http://localhost:3000/workspace", { waitUntil: "domcontentloaded" });
+    await a11yPage.waitForSelector("header");
+    await delay(600);
+
+    // Inject and run axe-core
+    const axeSource = fs.readFileSync(path.resolve("./node_modules/axe-core/axe.min.js"), "utf8");
+    await a11yPage.evaluate(axeSource);
+    const axeResults = await a11yPage.evaluate(async () => {
+      // @ts-expect-error axe is injected
+      return await window.axe.run(document, {
+        runOnly: {
+          type: "tag",
+          values: ["wcag2a", "wcag2aa", "best-practice"]
+        }
+      });
+    });
+
+    const criticalViolations = (axeResults.violations || []).filter(v => v.impact === "critical");
+    console.log(`[A11y Audit] Total violations: ${axeResults.violations.length}, Critical: ${criticalViolations.length}`);
+    assert("A11y Audit Runs Cleanly", axeResults && Array.isArray(axeResults.violations), "axe-core successfully evaluated DOM");
+    assert("Zero Critical A11y Violations", criticalViolations.length === 0, `Critical a11y violations count: ${criticalViolations.length}`);
+
+    await a11yPage.close();
+    await a11yContext.close();
+
+
   } catch (err) {
     console.error("FATAL TEST ERROR:", err.message);
   } finally {
