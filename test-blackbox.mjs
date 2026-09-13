@@ -111,6 +111,7 @@ async function runBlackboxTests() {
   const browser = await puppeteer.launch({
     executablePath: CHROME,
     headless: true,
+    protocolTimeout: 60000,
     args: ["--no-sandbox", "--disable-setuid-sandbox", "--window-size=1280,900"],
   });
 
@@ -139,9 +140,14 @@ async function runBlackboxTests() {
     await page.waitForSelector("h1");
     const title = await page.title();
     assert("Page Title Contains Closebook", (title.toLowerCase().includes("closedbook") || title.toLowerCase().includes("closebook")), title);
-    const h1 = await page.$eval("h1", (el) => el.textContent);
+    const h1 = await page.evaluate(() => {
+      const el = document.querySelector("h1");
+      return el ? el.textContent : "";
+    });
     assert("Hero Headline Rendered", h1.length > 3, h1);
-    await page.screenshot({ path: path.join(ARTIFACT_DIR, "audit_01_landing.png") });
+    try {
+      await page.screenshot({ path: path.join(ARTIFACT_DIR, "audit_01_landing.png") });
+    } catch {}
 
     // TEST 2: WORKSPACE LOAD & PREFERENCE RESET
     console.log("\n--- TEST 2: Workspace Load & Preferences Reset ---");
@@ -1175,8 +1181,11 @@ async function runBlackboxTests() {
     await delay(300);
 
     // 21.c: Dismiss Demo Banner & Verify Persistence
-    await page.click("#btn-dismiss-demo-banner");
-    await delay(300);
+    await page.evaluate(() => {
+      const btn = document.getElementById("btn-dismiss-demo-banner");
+      if (btn) btn.click();
+    });
+    await delay(500);
 
     const bannerDismissed = await page.evaluate(() => {
       const banner = document.getElementById("workspace-demo-banner");
@@ -1190,16 +1199,16 @@ async function runBlackboxTests() {
     );
 
     // 21.d: Ledger Empty Search State & Reset Filter CTA
-    await page.evaluate(() => {
-      const btns = Array.from(document.querySelectorAll("button"));
-      const ledgerTab = btns.find(b => b.textContent && b.textContent.includes("Ledger"));
-      if (ledgerTab) ledgerTab.click();
-    });
-    await delay(300);
+    await clickNavButton(page, "Transactions", "Ledger", "Buku Kas");
+    await delay(500);
+    await page.waitForSelector("input[placeholder*='Search'], input[placeholder*='Cari']", { timeout: 5000 });
 
     // Type query that returns 0 matches
-    await page.type("input[placeholder*='Search']", "ZZZ_NON_EXISTENT_VENDOR_QUERY_999");
-    await delay(300);
+    const searchInput = await page.$("input[placeholder*='Search'], input[placeholder*='Cari']");
+    if (searchInput) {
+      await searchInput.type("ZZZ_NON_EXISTENT_VENDOR_QUERY_999");
+    }
+    await delay(400);
 
     const filterEmptyState = await page.evaluate(() => {
       const resetBtn = document.getElementById("btn-reset-ledger-filter");

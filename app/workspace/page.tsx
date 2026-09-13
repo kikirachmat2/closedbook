@@ -1038,7 +1038,7 @@ export default function WorkspacePage() {
               aria-label={t("switchProject")}
             >
               <div className="flex items-center justify-between gap-2 mb-1">
-                <span className="text-[10px] uppercase tracking-wider text-[#737373] font-medium truncate">
+                <span className="text-[10px] uppercase tracking-wider text-[var(--color-stone,#8a8a8a)] font-medium truncate">
                   {t("activeProduction")}
                 </span>
                 <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-white/[0.05] text-[#a3a3a3] border border-white/[0.06] shrink-0">
@@ -1477,7 +1477,7 @@ export default function WorkspacePage() {
         </header>
 
         {/* Tab Content Panels with AnimatePresence Transitions */}
-        <div className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8 flex-1">
+        <main id="main-content" className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8 flex-1">
           {/* Storage Quota Guard Warning Banner */}
           <AnimatePresence>
             {store.storageQuotaExceeded && (
@@ -1768,7 +1768,7 @@ export default function WorkspacePage() {
               <div className="surface-panel p-5 sm:p-6">
                 <div className="flex items-center justify-between pb-4 mb-6 border-b border-white/[0.06]">
                   <div>
-                    <h3 className="text-sm font-medium text-[#fdfdfd]">{t("deptBudgetRealization")}</h3>
+                    <h2 className="text-sm font-medium text-[#fdfdfd]">{t("deptBudgetRealization")}</h2>
                     <p className="text-xs text-[#737373] mt-0.5">{t("deptBudgetSub")}</p>
                   </div>
                   <div className="flex items-center gap-3">
@@ -1803,7 +1803,7 @@ export default function WorkspacePage() {
                           <div className="flex items-center gap-2 font-medium text-[#fdfdfd]">
                             <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: dept.color }} />
                             <span>{dept.name}</span>
-                            <span className="text-[10px] font-mono text-[#737373] px-1.5 py-0.5 rounded bg-white/[0.04]">
+                            <span className="text-[10px] font-mono text-[var(--color-stone,#8a8a8a)] px-1.5 py-0.5 rounded bg-white/[0.04]">
                               {dept.code}
                             </span>
                           </div>
@@ -1852,7 +1852,7 @@ export default function WorkspacePage() {
                 {/* Recent Transactions */}
                 <div className="lg:col-span-7 surface-panel p-5 sm:p-6">
                   <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.06]">
-                    <h3 className="text-sm font-medium text-[#fdfdfd]">{t("recentEntries")}</h3>
+                    <h2 className="text-sm font-medium text-[#fdfdfd]">{t("recentEntries")}</h2>
                     <button
                       onClick={() => setActiveTab("transactions")}
                       className="text-xs text-[var(--color-primary,#ff1e42)] hover:underline min-h-[36px] flex items-center"
@@ -1898,7 +1898,7 @@ export default function WorkspacePage() {
                 {/* Live System Alerts */}
                 <div className="lg:col-span-5 surface-panel p-5 sm:p-6">
                   <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.06]">
-                    <h3 className="text-sm font-medium text-[#fdfdfd]">{t("activeFlags")}</h3>
+                    <h2 className="text-sm font-medium text-[#fdfdfd]">{t("activeFlags")}</h2>
                     <span className="text-xs text-[#737373]">Autonomous Guardrails</span>
                   </div>
 
@@ -3271,7 +3271,7 @@ export default function WorkspacePage() {
           )}
             </m.div>
           </AnimatePresence>
-        </div>
+        </main>
       </div>
 
       {/* ========================================================================= */}
