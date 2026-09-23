@@ -46,8 +46,8 @@ describe("Dexie.js ClosedBookDB v1 Schema & Local Error Logger (ADR-002, ADR-006
       departmentName: "Operations",
       status: "todo",
       priority: "high",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      assignee: "Alex M",
+      dueDate: "2026-10-15",
     });
 
     const tasks = await testDb.tasks.where("[projectId+status]").equals(["proj-test", "todo"]).toArray();
