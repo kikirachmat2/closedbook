@@ -395,8 +395,11 @@ export default function HomePage() {
 
                   <form onSubmit={handleSimulatedSubmit} className="space-y-3">
                     <div>
-                      <label className="block text-[11px] text-[#737373] mb-1">Description</label>
+                      <label htmlFor="simulated-desc" className="block text-[11px] text-[#737373] mb-1">
+                        Description
+                      </label>
                       <input
+                        id="simulated-desc"
                         type="text"
                         value={simulatedDesc}
                         onChange={(e) => setSimulatedDesc(e.target.value)}
@@ -405,8 +408,11 @@ export default function HomePage() {
                     </div>
 
                     <div>
-                      <label className="block text-[11px] text-[#737373] mb-1">Amount ($ USD)</label>
+                      <label htmlFor="simulated-amount" className="block text-[11px] text-[#737373] mb-1">
+                        Amount ($ USD)
+                      </label>
                       <input
+                        id="simulated-amount"
                         type="number"
                         value={simulatedAmount}
                         onChange={(e) => setSimulatedAmount(e.target.value)}

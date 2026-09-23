@@ -51,3 +51,16 @@ Before Sub-Fase G.6 (Document Generation) begins, the project owner or human ope
      - Verify `=SUM(E2:E9)` renders as a living formula in Google Sheets (not string literal).
      - Verify `.docx` converts to native editable Google Docs.
    - Save screenshots/video proof to `docs/testing/evidence/`.
+
+---
+
+## 4. Hard Gate Reminder & PLAN B Fallback Protocol
+
+> [!IMPORTANT]
+> **G.6 HARD GATE**: Sub-Fase G.6 (Document Generation) **TIDAK BOLEH START** tanpa BLOCKER-001 dinyatakan CLEARED.
+
+Jika Director/Project Owner belum dapat menyediakan Google Cloud OAuth credentials dalam 2 sub-fase ke depan (G.2 & G.3):
+- **PLAN B Trigger**: Pada permulaan G.4 / G.5, tim akan mengaktifkan **Fallback ADR-004 Option 1**:
+  - Mengembangkan generator template programmatik via Google Sheets API batchUpdate AST (`spreadsheets.batchUpdate` request payload JSON).
+  - Me-render sel, formula, formatting, dan borders langsung ke Google Sheets API tanpa bergantung pada binary multipart auto-conversion.
+  - Dokumentasi dan unit test AST generator sudah disiapkan sebagai fallback cadangan.

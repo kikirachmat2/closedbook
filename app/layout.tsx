@@ -55,6 +55,8 @@ import PreferencesModal from "@/components/PreferencesModal";
 import { MotionProvider } from "@/components/MotionProvider";
 import PwaManager from "@/components/PwaManager";
 import { IOSInstallPrompt } from "@/components/pwa/ios-install-prompt";
+import { UpdatePrompt } from "@/components/pwa/update-prompt";
+import { OfflineBanner } from "@/components/pwa/offline-banner";
 
 import { headers } from "next/headers";
 
@@ -83,10 +85,12 @@ export default async function RootLayout({
       <body className="bg-[var(--surface-canvas,#050505)] text-[var(--color-paper,#fdfdfd)] antialiased selection:bg-[var(--color-primary,#FF2A4D)] selection:text-[#ffffff]">
         <PreferencesProvider>
           <MotionProvider>
+            <OfflineBanner />
             {children}
             <PreferencesModal />
             <PwaManager />
             <IOSInstallPrompt />
+            <UpdatePrompt />
           </MotionProvider>
         </PreferencesProvider>
       </body>

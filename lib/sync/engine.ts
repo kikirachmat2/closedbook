@@ -83,6 +83,14 @@ export async function queueMutationDelta({
 
   useSyncEngine.getState().setPendingCount(pending);
 
+  // Attempt to register Background Sync with Service Worker for offline resilience
+  try {
+    const { requestBackgroundSync } = await import("./background-sync");
+    requestBackgroundSync().catch(() => {});
+  } catch {
+    // Non-blocking in non-browser/test environments
+  }
+
   return deltaId;
 }
 

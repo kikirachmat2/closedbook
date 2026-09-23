@@ -1,21 +1,59 @@
 {
   "name": "ClosedBook Production OS",
   "short_name": "ClosedBook",
-  "description": "Zero-budget, user-owned production and project management operating system.",
-  "start_url": "/",
+  "description": "Zero-budget, user-owned mobile-first production and project management operating system.",
+  "start_url": "/workspace",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#050505",
   "theme_color": "#050505",
   "icons": [
     {
       "src": "/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/icon.png",
       "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/apple-touch-icon-180.png",
+      "sizes": "180x180",
       "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Project",
+      "short_name": "Project",
+      "description": "Create a new production project workspace",
+      "url": "/workspace?action=new-project",
+      "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Quick Expense",
+      "short_name": "Expense",
+      "description": "Log an on-set expense transaction",
+      "url": "/workspace?action=quick-expense",
+      "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Open Ledger",
+      "short_name": "Ledger",
+      "description": "View master cash flow ledger",
+      "url": "/workspace?tab=ledger",
+      "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
     }
   ]
 }
