@@ -7,29 +7,51 @@
     "build": "next build",
     "analyze": "ANALYZE=true next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "lhci": "lhci autorun"
   },
   "dependencies": {
+    "@simplewebauthn/browser": "^14.0.0",
+    "@simplewebauthn/server": "^14.0.2",
+    "@vercel/functions": "^3.9.9",
     "clsx": "^2.1.1",
+    "currency.js": "^2.0.4",
+    "dexie": "^4.4.6",
+    "dexie-react-hooks": "^4.4.0",
     "framer-motion": "^13.2.0",
+    "iron-session": "^9.0.1",
+    "jose": "^6.2.12",
     "lucide-react": "^1.16.0",
     "next": "^15.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "tailwind-merge": "^3.0.2"
+    "tailwind-merge": "^3.0.2",
+    "y-indexeddb": "^9.0.12",
+    "yjs": "^13.6.32"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@lhci/cli": "^0.15.1",
     "@next/bundle-analyzer": "^16.3.5",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.0.9",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/ui": "^4.1.11",
     "axe-core": "^4.13.0",
     "eslint": "^8.57.1",
     "eslint-config-next": "^15.5.25",
+    "msw": "^2.15.0",
     "postcss": "^8",
     "puppeteer-core": "^25.10.0",
     "tailwindcss": "^4.0.9",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.11"
   }
 }
