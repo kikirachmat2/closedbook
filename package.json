@@ -22,6 +22,7 @@
     "dexie": "^4.4.6",
     "dexie-react-hooks": "^4.4.0",
     "framer-motion": "^13.2.0",
+    "inngest": "^4.21.0",
     "iron-session": "^9.0.1",
     "jose": "^6.2.12",
     "lucide-react": "^1.16.0",
@@ -30,7 +31,8 @@
     "react-dom": "^19.0.0",
     "tailwind-merge": "^3.0.2",
     "y-indexeddb": "^9.0.12",
-    "yjs": "^13.6.32"
+    "yjs": "^13.6.32",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

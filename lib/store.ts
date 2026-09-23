@@ -21,6 +21,8 @@ import {
   ProjectNote,
   NoteCategory,
 } from "./types";
+import { migrateLocalStorageToDexie } from "@/lib/db/migration";
+import { isFeatureEnabled } from "@/lib/flags";
 
 const INITIAL_PROJECT: Project = {
   id: "proj-001",
@@ -293,6 +295,11 @@ export function useClosebookStore() {
           }
         }
         localStorage.setItem(MIGRATION_FLAG, "true");
+      }
+
+      // Trigger Dexie.js background migration (idempotent, safe)
+      if (isFeatureEnabled("USE_DEXIE_STORAGE")) {
+        migrateLocalStorageToDexie().catch((e) => console.warn("[Dexie Migration]:", e));
       }
 
       // Load Projects and identify active project

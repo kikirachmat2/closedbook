@@ -5,6 +5,7 @@
 export interface FeatureFlags {
   USE_YJS_CRDT: boolean;
   USE_DEXIE_STORAGE: boolean;
+  USE_DEXIE_READ: boolean;
   USE_WEBAUTHN_CONFIRMATION: boolean;
   USE_INNGEST_QUEUE: boolean;
   USE_HYBRID_CSP: boolean;
@@ -14,6 +15,7 @@ export interface FeatureFlags {
 export const DEFAULT_FLAGS: FeatureFlags = {
   USE_YJS_CRDT: true,
   USE_DEXIE_STORAGE: true,
+  USE_DEXIE_READ: true,
   USE_WEBAUTHN_CONFIRMATION: false, // Activated in G.8
   USE_INNGEST_QUEUE: false, // Activated in G.1/G.6
   USE_HYBRID_CSP: true,
