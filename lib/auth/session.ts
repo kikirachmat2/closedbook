@@ -2,7 +2,7 @@
 // CLOSEDBOOK PRODUCTION OS — ENCRYPTED SESSION ENGINE (ADR-001)
 // =========================================================================
 
-import { getIronSession, SessionOptions, sealData, unsealData } from "iron-session";
+import { getIronSession, SessionOptions, sealData, unsealData, IronSession } from "iron-session";
 import { cookies } from "next/headers";
 import { COOKIE_SESSION_NAME, SESSION_TTL_SECONDS } from "./constants";
 
@@ -74,11 +74,11 @@ export function getSessionOptions(): SessionOptions {
 /**
  * Retrieves the encrypted session from Next.js server context.
  */
-export async function getSession(): Promise<SessionData & { save: () => Promise<void>; destroy: () => void }> {
+export async function getSession(): Promise<IronSession<SessionData>> {
   const cookieStore = await cookies();
   const session = await getIronSession<SessionData>(cookieStore, getSessionOptions());
 
-  if (!session.isLoggedIn) {
+  if (session.isLoggedIn === undefined) {
     session.isLoggedIn = defaultSession.isLoggedIn;
     session.createdAt = defaultSession.createdAt;
   }
