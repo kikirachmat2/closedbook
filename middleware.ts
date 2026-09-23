@@ -2,16 +2,13 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const response = NextResponse.next();
-
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const isDev = process.env.NODE_ENV !== "production";
-  const pathname = request.nextUrl.pathname;
 
-  // Hybrid CSP (ADR-003):
-  // Fast Refresh in development requires 'unsafe-eval'
+  // Production uses 'strict-dynamic' + 'nonce-${nonce}' with zero 'unsafe-eval' and zero 'unsafe-inline' (ADR-003)
   const scriptSrc = isDev
     ? "'self' 'unsafe-eval' 'unsafe-inline' https://apis.google.com"
-    : "'self' 'unsafe-inline' https://apis.google.com";
+    : `'self' 'nonce-${nonce}' 'strict-dynamic' https://apis.google.com`;
 
   const cspHeader = `
     default-src 'self';
@@ -31,10 +28,19 @@ export function middleware(request: NextRequest) {
     .replace(/\s{2,}/g, " ")
     .trim();
 
-  // Set Content-Security-Policy
-  response.headers.set("Content-Security-Policy", cspHeader);
+  // Forward nonce to Next.js so it attaches the nonce attribute to all framework script tags
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", cspHeader);
 
-  // Security Headers
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
+
+  // Set response headers
+  response.headers.set("Content-Security-Policy", cspHeader);
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");

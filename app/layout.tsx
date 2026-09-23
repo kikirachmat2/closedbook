@@ -56,11 +56,15 @@ import { MotionProvider } from "@/components/MotionProvider";
 import PwaManager from "@/components/PwaManager";
 import { IOSInstallPrompt } from "@/components/pwa/ios-install-prompt";
 
-export default function RootLayout({
+import { headers } from "next/headers";
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nonce = (await headers()).get("x-nonce") || undefined;
+
   return (
     <html
       lang="en"
@@ -70,6 +74,7 @@ export default function RootLayout({
     >
       <head>
         <script
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('closebook_theme');if(!t||!['signature','obsidian','indigo','emerald','amber','paper'].includes(t)){t='signature';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`,
           }}
