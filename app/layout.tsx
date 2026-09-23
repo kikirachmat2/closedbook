@@ -30,6 +30,11 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "ClosedBook",
+  },
   openGraph: {
     title: "ClosedBook — Modern Production & Project OS",
     description:
@@ -49,6 +54,7 @@ import { PreferencesProvider } from "@/lib/preferences";
 import PreferencesModal from "@/components/PreferencesModal";
 import { MotionProvider } from "@/components/MotionProvider";
 import PwaManager from "@/components/PwaManager";
+import { IOSInstallPrompt } from "@/components/pwa/ios-install-prompt";
 
 export default function RootLayout({
   children,
@@ -75,6 +81,7 @@ export default function RootLayout({
             {children}
             <PreferencesModal />
             <PwaManager />
+            <IOSInstallPrompt />
           </MotionProvider>
         </PreferencesProvider>
       </body>
