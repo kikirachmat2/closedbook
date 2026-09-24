@@ -13,6 +13,13 @@ import { Transaction, EquipmentStatus, Department } from "@/lib/types";
 import { m, AnimatePresence } from "@/components/MotionProvider";
 import CountUp from "@/components/CountUp";
 import { Skeleton, WorkspaceSkeleton } from "@/components/Skeleton";
+import BottomNav from "@/components/mobile/BottomNav";
+import TopAppBar from "@/components/mobile/TopAppBar";
+import FAB from "@/components/mobile/FAB";
+import PullToRefresh from "@/components/mobile/PullToRefresh";
+import PageTransition from "@/components/mobile/PageTransition";
+import EmptyState from "@/components/mobile/EmptyState";
+import { NetworkErrorBanner } from "@/components/mobile/ErrorRecovery";
 import {
   LayoutDashboard,
   Receipt,
@@ -1305,8 +1312,34 @@ export default function WorkspacePage() {
 
       {/* 2. Main Workspace Body */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        {/* Top Header Bar */}
-        <header className="h-16 border-b border-white/[0.06] bg-[var(--surface-canvas,#050505)]/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between shrink-0 sticky top-0 z-30">
+        {/* Mobile Top App Bar (Jakob's Law progressive disclosure & scroll-hide) */}
+        <TopAppBar
+          title={
+            activeTab === "transactions"
+              ? "Ledger"
+              : activeTab === "tasks"
+              ? "Tasks"
+              : activeTab === "pockets"
+              ? "Cash Drawer"
+              : activeTab === "callsheet"
+              ? "Docs"
+              : activeTab === "overview"
+              ? "Overview"
+              : activeTab === "reconcile"
+              ? "Reconciliation"
+              : "ClosedBook"
+          }
+          isRoot={true}
+          onMenuToggle={() => setIsMobileProjectDropdownOpen((prev) => !prev)}
+          actions={
+            <div className="flex items-center gap-1">
+              <PreferencesControls compact={true} />
+            </div>
+          }
+        />
+
+        {/* Desktop Header Bar */}
+        <header className="hidden md:flex h-16 border-b border-white/[0.06] bg-[var(--surface-canvas,#050505)]/90 backdrop-blur-md px-4 sm:px-6 items-center justify-between shrink-0 sticky top-0 z-30">
           <div className="flex items-center gap-3">
             {/* Mobile Brand Logo */}
             <Link href="/" className="md:hidden flex items-center gap-2 min-h-[44px]">
@@ -1652,15 +1685,34 @@ export default function WorkspacePage() {
               </m.div>
             )}
           </AnimatePresence>
-          <AnimatePresence mode="wait">
-            <m.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-              className="w-full space-y-6 sm:space-y-8"
-            >
+
+          {/* Offline Recovery Banner */}
+          {!isOnline && (
+            <NetworkErrorBanner
+              onRetry={() => setIsOnline(typeof navigator !== "undefined" ? navigator.onLine : true)}
+              className="mb-4"
+            />
+          )}
+
+          <PullToRefresh
+            disabled={activeTab !== "transactions" && activeTab !== "tasks" && activeTab !== "pockets"}
+            onRefresh={async () => {
+              if (store.webhookUrl) {
+                await store.bulkSyncToWebhook();
+              } else {
+                await new Promise((resolve) => setTimeout(resolve, 350));
+              }
+            }}
+          >
+            <AnimatePresence mode="wait">
+              <m.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                className="w-full space-y-6 sm:space-y-8"
+              >
           {/* =========================================================================
            * RECONCILIATION TAB
            * =========================================================================*/}
@@ -2156,45 +2208,33 @@ export default function WorkspacePage() {
                     <tbody className="divide-y divide-white/[0.04]">
                       {filteredTransactions.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="p-0">
-                            <div className="p-8 sm:p-12 flex flex-col items-center justify-center text-center">
-                              {store.transactions.length === 0 ? (
-                                <>
-                                  <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-[#737373] mb-3">
-                                    <Receipt className="w-6 h-6 opacity-60" />
-                                  </div>
-                                  <h3 className="text-sm font-semibold text-[#fdfdfd]">{t("noExpensesYet")}</h3>
-                                  <p className="text-xs text-[#737373] max-w-sm mt-1 mb-4">{t("noExpensesYetDesc")}</p>
-                                  <button
-                                    id="btn-empty-log-expense"
-                                    onClick={openLogModal}
-                                    className="btn-primary-crimson text-xs min-h-[38px] px-4 flex items-center gap-1.5"
-                                  >
-                                    <Plus className="w-3.5 h-3.5" />
-                                    <span>{t("logFirstExpense")}</span>
-                                  </button>
-                                </>
-                              ) : (
-                                <>
-                                  <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-[#737373] mb-3">
-                                    <Search className="w-6 h-6 opacity-60" />
-                                  </div>
-                                  <h3 className="text-sm font-semibold text-[#fdfdfd]">{t("noMatchingTransactions")}</h3>
-                                  <p className="text-xs text-[#737373] max-w-sm mt-1 mb-4">{t("noMatchingTransactionsDesc")}</p>
-                                  <button
-                                    id="btn-reset-ledger-filter"
-                                    onClick={() => {
-                                      setSearchQuery("");
-                                      setSelectedDeptFilter("all");
-                                    }}
-                                    className="btn-ghost-pill text-xs min-h-[38px] px-4 text-[#a3a3a3] hover:text-white flex items-center gap-1.5"
-                                  >
-                                    <RefreshCw className="w-3.5 h-3.5" />
-                                    <span>{t("resetFilters")}</span>
-                                  </button>
-                                </>
-                              )}
-                            </div>
+                          <td colSpan={8} className="p-4 sm:p-8">
+                            {store.transactions.length === 0 ? (
+                              <EmptyState
+                                icon={Receipt}
+                                headline={language === "id" ? "Belum Ada Pengeluaran" : "No Expenses Recorded"}
+                                body={
+                                  language === "id"
+                                    ? "Belum ada pengeluaran. Tap + untuk catat pengeluaran pertama."
+                                    : "No expenses recorded yet. Tap + to log the first production expense."
+                                }
+                                actionLabel={language === "id" ? "Catat Pengeluaran Pertama" : "Log First Expense"}
+                                actionId="btn-empty-log-expense"
+                                onAction={openLogModal}
+                              />
+                            ) : (
+                              <EmptyState
+                                icon={Search}
+                                headline={t("noMatchingTransactions")}
+                                body={t("noMatchingTransactionsDesc")}
+                                actionLabel={t("resetFilters")}
+                                actionId="btn-reset-ledger-filter"
+                                onAction={() => {
+                                  setSearchQuery("");
+                                  setSelectedDeptFilter("all");
+                                }}
+                              />
+                            )}
                           </td>
                         </tr>
                       ) : (
@@ -3271,75 +3311,42 @@ export default function WorkspacePage() {
           )}
             </m.div>
           </AnimatePresence>
+          </PullToRefresh>
         </main>
       </div>
 
       {/* ========================================================================= */}
-      {/* MOBILE STICKY BOTTOM NAVIGATION BAR */}
+      {/* MOBILE STICKY BOTTOM NAVIGATION BAR (5-TAB HICK'S LAW + SERIAL POSITION) */}
       {/* ========================================================================= */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#070707]/95 backdrop-blur-xl border-t border-white/[0.08] px-2 py-1.5 flex items-center justify-around">
-        <button
-          onClick={() => setActiveTab("overview")}
-          className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] rounded-lg transition-colors ${
-            activeTab === "overview" ? "text-[var(--color-primary,#ff1e42)]" : "text-[#737373]"
-          }`}
-        >
-          <LayoutDashboard className="w-5 h-5" />
-          <span className="text-[10px] mt-1 font-medium">Overview</span>
-        </button>
+      <BottomNav
+        activeTab={activeTab}
+        onTabChange={(tabId) => setActiveTab(tabId as TabId)}
+        badges={{
+          tasks: overdueTasks.length > 0,
+          transactions: stalePendingTx.length > 0,
+          callsheet: !isReconDone,
+        }}
+      />
 
-        <button
-          onClick={() => setActiveTab("transactions")}
-          className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] rounded-lg transition-colors ${
-            activeTab === "transactions" ? "text-[var(--color-primary,#ff1e42)]" : "text-[#737373]"
-          }`}
-        >
-          <Receipt className="w-5 h-5" />
-          <span className="text-[10px] mt-1 font-medium">Ledger</span>
-        </button>
-
-        {/* Mobile Quick Log FAB */}
-        <button
-          onClick={openLogModal}
-          className="w-12 h-12 rounded-full bg-[var(--color-primary,#ff1e42)] text-white flex items-center justify-center shadow-[0_0_20px_rgba(255,30,66,0.4)] -mt-4 shrink-0 transition-transform active:scale-95"
-          title="Quick Log Petty Cash"
-        >
-          <Plus className="w-6 h-6" />
-        </button>
-
-        <button
-          onClick={() => setActiveTab("tasks")}
-          className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] rounded-lg transition-colors ${
-            activeTab === "tasks" ? "text-[var(--color-primary,#ff1e42)]" : "text-[#737373]"
-          }`}
-        >
-          <CheckSquare className="w-5 h-5" />
-          <span className="text-[10px] mt-1 font-medium">Tasks</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab("callsheet")}
-          className={`flex flex-col items-center justify-center min-w-[52px] min-h-[48px] rounded-lg transition-colors ${
-            activeTab === "callsheet" ? "text-[var(--color-primary,#ff1e42)]" : "text-[#737373]"
-          }`}
-        >
-          <Film className="w-5 h-5" />
-          <span className="text-[10px] mt-1 font-medium">Schedule</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab("reconcile")}
-          className={`relative flex flex-col items-center justify-center min-w-[52px] min-h-[48px] rounded-lg transition-colors ${
-            activeTab === "reconcile" ? "text-[var(--color-primary,#ff1e42)]" : "text-[#737373]"
-          }`}
-        >
-          <CheckCircle2 className="w-5 h-5" />
-          <span className="text-[10px] mt-1 font-medium">Reconcile</span>
-          {store.reconciliations.filter(r => r.dayNumber === store.callSheet.dayNumber).length === 0 && (
-            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#f59e0b]" />
-          )}
-        </button>
-      </div>
+      {/* ========================================================================= */}
+      {/* CONTEXT-AWARE FAB & RADIAL MENU (FITTS'S LAW & RIGHT/LEFT HAND ERGONOMICS) */}
+      {/* ========================================================================= */}
+      <FAB
+        activeTab={activeTab}
+        onPrimaryAction={() => {
+          if (activeTab === "transactions") openLogModal();
+          else if (activeTab === "tasks") openTaskModal();
+          else if (activeTab === "pockets") openTransferModal();
+          else if (activeTab === "callsheet") setIsCallSheetModalOpen(true);
+          else openLogModal();
+        }}
+        onScanReceipt={handleTriggerAiScan}
+        onAddTask={openTaskModal}
+        onTransfer={openTransferModal}
+        onExportCsv={store.exportLedgerCSV}
+        onEditSchedule={() => setIsCallSheetModalOpen(true)}
+        onPrintWrap={() => window.print()}
+      />
 
       {/* ========================================================================= */}
       {/* MODAL 1: LOG PETTY CASH (With Client-Side Photo Compression & EXIF Strip) */}

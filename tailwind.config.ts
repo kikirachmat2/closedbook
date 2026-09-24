@@ -11,10 +11,15 @@ const config: Config = {
   theme: {
     // Mobile-first screen breakpoints matching real iPhone form factors
     screens: {
-      sm: "375px", // iPhone SE / Mini
-      md: "390px", // iPhone 13/14/15/16 standard
-      lg: "414px", // iPhone Plus / XR
-      xl: "430px", // iPhone Pro Max
+      "iphone-se": "375px",
+      "iphone-std": "390px",
+      "iphone-plus": "414px",
+      "iphone-max": "430px",
+      sm: "640px",
+      md: "768px",
+      lg: "1024px",
+      xl: "1280px",
+      "2xl": "1536px",
       tablet: "768px",
       desktop: "1024px",
     },

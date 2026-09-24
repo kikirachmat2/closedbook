@@ -27,9 +27,10 @@ export function useServiceWorkerUpdate(): ServiceWorkerUpdateState {
 
     setIsSupported(true);
 
+    const hadController = Boolean(navigator.serviceWorker.controller);
     let refreshing = false;
     const handleControllerChange = () => {
-      if (!refreshing) {
+      if (!refreshing && hadController) {
         refreshing = true;
         window.location.reload();
       }
