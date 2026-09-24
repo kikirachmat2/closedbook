@@ -1195,7 +1195,7 @@ const PreferencesContext = createContext<PreferencesContextType | null>(null);
 export function PreferencesProvider({ children }: { children: React.ReactNode }) {
   const [currency, setCurrencyState] = useState<CurrencyCode>("USD");
   const [language, setLanguageState] = useState<LanguageCode>("en");
-  const [theme, setThemeState] = useState<ThemeCode>("signature");
+  const [theme, setThemeState] = useState<ThemeCode>("obsidian");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isRemindersEnabled, setIsRemindersEnabledState] = useState<boolean>(true);
   const [isWebNotificationsEnabled, setIsWebNotificationsEnabledState] = useState<boolean>(false);
@@ -1231,7 +1231,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
         setThemeState(savedTheme);
         document.documentElement.setAttribute("data-theme", savedTheme);
       } else {
-        document.documentElement.setAttribute("data-theme", "signature");
+        document.documentElement.setAttribute("data-theme", "obsidian");
       }
     } catch {}
     setMounted(true);

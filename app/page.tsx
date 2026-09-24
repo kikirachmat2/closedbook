@@ -403,7 +403,7 @@ export default function HomePage() {
                         type="text"
                         value={simulatedDesc}
                         onChange={(e) => setSimulatedDesc(e.target.value)}
-                        className="w-full bg-[#121212] border border-white/[0.08] rounded-full px-3.5 py-2 text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
+                        className="w-full bg-[#121212] border border-white/[0.08] rounded-full px-4 py-2.5 text-[16px] min-h-[44px] text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
                       />
                     </div>
 
@@ -416,7 +416,7 @@ export default function HomePage() {
                         type="number"
                         value={simulatedAmount}
                         onChange={(e) => setSimulatedAmount(e.target.value)}
-                        className="w-full bg-[#121212] border border-white/[0.08] rounded-full px-3.5 py-2 text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
+                        className="w-full bg-[#121212] border border-white/[0.08] rounded-full px-4 py-2.5 text-[16px] min-h-[44px] text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
                       />
                     </div>
 

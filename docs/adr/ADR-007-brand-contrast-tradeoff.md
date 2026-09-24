@@ -3,6 +3,7 @@
 * Status: accepted
 * Date: 2026-09-23
 * Deciders: Director, Lead System Architect
+* Cross-References: [ADR-008: Theme-Specific Crimson Variant Calibration](file:///Users/kiki/Documents/Web%20Develop/ClosedBook/docs/adr/ADR-008-crimson-variant-per-theme-wcag.md)
 
 ## Context and Problem Statement
 In Sub-Fase F.4 and G.0, axe-core automated audits flagged a `color-contrast` violation on `.btn-primary-crimson > span` (white text on Electric Crimson `#FF2A4D`, yielding a contrast ratio of 3.69:1).

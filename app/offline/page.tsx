@@ -76,7 +76,7 @@ export default function OfflinePage() {
           <button
             onClick={handleRetry}
             disabled={isChecking}
-            className="w-full py-3 px-5 rounded-xl bg-[#FF2A4D] text-white font-medium text-sm flex items-center justify-center gap-2 hover:bg-[#e02040] transition-colors active:scale-[0.98] disabled:opacity-50"
+            className="w-full min-h-[44px] py-3 px-5 rounded-xl bg-[#FF2A4D] text-white font-medium text-sm flex items-center justify-center gap-2 hover:bg-[#e02040] transition-colors active:scale-[0.98] disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${isChecking ? "animate-spin" : ""}`} />
             <span>{isChecking ? "Memeriksa Koneksi..." : "Coba Sambungkan Lagi"}</span>
@@ -84,7 +84,7 @@ export default function OfflinePage() {
 
           <Link
             href="/workspace"
-            className="w-full py-3 px-5 rounded-xl bg-white/5 hover:bg-white/10 text-stone-300 font-medium text-sm flex items-center justify-center gap-2 border border-white/10 transition-colors"
+            className="w-full min-h-[44px] py-3 px-5 rounded-xl bg-white/5 hover:bg-white/10 text-stone-300 font-medium text-sm flex items-center justify-center gap-2 border border-white/10 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Kembali ke Workspace Lokal</span>
