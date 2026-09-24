@@ -18,6 +18,10 @@ export default function PreferencesModal() {
     setIsRemindersEnabled,
     isWebNotificationsEnabled,
     setIsWebNotificationsEnabled,
+    isHapticsEnabled,
+    setIsHapticsEnabled,
+    fabPosition,
+    setFabPosition,
     geminiApiKey,
     setGeminiApiKey,
     currencies,
@@ -311,6 +315,71 @@ export default function PreferencesModal() {
                     }`}
                   />
                 </button>
+              </div>
+
+              {/* Tactile Haptic Feedback Toggle */}
+              <div className="surface-overlay p-3.5 rounded-[12px] border border-white/[0.06] flex items-center justify-between gap-4">
+                <div>
+                  <div className="text-xs font-semibold text-[var(--color-paper,#fdfdfd)]">
+                    {t("hapticFeedback")}
+                  </div>
+                  <div className="text-[11px] text-[var(--color-stone,#737373)] leading-relaxed">
+                    {t("hapticFeedbackDesc")}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  id="haptics-toggle-btn"
+                  onClick={() => setIsHapticsEnabled(!isHapticsEnabled)}
+                  className={`w-12 h-6 rounded-full transition-colors relative shrink-0 p-0.5 ${
+                    isHapticsEnabled ? "bg-[var(--color-primary,#ff1e42)]" : "bg-white/10"
+                  }`}
+                  aria-label="Toggle haptic vibration feedback"
+                >
+                  <span
+                    className={`block w-5 h-5 rounded-full bg-white transition-transform ${
+                      isHapticsEnabled ? "translate-x-6" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* FAB Ergonomic Placement (Fitts's Law) */}
+              <div className="surface-overlay p-3.5 rounded-[12px] border border-white/[0.06] space-y-2">
+                <div>
+                  <div className="text-xs font-semibold text-[var(--color-paper,#fdfdfd)]">
+                    {t("fabPlacement")}
+                  </div>
+                  <div className="text-[11px] text-[var(--color-stone,#737373)] leading-relaxed">
+                    {t("fabPlacementDesc")}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <button
+                    type="button"
+                    id="fab-position-right"
+                    onClick={() => setFabPosition("right")}
+                    className={`min-h-[44px] px-3 py-2 rounded-xl text-xs font-medium border flex items-center justify-center gap-2 transition-all ${
+                      fabPosition === "right"
+                        ? "bg-[var(--accent-badge-bg,rgba(255,30,66,0.1))] border-[var(--color-primary,#ff1e42)] text-[var(--color-paper,#fdfdfd)]"
+                        : "surface-overlay border-white/[0.08] text-[var(--color-stone,#737373)] hover:text-white"
+                    }`}
+                  >
+                    <span>👉 {t("fabRight")}</span>
+                  </button>
+                  <button
+                    type="button"
+                    id="fab-position-left"
+                    onClick={() => setFabPosition("left")}
+                    className={`min-h-[44px] px-3 py-2 rounded-xl text-xs font-medium border flex items-center justify-center gap-2 transition-all ${
+                      fabPosition === "left"
+                        ? "bg-[var(--accent-badge-bg,rgba(255,30,66,0.1))] border-[var(--color-primary,#ff1e42)] text-[var(--color-paper,#fdfdfd)]"
+                        : "surface-overlay border-white/[0.08] text-[var(--color-stone,#737373)] hover:text-white"
+                    }`}
+                  >
+                    <span>👈 {t("fabLeft")}</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>

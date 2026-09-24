@@ -176,6 +176,12 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     inAppRemindersDesc: "Proactive banners for pending daily reconciliation, overdue tasks, and pending approvals",
     enableWebNotifications: "Browser Push Notifications",
     webNotificationsDesc: "Native system notifications when the tab is in background",
+    hapticFeedback: "Tactile Haptic Feedback",
+    hapticFeedbackDesc: "Vibration feedback on tab switches, FAB taps, and critical actions",
+    fabPlacement: "Action Button (FAB) Ergonomics",
+    fabPlacementDesc: "Optimize thumb reach for right or left-handed operation (Fitts's Law)",
+    fabRight: "Right Handed (Default)",
+    fabLeft: "Left Handed",
     reminderPendingItems: "action items requiring attention",
     reminderReconIncomplete: "Day {day} reconciliation pending",
     reminderOverdueTasks: "{count} overdue task",
@@ -440,6 +446,12 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     inAppRemindersDesc: "Banner proaktif untuk rekonsiliasi harian, tugas lewat tenggat, dan persetujuan tertunda",
     enableWebNotifications: "Notifikasi Browser",
     webNotificationsDesc: "Notifikasi sistem saat tab berada di latar belakang",
+    hapticFeedback: "Umpan Balik Getar (Haptik)",
+    hapticFeedbackDesc: "Getaran taktil saat perpindahan tab, tombol aksi, dan konfirmasi",
+    fabPlacement: "Ergonomi Tombol Aksi (FAB)",
+    fabPlacementDesc: "Optimalkan jangkauan jempol untuk dominasi tangan kanan atau kidal (Hukum Fitts)",
+    fabRight: "Tangan Kanan (Standar)",
+    fabLeft: "Tangan Kiri (Kidal)",
     reminderPendingItems: "item membutuhkan perhatian",
     reminderReconIncomplete: "Rekonsiliasi Hari {day} belum selesai",
     reminderOverdueTasks: "{count} tugas lewat tenggat",
@@ -701,6 +713,12 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     inAppRemindersDesc: "Banners proactivos para reconciliación pendiente, tareas vencidas y aprobaciones",
     enableWebNotifications: "Notificaciones del Navegador",
     webNotificationsDesc: "Notificaciones de sistema cuando la pestaña está en segundo plano",
+    hapticFeedback: "Respuesta Háptica Táctil",
+    hapticFeedbackDesc: "Vibración al cambiar de pestaña, tocar el botón de acción y confirmar",
+    fabPlacement: "Ergonomía del Botón de Acción (FAB)",
+    fabPlacementDesc: "Optimiza el alcance del pulgar para uso diestro o zurdo (Ley de Fitts)",
+    fabRight: "Diestro (Predeterminado)",
+    fabLeft: "Zurdo",
     reminderPendingItems: "elementos requieren atención",
     reminderReconIncomplete: "Reconciliación del Día {day} pendiente",
     reminderOverdueTasks: "{count} tarea vencida",
@@ -962,6 +980,12 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     inAppRemindersDesc: "日次照合、期限切れタスク、保留中の承認についてバナーを表示します",
     enableWebNotifications: "ブラウザ通知",
     webNotificationsDesc: "タブがバックグラウンドにあるときにシステム通知を送信します",
+    hapticFeedback: "触覚ハプティクスフィードバック",
+    hapticFeedbackDesc: "タブ切り替え、FABタップ、重要操作時の振動フィードバック",
+    fabPlacement: "アクションボタン（FAB）人間工学",
+    fabPlacementDesc: "右手または左手操作に合わせた親指リーチの最適化（フィッツの法則）",
+    fabRight: "右手利き（標準）",
+    fabLeft: "左手利き",
     reminderPendingItems: "件の対応が必要な項目",
     reminderReconIncomplete: "第{day}日の照合が未完了です",
     reminderOverdueTasks: "{count}件の期限切れタスク",
@@ -1183,6 +1207,10 @@ interface PreferencesContextType {
   setIsRemindersEnabled: (enabled: boolean) => void;
   isWebNotificationsEnabled: boolean;
   setIsWebNotificationsEnabled: (enabled: boolean) => void;
+  isHapticsEnabled: boolean;
+  setIsHapticsEnabled: (enabled: boolean) => void;
+  fabPosition: "right" | "left";
+  setFabPosition: (position: "right" | "left") => void;
   geminiApiKey: string;
   setGeminiApiKey: (key: string) => void;
   currencies: Record<CurrencyCode, CurrencyConfig>;
@@ -1190,7 +1218,7 @@ interface PreferencesContextType {
   themes: Record<ThemeCode, ThemeConfig>;
 }
 
-const PreferencesContext = createContext<PreferencesContextType | null>(null);
+export const PreferencesContext = createContext<PreferencesContextType | null>(null);
 
 export function PreferencesProvider({ children }: { children: React.ReactNode }) {
   const [currency, setCurrencyState] = useState<CurrencyCode>("USD");
@@ -1199,6 +1227,8 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isRemindersEnabled, setIsRemindersEnabledState] = useState<boolean>(true);
   const [isWebNotificationsEnabled, setIsWebNotificationsEnabledState] = useState<boolean>(false);
+  const [isHapticsEnabled, setIsHapticsEnabledState] = useState<boolean>(true);
+  const [fabPosition, setFabPositionState] = useState<"right" | "left">("right");
   const [geminiApiKey, setGeminiApiKeyState] = useState<string>("");
   const [mounted, setMounted] = useState(false);
 
@@ -1211,6 +1241,14 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       const savedWebNotifs = localStorage.getItem("closebook_web_notifications_enabled");
       if (savedWebNotifs !== null) {
         setIsWebNotificationsEnabledState(savedWebNotifs === "true");
+      }
+      const savedHaptics = localStorage.getItem("closebook_haptics_enabled");
+      if (savedHaptics !== null) {
+        setIsHapticsEnabledState(savedHaptics === "true");
+      }
+      const savedFabPos = localStorage.getItem("closebook_fab_position") as "right" | "left";
+      if (savedFabPos === "right" || savedFabPos === "left") {
+        setFabPositionState(savedFabPos);
       }
       const savedGeminiKey = localStorage.getItem("closebook_gemini_api_key");
       if (savedGeminiKey) {
@@ -1270,6 +1308,20 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
     setIsWebNotificationsEnabledState(enabled);
     try {
       localStorage.setItem("closebook_web_notifications_enabled", String(enabled));
+    } catch {}
+  };
+
+  const setIsHapticsEnabled = (enabled: boolean) => {
+    setIsHapticsEnabledState(enabled);
+    try {
+      localStorage.setItem("closebook_haptics_enabled", String(enabled));
+    } catch {}
+  };
+
+  const setFabPosition = (position: "right" | "left") => {
+    setFabPositionState(position);
+    try {
+      localStorage.setItem("closebook_fab_position", position);
     } catch {}
   };
 
@@ -1348,6 +1400,10 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
         setIsRemindersEnabled,
         isWebNotificationsEnabled,
         setIsWebNotificationsEnabled,
+        isHapticsEnabled,
+        setIsHapticsEnabled,
+        fabPosition,
+        setFabPosition,
         geminiApiKey,
         setGeminiApiKey,
         currencies: CURRENCIES,
