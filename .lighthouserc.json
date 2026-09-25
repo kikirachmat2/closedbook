@@ -5,7 +5,10 @@
         "https://closebook-git-feat-g5-card-lists-fikris-projects-ade2d7c3.vercel.app/",
         "https://closebook-git-feat-g5-card-lists-fikris-projects-ade2d7c3.vercel.app/workspace"
       ],
-      "numberOfRuns": 1
+      "numberOfRuns": 1,
+      "settings": {
+        "extraHeaders": "{\"x-vercel-protection-bypass\": \"\"}"
+      }
     },
     "assert": {
       "preset": "lighthouse:recommended",
