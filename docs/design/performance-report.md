@@ -94,3 +94,18 @@ Route (app)                                 Size  First Load JS
 - **Vitest Unit Suite**: 123 passing tests (Target was 122+).
 - **Playwright E2E Suite**: 171 passing tests across Desktop Chrome, Mobile Safari (iPhone 15), and Mobile Chrome (Pixel 7). Target was 118+.
 - **Zero Skipped Tests**: Complete test coverage across all variants and gestures.
+
+---
+
+## 6. Video Walkthrough Artifact
+
+- **Demo Video**: `g5_card_lists_comfort_1790354798266.webp`
+- **Scope Demonstrated**:
+  1. Mobile Viewport 390×844 layout & card variants (`default`, `compact`, `urgent`, `selected`, `disabled`)
+  2. Three-dot menu (`...`) accessible action sheet (WCAG 2.5.7)
+  3. Interactive density switching (`compact` 56px, `comfortable` 72px, `spacious` 88px)
+  4. 5-Second Forgiveness Undo toast with immediate state restoration
+  5. Realtime 200ms debounced search with `<mark>` keyword highlighting
+  6. Multi-select activation, TopAppBar selection state, and BulkActionBar
+  7. 500-item virtual scroll with 60fps virtualization
+
