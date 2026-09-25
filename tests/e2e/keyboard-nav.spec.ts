@@ -8,6 +8,7 @@ test.describe("Keyboard Navigation & A11y Focus System", () => {
 
   test("supports skip-to-content link when focused via keyboard", async ({ page }) => {
     const skipLink = page.locator('a[href="#main-content"]');
+    await expect(skipLink).toBeAttached();
     await skipLink.focus();
     await expect(skipLink).toBeFocused();
 

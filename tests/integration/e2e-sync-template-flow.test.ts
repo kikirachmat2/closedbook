@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from "vitest";
 import "fake-indexeddb/auto";
 import { setupServer } from "msw/node";
 import { http, HttpResponse } from "msw";
@@ -159,8 +159,14 @@ describe("Integration: Project Creation → Template Seeding → Task Edit → D
       name: projectName,
       slug: "midnight-horizon",
       currency: "IDR",
+      totalBudget: 100000000,
+      currentDisbursed: 0,
+      driveFolderId: "",
+      sheetId: "",
+      shootDays: 10,
+      startDate: new Date().toISOString(),
+      director: "Director",
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     });
     const savedProject = await db.projects.get(projectId);
     expect(savedProject?.name).toBe("Midnight Horizon");
@@ -197,7 +203,10 @@ describe("Integration: Project Creation → Template Seeding → Task Edit → D
       projectId,
       title: "Night Shoot - Harbor Dock",
       departmentId: "lighting",
-      status: "in-progress",
+      departmentName: "Lighting",
+      assignee: "Gaffer",
+      dueDate: "2026-10-01",
+      status: "in_progress",
       priority: "high",
     });
 

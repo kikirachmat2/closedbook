@@ -46,15 +46,25 @@
   --radius-full: 9999px;
 
   /* Mobile-first Touch Target Breakpoints (iPhone Sizes) */
-  --breakpoint-sm: 375px;  /* iPhone SE / mini */
-  --breakpoint-md: 390px;  /* iPhone 13/14/15/16 */
-  --breakpoint-lg: 414px;  /* iPhone Plus */
-  --breakpoint-xl: 430px;  /* iPhone Pro Max */
+  --breakpoint-iphone-se: 375px;  /* iPhone SE / mini */
+  --breakpoint-iphone-std: 390px;  /* iPhone 13/14/15/16 */
+  --breakpoint-iphone-plus: 414px;  /* iPhone Plus */
+  --breakpoint-iphone-max: 430px;  /* iPhone Pro Max */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
 
   /* Mobile-First Typography Tokens */
   --font-cb-display: var(--cb-font-display);
   --font-cb-body: var(--cb-font-body);
   --font-cb-mono: var(--cb-font-mono);
+
+  /* Motion Duration Tokens */
+  --transition-duration-instant: 80ms;
+  --transition-duration-quick: 150ms;
+  --transition-duration-normal: 220ms;
+  --transition-duration-slow: 320ms;
 }
 
 /* =========================================================================
@@ -754,3 +764,44 @@ html, body {
 .print-only {
   display: none;
 }
+
+/* =========================================================================
+   DOHERTY SKELETON SHIMMER (1.5s ease-in-out infinite, reduced-motion static)
+   ========================================================================= */
+
+@keyframes cb-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.cb-skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--cb-surface, #111111);
+}
+
+.cb-skeleton-shimmer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 100%
+  );
+  animation: cb-shimmer 1.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cb-skeleton-shimmer::before {
+    animation: none !important;
+    display: none !important;
+  }
+}
+

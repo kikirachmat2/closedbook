@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { usePreferences, CurrencyCode, LanguageCode, ThemeCode } from "@/lib/preferences";
-import { X, Check, Globe, DollarSign, Palette, Sparkles, Bell, ExternalLink, Eye, EyeOff, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react";
+import { usePreferences, CurrencyCode, LanguageCode, ThemeCode, ListDensity } from "@/lib/preferences";
+import { X, Check, Globe, DollarSign, Palette, Sparkles, Bell, ExternalLink, Eye, EyeOff, RefreshCw, CheckCircle2, AlertCircle, LayoutList } from "lucide-react";
 
 export default function PreferencesModal() {
   const {
@@ -14,10 +14,16 @@ export default function PreferencesModal() {
     setLanguage,
     theme,
     setTheme,
+    listDensity,
+    setListDensity,
     isRemindersEnabled,
     setIsRemindersEnabled,
     isWebNotificationsEnabled,
     setIsWebNotificationsEnabled,
+    isHapticsEnabled,
+    setIsHapticsEnabled,
+    fabPosition,
+    setFabPosition,
     geminiApiKey,
     setGeminiApiKey,
     currencies,
@@ -238,6 +244,76 @@ export default function PreferencesModal() {
             </div>
           </div>
 
+          {/* LIST DENSITY PREFERENCE */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <LayoutList className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-stone,#737373)]">
+                {t("listDensity")}
+              </h3>
+            </div>
+            <p className="text-[11px] text-[var(--color-stone,#737373)] mb-3">
+              {t("listDensityDesc")}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              {(
+                [
+                  {
+                    id: "comfortable",
+                    name: t("densityComfortable"),
+                    desc: t("densityComfortableDesc"),
+                    height: "72px",
+                  },
+                  {
+                    id: "compact",
+                    name: t("densityCompact"),
+                    desc: t("densityCompactDesc"),
+                    height: "56px",
+                  },
+                  {
+                    id: "spacious",
+                    name: t("densitySpacious"),
+                    desc: t("densitySpaciousDesc"),
+                    height: "88px",
+                  },
+                ] as const
+              ).map((d) => {
+                const isSelected = listDensity === d.id;
+                return (
+                  <button
+                    key={d.id}
+                    id={`density-option-${d.id}`}
+                    type="button"
+                    onClick={() => setListDensity(d.id)}
+                    className={`min-h-[72px] p-3.5 rounded-[14px] text-left transition-all border flex flex-col justify-between ${
+                      isSelected
+                        ? "border-[var(--color-primary,#ff1e42)] shadow-md bg-[var(--accent-badge-bg,rgba(255,30,66,0.08))]"
+                        : "surface-overlay border-white/[0.06] hover:border-white/[0.18]"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full mb-1">
+                      <span className="text-xs font-semibold text-[var(--color-paper,#fdfdfd)]">
+                        {d.name}
+                      </span>
+                      {isSelected ? (
+                        <div className="w-4 h-4 rounded-full bg-[var(--color-primary,#ff1e42)] flex items-center justify-center text-white">
+                          <Check className="w-2.5 h-2.5 stroke-[3]" />
+                        </div>
+                      ) : (
+                        <span className="text-[10px] text-[var(--color-stone,#737373)] font-mono">
+                          {d.height}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-[var(--color-stone,#737373)] line-clamp-2">
+                      {d.desc}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* 4. NOTIFICATIONS & REMINDERS */}
           <div>
             <div className="flex items-center gap-2 mb-3">
@@ -311,6 +387,71 @@ export default function PreferencesModal() {
                     }`}
                   />
                 </button>
+              </div>
+
+              {/* Tactile Haptic Feedback Toggle */}
+              <div className="surface-overlay p-3.5 rounded-[12px] border border-white/[0.06] flex items-center justify-between gap-4">
+                <div>
+                  <div className="text-xs font-semibold text-[var(--color-paper,#fdfdfd)]">
+                    {t("hapticFeedback")}
+                  </div>
+                  <div className="text-[11px] text-[var(--color-stone,#737373)] leading-relaxed">
+                    {t("hapticFeedbackDesc")}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  id="haptics-toggle-btn"
+                  onClick={() => setIsHapticsEnabled(!isHapticsEnabled)}
+                  className={`w-12 h-6 rounded-full transition-colors relative shrink-0 p-0.5 ${
+                    isHapticsEnabled ? "bg-[var(--color-primary,#ff1e42)]" : "bg-white/10"
+                  }`}
+                  aria-label="Toggle haptic vibration feedback"
+                >
+                  <span
+                    className={`block w-5 h-5 rounded-full bg-white transition-transform ${
+                      isHapticsEnabled ? "translate-x-6" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* FAB Ergonomic Placement (Fitts's Law) */}
+              <div className="surface-overlay p-3.5 rounded-[12px] border border-white/[0.06] space-y-2">
+                <div>
+                  <div className="text-xs font-semibold text-[var(--color-paper,#fdfdfd)]">
+                    {t("fabPlacement")}
+                  </div>
+                  <div className="text-[11px] text-[var(--color-stone,#737373)] leading-relaxed">
+                    {t("fabPlacementDesc")}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <button
+                    type="button"
+                    id="fab-position-right"
+                    onClick={() => setFabPosition("right")}
+                    className={`min-h-[44px] px-3 py-2 rounded-xl text-xs font-medium border flex items-center justify-center gap-2 transition-all ${
+                      fabPosition === "right"
+                        ? "bg-[var(--accent-badge-bg,rgba(255,30,66,0.1))] border-[var(--color-primary,#ff1e42)] text-[var(--color-paper,#fdfdfd)]"
+                        : "surface-overlay border-white/[0.08] text-[var(--color-stone,#737373)] hover:text-white"
+                    }`}
+                  >
+                    <span>👉 {t("fabRight")}</span>
+                  </button>
+                  <button
+                    type="button"
+                    id="fab-position-left"
+                    onClick={() => setFabPosition("left")}
+                    className={`min-h-[44px] px-3 py-2 rounded-xl text-xs font-medium border flex items-center justify-center gap-2 transition-all ${
+                      fabPosition === "left"
+                        ? "bg-[var(--accent-badge-bg,rgba(255,30,66,0.1))] border-[var(--color-primary,#ff1e42)] text-[var(--color-paper,#fdfdfd)]"
+                        : "surface-overlay border-white/[0.08] text-[var(--color-stone,#737373)] hover:text-white"
+                    }`}
+                  >
+                    <span>👈 {t("fabLeft")}</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
