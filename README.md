@@ -67,6 +67,32 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+## ✦ Live Production
+
+- **URL**: [https://closedbook.vercel.app](https://closedbook.vercel.app)
+- **Deployment**: Automatic continuous delivery from `main` via Vercel Edge Network
+- **Security**: Nonce-based strict-dynamic CSP (ADR-003), HSTS, Zero Server Retention
+
+## ✦ Releases
+
+- [**v0.6.0 — Mobile Shell + Card-Based Lists**](https://github.com/kikirachmat2/closedbook/releases/tag/v0.6.0) (Stable)
+- [**v0.5.0-mobile-shell**](https://github.com/kikirachmat2/closedbook/releases/tag/v0.5.0-mobile-shell)
+- [**v0.4.0-design-system**](https://github.com/kikirachmat2/closedbook/releases/tag/v0.4.0-design-system)
+- [**v0.3.0-pwa**](https://github.com/kikirachmat2/closedbook/releases/tag/v0.3.0-pwa)
+- [**v0.2.0-data-engine**](https://github.com/kikirachmat2/closedbook/releases/tag/v0.2.0-data-engine)
+- [**v0.1.0-foundation**](https://github.com/kikirachmat2/closedbook/releases/tag/v0.1.0-foundation)
+
+## ✦ Tech Stack
+
+- **Framework**: Next.js 15.5 App Router + React 19
+- **Local Storage Engine**: Dexie.js (IndexedDB) with reactive hooks & dual-read cutover
+- **CRDT & Sync**: Yjs document merging + append-only Google Drive delta synchronization
+- **PWA & Offline**: Multi-tier Service Worker caching with update kill-switch
+- **Mobile Animation**: Framer Motion (lazy-loaded motion component for minimal bundle footprint)
+- **Virtualization**: TanStack Virtual v3 for 60fps 500+ long list performance
+- **Styling**: Tailwind CSS v3 with Savee editorial design tokens & binary radius vocabulary
+- **Testing**: Vitest (123 unit/integration tests) + Playwright (cross-browser mobile & desktop)
+
 ## ✦ Development Workflow (Main-Only)
 
 - **Single Branch**: `main`
@@ -79,3 +105,4 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## ✦ License
 
 MIT License — free for independent filmmakers, creators, and organizers worldwide.
+
