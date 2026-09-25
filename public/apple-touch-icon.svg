@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
+  <!-- Solid square canvas (Apple HIG: No pre-baked corner radius) -->
+  <rect width="180" height="180" fill="#050505"/>
+
+  <!-- Centered & Proportionally Scaled Feather Graphic -->
+  <g transform="translate(18, 18) scale(0.28125)">
+    <!-- Upper Feather Blade (Flat Crimson) -->
+    <path d="M120 76 C236 76 364 172 396 312 C334 300 248 246 182 172 C148 134 130 100 120 76 Z" fill="#FF2A4D"/>
+
+    <!-- Lower Feather Blade (Flat Crimson) -->
+    <path d="M184 220 C242 278 322 336 378 348 C346 388 280 402 226 382 C182 364 150 318 142 276 C156 258 170 238 184 220 Z" fill="#FF2A4D"/>
+
+    <!-- Precision Nib Collar (Flat Pure Paper White) -->
+    <path d="M366 338 L428 400 L400 432 L338 370 Z" fill="#FDFDFD"/>
+
+    <!-- Sharp Pen Nib Point (Flat Crimson) -->
+    <path d="M428 400 L458 458 L398 432 Z" fill="#FF2A4D"/>
+  </g>
+</svg>

@@ -395,22 +395,28 @@ export default function HomePage() {
 
                   <form onSubmit={handleSimulatedSubmit} className="space-y-3">
                     <div>
-                      <label className="block text-[11px] text-[#737373] mb-1">Description</label>
+                      <label htmlFor="simulated-desc" className="block text-[11px] text-[#737373] mb-1">
+                        Description
+                      </label>
                       <input
+                        id="simulated-desc"
                         type="text"
                         value={simulatedDesc}
                         onChange={(e) => setSimulatedDesc(e.target.value)}
-                        className="w-full bg-[#121212] border border-white/[0.08] rounded-full px-3.5 py-2 text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
+                        className="w-full bg-[#121212] border border-white/[0.08] rounded-full px-4 py-2.5 text-[16px] min-h-[44px] text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[11px] text-[#737373] mb-1">Amount ($ USD)</label>
+                      <label htmlFor="simulated-amount" className="block text-[11px] text-[#737373] mb-1">
+                        Amount ($ USD)
+                      </label>
                       <input
+                        id="simulated-amount"
                         type="number"
                         value={simulatedAmount}
                         onChange={(e) => setSimulatedAmount(e.target.value)}
-                        className="w-full bg-[#121212] border border-white/[0.08] rounded-full px-3.5 py-2 text-xs text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
+                        className="w-full bg-[#121212] border border-white/[0.08] rounded-full px-4 py-2.5 text-[16px] min-h-[44px] text-[#fdfdfd] focus:outline-none focus:border-[#ff1e42]"
                       />
                     </div>
 

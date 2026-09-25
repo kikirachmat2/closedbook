@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Instrument_Serif } from "next/font/google";
+import { Inter, Instrument_Serif, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
@@ -12,6 +12,12 @@ const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
   weight: ["400"],
   variable: "--font-instrument-serif",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
   display: "swap",
 });
 
@@ -30,6 +36,11 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "ClosedBook",
+  },
   openGraph: {
     title: "ClosedBook — Modern Production & Project OS",
     description:
@@ -49,32 +60,43 @@ import { PreferencesProvider } from "@/lib/preferences";
 import PreferencesModal from "@/components/PreferencesModal";
 import { MotionProvider } from "@/components/MotionProvider";
 import PwaManager from "@/components/PwaManager";
+import { IOSInstallPrompt } from "@/components/pwa/ios-install-prompt";
+import { UpdatePrompt } from "@/components/pwa/update-prompt";
+import { OfflineBanner } from "@/components/pwa/offline-banner";
 
-export default function RootLayout({
+import { headers } from "next/headers";
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nonce = (await headers()).get("x-nonce") || undefined;
+
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${instrumentSerif.variable}`}
-      data-theme="signature"
+      className={`${inter.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable}`}
+      data-theme="obsidian"
       suppressHydrationWarning
     >
       <head>
         <script
+          nonce={nonce}
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('closebook_theme');if(!t||!['signature','obsidian','indigo','emerald','amber','paper'].includes(t)){t='signature';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('closebook_theme');if(!t||!['signature','obsidian','indigo','emerald','amber','paper'].includes(t)){t='obsidian';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`,
           }}
         />
       </head>
       <body className="bg-[var(--surface-canvas,#050505)] text-[var(--color-paper,#fdfdfd)] antialiased selection:bg-[var(--color-primary,#FF2A4D)] selection:text-[#ffffff]">
         <PreferencesProvider>
           <MotionProvider>
+            <OfflineBanner />
             {children}
             <PreferencesModal />
             <PwaManager />
+            <IOSInstallPrompt />
+            <UpdatePrompt />
           </MotionProvider>
         </PreferencesProvider>
       </body>

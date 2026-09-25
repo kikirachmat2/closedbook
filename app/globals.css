@@ -1,6 +1,30 @@
 @import "tailwindcss";
+@config "../tailwind.config.ts";
+
+/* =========================================================================
+   CLOSEDBOOK DESIGN TOKENS FOUNDATION (G.3 MOBILE-FIRST DESIGN SYSTEM)
+   ADR-007 Compliance: Obsidian Canvas #050505, Electric Crimson #FF2A4D,
+   Binary Radii (14px surface / 9999px pill), Zero Drop Shadows.
+   ========================================================================= */
 
 @theme {
+  /* Extended Color Palette */
+  --color-cb-canvas: var(--cb-canvas);
+  --color-cb-surface: var(--cb-surface);
+  --color-cb-surface-elevated: var(--cb-surface-elevated);
+  --color-cb-crimson: var(--cb-crimson);
+  --color-cb-crimson-hover: var(--cb-crimson-hover);
+  --color-cb-text-primary: var(--cb-text-primary);
+  --color-cb-text-secondary: var(--cb-text-secondary);
+  --color-cb-text-tertiary: var(--cb-text-tertiary);
+  --color-cb-border: var(--cb-border);
+  --color-cb-border-subtle: var(--cb-border-subtle);
+  --color-cb-border-focus: var(--cb-border-focus);
+  --color-cb-success: var(--cb-success);
+  --color-cb-warning: var(--cb-warning);
+  --color-cb-error: var(--cb-error);
+
+  /* Legacy Color Mappings for backward compatibility */
   --color-crimson: #ff1e42;
   --color-obsidian: #050505;
   --color-charcoal: #121212;
@@ -13,119 +37,294 @@
   --color-ash: #a3a3a3;
   --color-stone: #737373;
 
+  /* Binary Radii Scale */
+  --radius-cb-inner: 8px;
+  --radius-cb-surface: 14px;
+  --radius-cb-pill: 9999px;
   --radius-xl: 14px;
   --radius-card: 14px;
   --radius-full: 9999px;
+
+  /* Mobile-first Touch Target Breakpoints (iPhone Sizes) */
+  --breakpoint-iphone-se: 375px;  /* iPhone SE / mini */
+  --breakpoint-iphone-std: 390px;  /* iPhone 13/14/15/16 */
+  --breakpoint-iphone-plus: 414px;  /* iPhone Plus */
+  --breakpoint-iphone-max: 430px;  /* iPhone Pro Max */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+
+  /* Mobile-First Typography Tokens */
+  --font-cb-display: var(--cb-font-display);
+  --font-cb-body: var(--cb-font-body);
+  --font-cb-mono: var(--cb-font-mono);
+
+  /* Motion Duration Tokens */
+  --transition-duration-instant: 80ms;
+  --transition-duration-quick: 150ms;
+  --transition-duration-normal: 220ms;
+  --transition-duration-slow: 320ms;
 }
 
+/* =========================================================================
+   ROOT & THEME VARIABLES (CSS TOKENS)
+   ========================================================================= */
+
 :root, [data-theme="signature"] {
-  --color-primary: #FF2A4D;
-  --color-primary-hover: #ff4767;
-  --surface-canvas: #050505;
-  --surface-elevated: #111111;
-  --surface-deep: #181818;
+  /* Primitive Colors */
+  --cb-canvas: #050505;
+  --cb-surface: #0D0D0D;
+  --cb-surface-elevated: #141414;
+  --cb-crimson: #FF2A4D;
+  --cb-crimson-hover: #E02040;
+  --cb-text-primary: #FDFDFD;
+  --cb-text-secondary: #A3A3A3;
+  --cb-text-tertiary: #858585;
+  --cb-border: rgba(255, 255, 255, 0.08);
+  --cb-border-subtle: rgba(255, 255, 255, 0.04);
+  --cb-border-focus: #FF2A4D;
+  --cb-success: #10B981;
+  --cb-warning: #F59E0B;
+  --cb-error: #EF4444;
+
+  /* Semantic Tokens */
+  --cb-bg: var(--cb-canvas);
+  --cb-fg: var(--cb-text-primary);
+  --cb-accent: var(--cb-crimson);
+  --cb-accent-hover: var(--cb-crimson-hover);
+  --cb-danger: var(--cb-error);
+
+  /* Spacing Scale (Fibonacci-based: 4/8/12/16/24/32/48/64) */
+  --cb-space-1: 4px;
+  --cb-space-2: 8px;
+  --cb-space-3: 12px;
+  --cb-space-4: 16px;
+  --cb-space-6: 24px;
+  --cb-space-8: 32px;
+  --cb-space-12: 48px;
+  --cb-space-16: 64px;
+
+  /* Radius Tokens */
+  --cb-radius-surface: 14px;
+  --cb-radius-pill: 9999px;
+  --cb-radius-inner: 8px;
+
+  /* Typography Stacks */
+  --cb-font-display: var(--font-instrument-serif), Georgia, serif;
+  --cb-font-body: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --cb-font-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+
+  /* Motion Tokens (NN/g 2024 & mobile touch standards) */
+  --cb-motion-instant: 80ms;   /* Button press & instant haptic feedback */
+  --cb-motion-quick: 150ms;     /* Tap feedback & micro-interaction */
+  --cb-motion-normal: 220ms;    /* Navigation transition & sheet expand */
+  --cb-motion-slow: 320ms;      /* Modal push & overlay fade */
+  --cb-motion-press: var(--cb-motion-instant);
+  --cb-motion-tap: var(--cb-motion-quick);
+  --cb-motion-slide: var(--cb-motion-normal);
+  --cb-motion-modal: var(--cb-motion-slow);
+  --cb-ease-default: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Icon Sizing Scale */
+  --cb-icon-xs: 12px;   /* Micro-indicators & table tags */
+  --cb-icon-sm: 16px;   /* Inline metadata icons */
+  --cb-icon-md: 20px;   /* Button icons */
+  --cb-icon-lg: 24px;   /* Bottom nav & top bar icons */
+  --cb-icon-xl: 32px;   /* Feature card icons */
+  --cb-icon-2xl: 48px;  /* Onboarding / hero display icons */
+  --cb-icon-hero: var(--cb-icon-2xl); /* Semantic alias */
+
+  /* Safe Area Tokens (iOS Safari & Notch) */
+  --cb-safe-top: env(safe-area-inset-top, 0px);
+  --cb-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --cb-safe-left: env(safe-area-inset-left, 0px);
+  --cb-safe-right: env(safe-area-inset-right, 0px);
+
+  /* Legacy theme mapping */
+  --color-primary: var(--cb-crimson);
+  --color-primary-hover: var(--cb-crimson-hover);
+  --surface-canvas: var(--cb-canvas);
+  --surface-elevated: var(--cb-surface);
+  --surface-deep: var(--cb-surface-elevated);
   --surface-hover: #1f1f1f;
-  --color-paper: #fdfdfd;
-  --color-pearl: #d4d4d4;
-  --color-ash: #a3a3a3;
+  --color-paper: var(--cb-text-primary);
+  --color-pearl: var(--cb-text-secondary);
+  --color-ash: var(--cb-text-tertiary);
   --color-stone: #8a8a8a;
-  --border-subtle: rgba(255, 255, 255, 0.07);
-  --border-active: rgba(255, 255, 255, 0.16);
+  --border-subtle: var(--cb-border-subtle);
+  --border-active: var(--cb-border);
   --accent-badge-bg: rgba(255, 42, 77, 0.12);
 }
 
 [data-theme="obsidian"] {
-  --color-primary: #ff1e42;
-  --color-primary-hover: #ff3355;
-  --surface-canvas: #050505;
-  --surface-elevated: #121212;
-  --surface-deep: #181818;
+  --cb-canvas: #050505;
+  --cb-surface: #0E0E0E;
+  --cb-surface-elevated: #161616;
+  --cb-crimson: #FF1E42;
+  --cb-crimson-hover: #FF3355;
+  --cb-text-primary: #FDFDFD;
+  --cb-text-secondary: #A3A3A3;
+  --cb-text-tertiary: #737373;
+  --cb-border: rgba(255, 255, 255, 0.08);
+  --cb-border-subtle: rgba(255, 255, 255, 0.05);
+  --cb-border-focus: #FF1E42;
+
+  --color-primary: var(--cb-crimson);
+  --color-primary-hover: var(--cb-crimson-hover);
+  --surface-canvas: var(--cb-canvas);
+  --surface-elevated: var(--cb-surface);
+  --surface-deep: var(--cb-surface-elevated);
   --surface-hover: #1f1f1f;
-  --color-paper: #fdfdfd;
-  --color-pearl: #d4d4d4;
-  --color-ash: #a3a3a3;
+  --color-paper: var(--cb-text-primary);
+  --color-pearl: var(--cb-text-secondary);
+  --color-ash: var(--cb-text-tertiary);
   --color-stone: #8a8a8a;
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-active: rgba(255, 255, 255, 0.16);
+  --border-subtle: var(--cb-border-subtle);
+  --border-active: var(--cb-border);
   --accent-badge-bg: rgba(255, 30, 66, 0.12);
 }
 
-/* Cyber Indigo (Savee Classic Cobalt Reference) */
 [data-theme="indigo"] {
-  --color-primary: #3b82f6;
-  --color-primary-hover: #60a5fa;
-  --surface-canvas: #04050a;
-  --surface-elevated: #0d111d;
-  --surface-deep: #14192b;
+  --cb-canvas: #04050A;
+  --cb-surface: #0D111D;
+  --cb-surface-elevated: #14192B;
+  --cb-crimson: #3B82F6;
+  --cb-crimson-hover: #60A5FA;
+  --cb-text-primary: #F8FAFC;
+  --cb-text-secondary: #CBD5E1;
+  --cb-text-tertiary: #94A3B8;
+  --cb-border: rgba(59, 130, 246, 0.16);
+  --cb-border-subtle: rgba(59, 130, 246, 0.08);
+  --cb-border-focus: #3B82F6;
+
+  --color-primary: var(--cb-crimson);
+  --color-primary-hover: var(--cb-crimson-hover);
+  --surface-canvas: var(--cb-canvas);
+  --surface-elevated: var(--cb-surface);
+  --surface-deep: var(--cb-surface-elevated);
   --surface-hover: #1a2238;
-  --color-paper: #f8fafc;
-  --color-pearl: #cbd5e1;
-  --color-ash: #94a3b8;
+  --color-paper: var(--cb-text-primary);
+  --color-pearl: var(--cb-text-secondary);
+  --color-ash: var(--cb-text-tertiary);
   --color-stone: #94a3b8;
-  --border-subtle: rgba(59, 130, 246, 0.12);
-  --border-active: rgba(59, 130, 246, 0.28);
+  --border-subtle: var(--cb-border-subtle);
+  --border-active: var(--cb-border);
   --accent-badge-bg: rgba(59, 130, 246, 0.14);
 }
 
-/* Emerald Terminal (Matrix Mint Dark) */
 [data-theme="emerald"] {
-  --color-primary: #10b981;
-  --color-primary-hover: #34d399;
-  --surface-canvas: #030805;
-  --surface-elevated: #0a140f;
-  --surface-deep: #102119;
+  --cb-canvas: #030805;
+  --cb-surface: #0A140F;
+  --cb-surface-elevated: #102119;
+  --cb-crimson: #10B981;
+  --cb-crimson-hover: #34D399;
+  --cb-text-primary: #F0FDF4;
+  --cb-text-secondary: #BBF7D0;
+  --cb-text-tertiary: #86EFAC;
+  --cb-border: rgba(16, 185, 129, 0.16);
+  --cb-border-subtle: rgba(16, 185, 129, 0.08);
+  --cb-border-focus: #10B981;
+
+  --color-primary: var(--cb-crimson);
+  --color-primary-hover: var(--cb-crimson-hover);
+  --surface-canvas: var(--cb-canvas);
+  --surface-elevated: var(--cb-surface);
+  --surface-deep: var(--cb-surface-elevated);
   --surface-hover: #172e23;
-  --color-paper: #f0fdf4;
-  --color-pearl: #bbf7d0;
-  --color-ash: #86efac;
+  --color-paper: var(--cb-text-primary);
+  --color-pearl: var(--cb-text-secondary);
+  --color-ash: var(--cb-text-tertiary);
   --color-stone: #4ade80;
-  --border-subtle: rgba(16, 185, 129, 0.12);
-  --border-active: rgba(16, 185, 129, 0.28);
+  --border-subtle: var(--cb-border-subtle);
+  --border-active: var(--cb-border);
   --accent-badge-bg: rgba(16, 185, 129, 0.14);
 }
 
-/* Solar Amber (Cinematic Golden Hour) */
 [data-theme="amber"] {
-  --color-primary: #f59e0b;
-  --color-primary-hover: #fbbf24;
-  --surface-canvas: #090704;
-  --surface-elevated: #16120a;
-  --surface-deep: #221c10;
+  --cb-canvas: #090704;
+  --cb-surface: #16120A;
+  --cb-surface-elevated: #221C10;
+  --cb-crimson: #F59E0B;
+  --cb-crimson-hover: #FBBF24;
+  --cb-text-primary: #FFFBEB;
+  --cb-text-secondary: #FDE68A;
+  --cb-text-tertiary: #FCD34D;
+  --cb-border: rgba(245, 158, 11, 0.16);
+  --cb-border-subtle: rgba(245, 158, 11, 0.08);
+  --cb-border-focus: #F59E0B;
+
+  --color-primary: var(--cb-crimson);
+  --color-primary-hover: var(--cb-crimson-hover);
+  --surface-canvas: var(--cb-canvas);
+  --surface-elevated: var(--cb-surface);
+  --surface-deep: var(--cb-surface-elevated);
   --surface-hover: #2e2617;
-  --color-paper: #fffbeb;
-  --color-pearl: #fde68a;
-  --color-ash: #fcd34d;
+  --color-paper: var(--cb-text-primary);
+  --color-pearl: var(--cb-text-secondary);
+  --color-ash: var(--cb-text-tertiary);
   --color-stone: #d97706;
-  --border-subtle: rgba(245, 158, 11, 0.12);
-  --border-active: rgba(245, 158, 11, 0.28);
+  --border-subtle: var(--cb-border-subtle);
+  --border-active: var(--cb-border);
   --accent-badge-bg: rgba(245, 158, 11, 0.14);
 }
 
-/* Architectural Paper (Swiss Minimalist Light Mode) */
 [data-theme="paper"] {
-  --color-primary: #e11d48;
-  --color-primary-hover: #be123c;
-  --surface-canvas: #f8f9fa;
-  --surface-elevated: #ffffff;
-  --surface-deep: #f1f3f5;
+  --cb-canvas: #F8F9FA;
+  --cb-surface: #FFFFFF;
+  --cb-surface-elevated: #F1F3F5;
+  --cb-crimson: #BE123C;
+  --cb-crimson-hover: #9F1239;
+  --cb-text-primary: #0F172A;
+  --cb-text-secondary: #334155;
+  --cb-text-tertiary: #475569;
+  --cb-border: rgba(0, 0, 0, 0.12);
+  --cb-border-subtle: rgba(0, 0, 0, 0.06);
+  --cb-border-focus: #BE123C;
+
+  --color-primary: var(--cb-crimson);
+  --color-primary-hover: var(--cb-crimson-hover);
+  --surface-canvas: var(--cb-canvas);
+  --surface-elevated: var(--cb-surface);
+  --surface-deep: var(--cb-surface-elevated);
   --surface-hover: #e9ecef;
-  --color-paper: #0f172a;
-  --color-pearl: #334155;
-  --color-ash: #475569;
+  --color-paper: var(--cb-text-primary);
+  --color-pearl: var(--cb-text-secondary);
+  --color-ash: var(--cb-text-tertiary);
   --color-stone: #475569;
-  --border-subtle: rgba(0, 0, 0, 0.08);
-  --border-active: rgba(0, 0, 0, 0.2);
-  --accent-badge-bg: rgba(225, 29, 72, 0.08);
+  --border-subtle: var(--cb-border-subtle);
+  --border-active: var(--cb-border);
+  --accent-badge-bg: rgba(190, 18, 60, 0.10);
 }
+
+/* Reduced Motion Override for Accessibility (iOS Reduce Motion / Android Remove Animations) */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --cb-motion-instant: 0.01ms;
+    --cb-motion-quick: 0.01ms;
+    --cb-motion-normal: 0.01ms;
+    --cb-motion-slow: 0.01ms;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* =========================================================================
+   BASE RESET & TYPOGRAPHY SYSTEM
+   ========================================================================= */
 
 * {
   box-sizing: border-box;
 }
 
 html, body {
-  background-color: var(--surface-canvas);
-  color: var(--color-paper);
-  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--cb-canvas);
+  color: var(--cb-text-primary);
+  font-family: var(--cb-font-body);
   overflow-x: hidden;
   margin: 0;
   padding: 0;
@@ -133,11 +332,285 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* =========================================================================
+   MOBILE-FIRST TYPOGRAPHY SCALE (10 TIERS)
+   Base: 1rem = 16px. Body text >= 16px to prevent iOS auto-zoom on input.
+   ========================================================================= */
+
+.cb-display-xl {
+  font-family: var(--cb-font-display);
+  font-size: 2.25rem; /* 36px */
+  line-height: 2.5rem; /* 40px */
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.cb-display-l {
+  font-family: var(--cb-font-display);
+  font-size: 1.875rem; /* 30px */
+  line-height: 2.25rem; /* 36px */
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.cb-h1 {
+  font-family: var(--cb-font-body);
+  font-size: 1.5rem; /* 24px */
+  line-height: 1.875rem; /* 30px */
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.cb-h2 {
+  font-family: var(--cb-font-body);
+  font-size: 1.25rem; /* 20px */
+  line-height: 1.625rem; /* 26px */
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.cb-h3 {
+  font-family: var(--cb-font-body);
+  font-size: 1.125rem; /* 18px */
+  line-height: 1.5rem; /* 24px */
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.cb-body-l {
+  font-family: var(--cb-font-body);
+  font-size: 1.0625rem; /* 17px - iOS default */
+  line-height: 1.5rem; /* 24px */
+  font-weight: 400;
+}
+
+.cb-body-m {
+  font-family: var(--cb-font-body);
+  font-size: 1rem; /* 16px - Minimum iOS anti-zoom */
+  line-height: 1.375rem; /* 22px */
+  font-weight: 400;
+}
+
+.cb-body-s {
+  font-family: var(--cb-font-body);
+  font-size: 0.9375rem; /* 15px */
+  line-height: 1.25rem; /* 20px */
+  font-weight: 400;
+}
+
+.cb-caption {
+  font-family: var(--cb-font-body);
+  font-size: 0.8125rem; /* 13px */
+  line-height: 1.125rem; /* 18px */
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.cb-micro {
+  font-family: var(--cb-font-body);
+  font-size: 0.6875rem; /* 11px */
+  line-height: 0.875rem; /* 14px */
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Numeric/Financial Font */
+.cb-mono {
+  font-family: var(--cb-font-mono);
+  font-feature-settings: "tnum" 1, "cv05" 1;
+}
+
+/* =========================================================================
+   TOUCH TARGET & ACCESSIBILITY SYSTEM (WCAG 2.5.5 >= 44x44px)
+   ========================================================================= */
+
+.cb-touch-min {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Icon Sizing Tokens Utility Classes */
+.cb-icon-xs {
+  width: var(--cb-icon-xs);
+  height: var(--cb-icon-xs);
+  flex-shrink: 0;
+}
+
+.cb-icon-sm {
+  width: var(--cb-icon-sm);
+  height: var(--cb-icon-sm);
+  flex-shrink: 0;
+}
+
+.cb-icon-md {
+  width: var(--cb-icon-md);
+  height: var(--cb-icon-md);
+  flex-shrink: 0;
+}
+
+.cb-icon-lg {
+  width: var(--cb-icon-lg);
+  height: var(--cb-icon-lg);
+  flex-shrink: 0;
+}
+
+.cb-icon-xl {
+  width: var(--cb-icon-xl);
+  height: var(--cb-icon-xl);
+  flex-shrink: 0;
+}
+
+.cb-icon-2xl {
+  width: var(--cb-icon-2xl);
+  height: var(--cb-icon-2xl);
+  flex-shrink: 0;
+}
+
+.cb-icon-hero {
+  width: var(--cb-icon-hero);
+  height: var(--cb-icon-hero);
+  flex-shrink: 0;
+}
+
+/* Standard Crimson Focus Visible Ring (2px offset 2px) */
+.cb-focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--cb-canvas), 0 0 0 4px var(--cb-crimson);
+}
+
+/* Touch Target Button Variants (All >= 44x44px per WCAG 2.5.5) */
+.cb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cb-space-2);
+  min-height: 44px;
+  min-width: 44px;
+  padding: 10px 24px;
+  font-family: var(--cb-font-body);
+  font-size: 1rem; /* 16px iOS anti-zoom */
+  font-weight: 500;
+  line-height: 1.25rem;
+  border-radius: var(--cb-radius-pill);
+  cursor: pointer;
+  transition: transform var(--cb-motion-instant) var(--cb-ease-default),
+              background-color var(--cb-motion-quick) ease,
+              border-color var(--cb-motion-quick) ease,
+              opacity var(--cb-motion-instant) ease;
+  user-select: none;
+  text-decoration: none;
+}
+
+.cb-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--cb-canvas), 0 0 0 4px var(--cb-crimson);
+}
+
+.cb-btn:active {
+  transform: scale(0.98);
+  opacity: 0.92;
+  transition-duration: var(--cb-motion-instant);
+}
+
+.cb-btn-primary {
+  background-color: var(--cb-crimson);
+  color: #ffffff;
+  border: 1px solid transparent;
+}
+
+.cb-btn-primary:hover {
+  background-color: var(--cb-crimson-hover);
+}
+
+.cb-btn-secondary {
+  background-color: var(--cb-surface);
+  color: var(--cb-text-primary);
+  border: 1px solid var(--cb-border);
+}
+
+.cb-btn-secondary:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background-color: var(--cb-surface-elevated);
+}
+
+.cb-btn-ghost {
+  background-color: transparent;
+  color: var(--cb-text-primary);
+  border: 1px solid transparent;
+}
+
+.cb-btn-ghost:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.cb-btn-icon {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: var(--cb-radius-inner);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  color: var(--cb-text-secondary);
+  border: 1px solid transparent;
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.cb-btn-icon:hover {
+  color: var(--cb-text-primary);
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.cb-btn-icon:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--cb-canvas), 0 0 0 4px var(--cb-crimson);
+}
+
+/* =========================================================================
+   SAFE AREA UTILITIES (iOS Notch & Home Indicator)
+   ========================================================================= */
+
+.cb-safe-top {
+  padding-top: max(var(--cb-safe-top), 16px);
+}
+
+.cb-safe-bottom {
+  padding-bottom: max(var(--cb-safe-bottom), 16px);
+}
+
+.cb-safe-x {
+  padding-left: max(var(--cb-safe-left), 16px);
+  padding-right: max(var(--cb-safe-right), 16px);
+}
+
+/* =========================================================================
+   ELEVATION & SURFACES (ZERO DROP SHADOWS PER ADR-007)
+   Contrast generated via border and surface luminance only.
+   ========================================================================= */
+
+.cb-surface-card {
+  background-color: var(--cb-surface);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-surface);
+  transition: border-color var(--cb-motion-quick) var(--cb-ease-default);
+}
+
+.cb-surface-modal {
+  background-color: var(--cb-surface-elevated);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-surface);
+}
+
+/* =========================================================================
+   LEGACY COMPATIBILITY CLASSES (PRESERVES EXISTING DESKTOP PAGES)
+   ========================================================================= */
+
 .font-display {
   font-family: var(--font-instrument-serif), Georgia, serif;
 }
 
-/* Savee Sculptural Display Typography */
 .display-headline {
   font-size: clamp(48px, 8.5vw, 96px);
   line-height: 0.94;
@@ -161,18 +634,18 @@ html, body {
   letter-spacing: -0.01em;
 }
 
-/* Primary Dynamic Pill Button */
 .btn-primary-crimson {
-  background-color: var(--color-primary, #FF2A4D);
+  background-color: var(--cb-crimson);
   color: #ffffff;
   border-radius: 9999px;
-  padding: 13px 28px;
+  min-height: 44px;
+  padding: 10px 24px;
   font-size: 14px;
   font-weight: 500;
   letter-spacing: -0.01em;
   border: none;
   cursor: pointer;
-  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.22s ease;
+  transition: transform var(--cb-motion-quick) var(--cb-ease-default), background-color 0.15s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -181,27 +654,26 @@ html, body {
 }
 
 .btn-primary-crimson:hover {
-  background-color: var(--color-primary-hover, #ff4767);
-  transform: translateY(-2px) scale(1.01);
-  box-shadow: 0 4px 20px -2px rgba(255, 42, 77, 0.35);
+  background-color: var(--cb-crimson-hover);
+  transform: translateY(-1px);
 }
 
 .btn-primary-crimson:active {
-  transform: translateY(0) scale(0.98);
+  transform: scale(0.98);
 }
 
-/* Ghost Pill Button */
 .btn-ghost-pill {
   background-color: transparent;
-  color: var(--color-paper);
-  border: 1px solid var(--border-active, rgba(255, 255, 255, 0.16));
+  color: var(--cb-text-primary);
+  border: 1px solid var(--cb-border);
   border-radius: 9999px;
-  padding: 12px 24px;
+  min-height: 44px;
+  padding: 10px 20px;
   font-size: 14px;
   font-weight: 500;
   letter-spacing: -0.01em;
   cursor: pointer;
-  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.15s ease, background-color 0.15s ease;
+  transition: transform var(--cb-motion-quick) var(--cb-ease-default), border-color 0.15s ease, background-color 0.15s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -210,42 +682,31 @@ html, body {
 }
 
 .btn-ghost-pill:hover {
-  border-color: var(--color-primary, #FF2A4D);
-  background-color: var(--accent-badge-bg, rgba(255, 42, 77, 0.08));
-  transform: translateY(-2px);
+  border-color: var(--cb-crimson);
+  background-color: rgba(255, 42, 77, 0.08);
 }
 
 .btn-ghost-pill:active {
-  transform: translateY(0) scale(0.98);
+  transform: scale(0.98);
 }
 
-/* Binary Radii: 14px Surface & 9999px Control */
 .surface-panel {
-  background-color: var(--surface-elevated);
+  background-color: var(--cb-surface);
   border-radius: 14px;
-  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.07));
-  transition: transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s ease, box-shadow 0.24s ease;
+  border: 1px solid var(--cb-border);
+  transition: border-color 0.2s ease;
 }
 
 .surface-panel-hover:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
 .surface-overlay {
-  background-color: var(--surface-deep);
+  background-color: var(--cb-surface-elevated);
   border-radius: 14px;
-  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--cb-border-subtle);
 }
 
-@keyframes shimmer {
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-/* Scanline micro-animation */
 @keyframes beam {
   0% { transform: translateY(-100%); opacity: 0; }
   50% { opacity: 0.6; }
@@ -256,7 +717,6 @@ html, body {
   animation: beam 2.5s infinite ease-in-out;
 }
 
-/* Custom minimal scrollbars */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -272,7 +732,6 @@ html, body {
   background: #404040;
 }
 
-/* Print Media Styles for Production Wrap Summary & PDF Export */
 @media print {
   body {
     background: #ffffff !important;
@@ -281,7 +740,7 @@ html, body {
   header, nav, .btn-primary-crimson, .btn-ghost-pill, button, input, select, .no-print {
     display: none !important;
   }
-  .surface-panel, .surface-overlay {
+  .surface-panel, .surface-overlay, .cb-surface-card {
     border: 1px solid #e5e5e5 !important;
     background: #ffffff !important;
     box-shadow: none !important;
@@ -305,3 +764,44 @@ html, body {
 .print-only {
   display: none;
 }
+
+/* =========================================================================
+   DOHERTY SKELETON SHIMMER (1.5s ease-in-out infinite, reduced-motion static)
+   ========================================================================= */
+
+@keyframes cb-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.cb-skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--cb-surface, #111111);
+}
+
+.cb-skeleton-shimmer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 100%
+  );
+  animation: cb-shimmer 1.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cb-skeleton-shimmer::before {
+    animation: none !important;
+    display: none !important;
+  }
+}
+

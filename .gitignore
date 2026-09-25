@@ -6,6 +6,8 @@
 
 # testing
 /coverage
+/.lighthouseci/
+/test-results/
 
 # next.js
 /.next/
@@ -33,3 +35,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# media assets & walkthrough recordings (B1 & Task 14)
+/docs/ux-walkthrough/*.webp
+/docs/ux-walkthrough/*.mp4
+/docs/design/screenshots/*.png
