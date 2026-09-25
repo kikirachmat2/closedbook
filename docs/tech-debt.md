@@ -26,3 +26,10 @@
 - **Status**: Non-blocking test runner warning
 - **Description**: Node prints a deprecation warning about `--localstorage-file` during jsdom/playwright test worker initialization.
 - **Resolution Plan**: Suppress via `NODE_OPTIONS` or update to Node 22 LTS test runner flags.
+
+### DEBT-004: Branch Structure Consolidation (Resolved)
+- **Origin**: Pipeline Review (Prompt #20 - #22)
+- **Status**: **RESOLVED** — Consolidated into `main-only` workflow.
+- **Description**: Previous multi-branch structure (`develop`, `feat/g0` through `feat/g5`) accumulated cognitive overhead and potential merge drift.
+- **Resolution**: All 6 milestone tags (`v0.1.0` to `v0.6.0-preview`) are permanently pinned. Local and remote auxiliary branches deleted. Single-branch continuous delivery on `main` is now standard.
+

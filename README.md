@@ -67,6 +67,13 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+## ✦ Development Workflow (Main-Only)
+
+- **Single Branch**: `main`
+- **Continuous Deployment**: Every commit pushed directly to `main` auto-deploys to production Vercel ([closedbook.vercel.app](https://closedbook.vercel.app))
+- **No Feature Branches / PR Overhead**: Zero merge friction, zero dangling PRs, streamlined continuous delivery.
+- **Commit Convention**: Standard conventional commits (`type(scope): description`).
+
 ---
 
 ## ✦ License
