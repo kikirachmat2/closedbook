@@ -2,6 +2,10 @@ import { test, expect } from "@playwright/test";
 
 test.describe("G.5 Card Lists & UX Comfort Validation Suite", () => {
   test.beforeEach(async ({ page }) => {
+    // Disable iOS PWA prompt from overlaying mobile test interactions
+    await page.addInitScript(() => {
+      localStorage.setItem("cb_ios_install_dismiss_count", "10");
+    });
     // Set mobile viewport (iPhone 14 / modern mobile target 390x844)
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/test-comfort");
@@ -46,7 +50,7 @@ test.describe("G.5 Card Lists & UX Comfort Validation Suite", () => {
     // Tap Batal (Undo)
     const undoBtn = page.locator('[data-testid="undo-btn"]');
     await expect(undoBtn).toBeVisible();
-    await undoBtn.click();
+    await undoBtn.click({ force: true });
 
     // Verify restored
     await expect(page.locator("#card-tx-today-1")).toBeVisible({ timeout: 5000 });

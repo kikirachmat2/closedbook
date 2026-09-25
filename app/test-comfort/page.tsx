@@ -431,7 +431,7 @@ export default function ComfortPreviewPage() {
       {latestUndo && (
         <div
           data-testid="undo-toast"
-          className="fixed bottom-6 left-4 right-4 max-w-sm mx-auto z-50 p-4 rounded-2xl bg-[#141414] border border-white/[0.12] shadow-2xl flex items-center justify-between gap-3 animate-slide-up"
+          className="fixed bottom-6 left-4 right-4 max-w-sm mx-auto z-[60] p-4 rounded-2xl bg-[#141414] border border-white/[0.12] shadow-2xl flex items-center justify-between gap-3 animate-slide-up"
         >
           <span data-testid="undo-toast-message" className="text-xs text-white font-medium flex-1">
             {latestUndo.description}
