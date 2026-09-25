@@ -98,7 +98,8 @@ export default function VirtualCardList<T>({
       className={`overflow-y-auto w-full scrollbar-thin ${className}`}
       style={{
         maxHeight: typeof maxHeight === "number" ? `${maxHeight}px` : maxHeight,
-        contain: "strict",
+        height: typeof maxHeight === "number" ? `${maxHeight}px` : maxHeight,
+        contain: "content",
       }}
     >
       <div
