@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { usePreferences, CurrencyCode, LanguageCode, ThemeCode } from "@/lib/preferences";
-import { X, Check, Globe, DollarSign, Palette, Sparkles, Bell, ExternalLink, Eye, EyeOff, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react";
+import { usePreferences, CurrencyCode, LanguageCode, ThemeCode, ListDensity } from "@/lib/preferences";
+import { X, Check, Globe, DollarSign, Palette, Sparkles, Bell, ExternalLink, Eye, EyeOff, RefreshCw, CheckCircle2, AlertCircle, LayoutList } from "lucide-react";
 
 export default function PreferencesModal() {
   const {
@@ -14,6 +14,8 @@ export default function PreferencesModal() {
     setLanguage,
     theme,
     setTheme,
+    listDensity,
+    setListDensity,
     isRemindersEnabled,
     setIsRemindersEnabled,
     isWebNotificationsEnabled,
@@ -235,6 +237,76 @@ export default function PreferencesModal() {
                     </div>
                     <p className="text-[11px] text-[var(--color-stone,#737373)] line-clamp-2">
                       {th.description}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* LIST DENSITY PREFERENCE */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <LayoutList className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-stone,#737373)]">
+                {t("listDensity")}
+              </h3>
+            </div>
+            <p className="text-[11px] text-[var(--color-stone,#737373)] mb-3">
+              {t("listDensityDesc")}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              {(
+                [
+                  {
+                    id: "comfortable",
+                    name: t("densityComfortable"),
+                    desc: t("densityComfortableDesc"),
+                    height: "72px",
+                  },
+                  {
+                    id: "compact",
+                    name: t("densityCompact"),
+                    desc: t("densityCompactDesc"),
+                    height: "56px",
+                  },
+                  {
+                    id: "spacious",
+                    name: t("densitySpacious"),
+                    desc: t("densitySpaciousDesc"),
+                    height: "88px",
+                  },
+                ] as const
+              ).map((d) => {
+                const isSelected = listDensity === d.id;
+                return (
+                  <button
+                    key={d.id}
+                    id={`density-option-${d.id}`}
+                    type="button"
+                    onClick={() => setListDensity(d.id)}
+                    className={`min-h-[72px] p-3.5 rounded-[14px] text-left transition-all border flex flex-col justify-between ${
+                      isSelected
+                        ? "border-[var(--color-primary,#ff1e42)] shadow-md bg-[var(--accent-badge-bg,rgba(255,30,66,0.08))]"
+                        : "surface-overlay border-white/[0.06] hover:border-white/[0.18]"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full mb-1">
+                      <span className="text-xs font-semibold text-[var(--color-paper,#fdfdfd)]">
+                        {d.name}
+                      </span>
+                      {isSelected ? (
+                        <div className="w-4 h-4 rounded-full bg-[var(--color-primary,#ff1e42)] flex items-center justify-center text-white">
+                          <Check className="w-2.5 h-2.5 stroke-[3]" />
+                        </div>
+                      ) : (
+                        <span className="text-[10px] text-[var(--color-stone,#737373)] font-mono">
+                          {d.height}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-[var(--color-stone,#737373)] line-clamp-2">
+                      {d.desc}
                     </p>
                   </button>
                 );

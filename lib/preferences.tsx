@@ -5,6 +5,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 export type CurrencyCode = "USD" | "IDR" | "EUR" | "GBP" | "SGD" | "JPY";
 export type LanguageCode = "en" | "id" | "es" | "ja";
 export type ThemeCode = "signature" | "obsidian" | "indigo" | "emerald" | "amber" | "paper";
+export type ListDensity = "comfortable" | "compact" | "spacious";
 
 export interface CurrencyConfig {
   code: CurrencyCode;
@@ -128,6 +129,14 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     currency: "Currency",
     language: "Language",
     theme: "Theme",
+    listDensity: "List Density",
+    listDensityDesc: "Adjust row height and spacing for list items.",
+    densityComfortable: "Comfortable",
+    densityComfortableDesc: "Standard 72px card height with optimal touch targets.",
+    densityCompact: "Compact",
+    densityCompactDesc: "Dense 56px card height for high volume lists.",
+    densitySpacious: "Spacious",
+    densitySpaciousDesc: "Accessible 88px card height for relaxed viewing.",
     dayCount: "Day {day} of {total}",
     syncActive: "Sync Active",
     settingsTitle: "Display & System Preferences",
@@ -398,6 +407,14 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     currency: "Mata Uang",
     language: "Bahasa",
     theme: "Tema Tampilan",
+    listDensity: "Kepadatan Daftar",
+    listDensityDesc: "Atur tinggi baris dan kerapatan item dalam daftar.",
+    densityComfortable: "Nyaman (Standar)",
+    densityComfortableDesc: "Tinggi 72px standar dengan target sentuh optimal.",
+    densityCompact: "Kompak",
+    densityCompactDesc: "Tinggi 56px padat untuk efisiensi daftar transaksi panjang.",
+    densitySpacious: "Lega",
+    densitySpaciousDesc: "Tinggi 88px lega dengan ruang sentuh ekstra untuk aksesibilitas.",
     dayCount: "Hari {day} dari {total}",
     syncActive: "Sinkronisasi Aktif",
     settingsTitle: "Preferensi Tampilan & Sistem",
@@ -665,6 +682,14 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     currency: "Moneda",
     language: "Idioma",
     theme: "Tema",
+    listDensity: "Densidad de Lista",
+    listDensityDesc: "Ajustar altura de fila y espacio para elementos de lista.",
+    densityComfortable: "Cómodo",
+    densityComfortableDesc: "Altura estándar de 72px con objetivos táctiles óptimos.",
+    densityCompact: "Compacto",
+    densityCompactDesc: "Altura densa de 56px para listas con muchos elementos.",
+    densitySpacious: "Espacioso",
+    densitySpaciousDesc: "Altura accesible de 88px para facilitar la visualización.",
     dayCount: "Día {day} de {total}",
     syncActive: "Sincronización Activa",
     settingsTitle: "Preferencias del Sistema y Pantalla",
@@ -932,6 +957,14 @@ export const TRANSLATIONS: Record<LanguageCode, Record<string, string>> = {
     currency: "通貨",
     language: "言語",
     theme: "テーマ",
+    listDensity: "リストの密度",
+    listDensityDesc: "リストアイテムの高さと間隔を調整します。",
+    densityComfortable: "標準 (快適)",
+    densityComfortableDesc: "標準の72pxの高さと最適なタッチターゲット。",
+    densityCompact: "コンパクト",
+    densityCompactDesc: "大量のリスト表示向けの56pxのコンパクトな高さ。",
+    densitySpacious: "ゆったり",
+    densitySpaciousDesc: "アクセシビリティ向けの88pxのゆとりある高さ。",
     dayCount: "{total}日中 {day}日目",
     syncActive: "同期中",
     settingsTitle: "表示・システム設定",
@@ -1211,6 +1244,8 @@ interface PreferencesContextType {
   setIsHapticsEnabled: (enabled: boolean) => void;
   fabPosition: "right" | "left";
   setFabPosition: (position: "right" | "left") => void;
+  listDensity: ListDensity;
+  setListDensity: (density: ListDensity) => void;
   geminiApiKey: string;
   setGeminiApiKey: (key: string) => void;
   currencies: Record<CurrencyCode, CurrencyConfig>;
@@ -1229,6 +1264,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
   const [isWebNotificationsEnabled, setIsWebNotificationsEnabledState] = useState<boolean>(false);
   const [isHapticsEnabled, setIsHapticsEnabledState] = useState<boolean>(true);
   const [fabPosition, setFabPositionState] = useState<"right" | "left">("right");
+  const [listDensity, setListDensityState] = useState<ListDensity>("comfortable");
   const [geminiApiKey, setGeminiApiKeyState] = useState<string>("");
   const [mounted, setMounted] = useState(false);
 
@@ -1249,6 +1285,10 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       const savedFabPos = localStorage.getItem("closebook_fab_position") as "right" | "left";
       if (savedFabPos === "right" || savedFabPos === "left") {
         setFabPositionState(savedFabPos);
+      }
+      const savedDensity = localStorage.getItem("closebook_list_density") as ListDensity;
+      if (savedDensity === "comfortable" || savedDensity === "compact" || savedDensity === "spacious") {
+        setListDensityState(savedDensity);
       }
       const savedGeminiKey = localStorage.getItem("closebook_gemini_api_key");
       if (savedGeminiKey) {
@@ -1322,6 +1362,13 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
     setFabPositionState(position);
     try {
       localStorage.setItem("closebook_fab_position", position);
+    } catch {}
+  };
+
+  const setListDensity = (density: ListDensity) => {
+    setListDensityState(density);
+    try {
+      localStorage.setItem("closebook_list_density", density);
     } catch {}
   };
 
@@ -1404,6 +1451,8 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
         setIsHapticsEnabled,
         fabPosition,
         setFabPosition,
+        listDensity,
+        setListDensity,
         geminiApiKey,
         setGeminiApiKey,
         currencies: CURRENCIES,
