@@ -1,5 +1,5 @@
 // =========================================================================
-// CLOSEDBOOK PRODUCTION OS — MSW GOOGLE OAUTH HANDLERS
+// CLOSEDBOOK PRODUCTION OS — MSW GOOGLE OAUTH & DRIVE HANDLERS
 // =========================================================================
 
 import { http, HttpResponse } from "msw";
@@ -71,5 +71,33 @@ export const handlers = [
   // 3. Google Revocation Endpoint
   http.post(GOOGLE_REVOKE_ENDPOINT, () => {
     return new HttpResponse(null, { status: 200 });
+  }),
+
+  // 4. Mock Google Drive upload (for G.6 when BLOCKER-001 cleared)
+  http.post("https://www.googleapis.com/upload/drive/v3/files", async ({ request }) => {
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader || !authHeader.includes("Bearer")) {
+      return new HttpResponse("Unauthorized", { status: 401 });
+    }
+
+    return HttpResponse.json({
+      id: "mock-file-id-12345",
+      name: "Master Ledger.xlsx",
+      mimeType: "application/vnd.google-apps.spreadsheet",
+      webViewLink: "https://docs.google.com/spreadsheets/d/mock-file-id-12345/edit",
+    });
+  }),
+
+  // 5. Mock Google Drive get file metadata
+  http.get("https://www.googleapis.com/drive/v3/files/:fileId", ({ params, request }) => {
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader || !authHeader.includes("Bearer")) {
+      return new HttpResponse("Unauthorized", { status: 401 });
+    }
+
+    return HttpResponse.json({
+      id: params.fileId,
+      webViewLink: `https://docs.google.com/document/d/${params.fileId}/edit`,
+    });
   }),
 ];

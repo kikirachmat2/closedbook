@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import BottomNav from "@/components/mobile/BottomNav";
 import TopAppBar from "@/components/mobile/TopAppBar";
@@ -127,6 +127,39 @@ describe("Mobile Shell & UX Psychology (Unit Tests)", () => {
       const fabBtn = screen.getByRole("button", { name: /primary action/i });
       fireEvent.click(fabBtn);
       expect(handlePrimary).toHaveBeenCalledTimes(1);
+    });
+
+    it("opens template selector with 3 options when Generate Document radial item is clicked", () => {
+      vi.useFakeTimers();
+      render(
+        <PreferencesProvider>
+          <FAB activeTab="transactions" onPrimaryAction={vi.fn()} />
+        </PreferencesProvider>
+      );
+
+      const fabBtn = screen.getByRole("button", { name: /primary action/i });
+      // Trigger long-press (450ms)
+      fireEvent.mouseDown(fabBtn);
+      act(() => {
+        vi.advanceTimersByTime(500);
+      });
+
+      // Radial action button for generate-doc should appear
+      const genDocBtn = screen.getByTestId("radial-action-generate-doc");
+      expect(genDocBtn).toBeInTheDocument();
+
+      // Click Generate Document
+      act(() => {
+        fireEvent.click(genDocBtn);
+      });
+
+      // Template selector sheet opens with 3 options
+      expect(screen.getByTestId("template-selector-sheet")).toBeInTheDocument();
+      expect(screen.getByTestId("select-template-ledger")).toBeInTheDocument();
+      expect(screen.getByTestId("select-template-call-sheet")).toBeInTheDocument();
+      expect(screen.getByTestId("select-template-wrap-report")).toBeInTheDocument();
+
+      vi.useRealTimers();
     });
   });
 

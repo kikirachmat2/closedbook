@@ -9,7 +9,8 @@
 
 ## 1. Walkthrough Recording Artifacts
 
-- **Video Recording**: `docs/ux-walkthrough/mobile-ux-walkthrough.webp` (Recorded live via browser automation in iPhone 15 mobile viewport 390×844)
+- **Video Recording**: `docs/ux-walkthrough/closedbook-g5.webm` (Recorded live via high-fidelity browser automation in iPhone 15 mobile viewport 390×844).
+  - *Browser Playback Note*: WebM container is natively supported on Chrome, Firefox, Edge, and Android. On iOS Safari, please view via Chrome/Firefox or desktop browser.
 - **Key Frames Captured**:
   1. `landing_page_1790272183578.png` — Onboarding & Clean Obsidian Canvas
   2. `workspace_ledger_1790272219838.png` — Top App Bar & 5-Tab Hick's Law Bottom Navigation (Primacy: Ledger active)
