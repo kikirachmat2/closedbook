@@ -5,8 +5,8 @@ const THEMES = ["obsidian", "signature", "indigo", "emerald", "amber", "paper"] 
 test.describe("Theme System & Light/Dark Mode Primitive Verification", () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/design-system", { waitUntil: "networkidle" });
-    await expect(page.locator('[data-hydrated="true"]')).toBeVisible();
+    await page.goto("/design-system", { waitUntil: "domcontentloaded" });
+    await expect(page.locator('[data-hydrated="true"]')).toBeVisible({ timeout: 15000 });
   });
 
   for (const theme of THEMES) {

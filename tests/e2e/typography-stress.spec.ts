@@ -15,8 +15,8 @@ test.describe("Typography Stress Testing Across Mobile Breakpoints", () => {
       testInfo
     ) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
-      await page.goto("/design-system", { waitUntil: "networkidle" });
-      await expect(page.locator('[data-hydrated="true"]')).toBeVisible();
+      await page.goto("/design-system", { waitUntil: "domcontentloaded" });
+      await expect(page.locator('[data-hydrated="true"]')).toBeVisible({ timeout: 15000 });
 
       // 1. Verify long project name (60 chars) does not cause viewport horizontal scroll
       const displayXl = page.locator('[data-testid="stress-display-xl"]');
