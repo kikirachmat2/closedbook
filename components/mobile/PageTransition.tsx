@@ -1,7 +1,9 @@
 "use client";
 
 import React from "react";
-import { motion, AnimatePresence, useReducedMotion, Transition } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
+import { m, AnimatePresence } from "@/components/MotionProvider";
+import type { Transition } from "framer-motion";
 
 export type TransitionType = "tab-switch" | "forward" | "back" | "modal";
 
@@ -85,7 +87,7 @@ export default function PageTransition({
 
   return (
     <AnimatePresence mode="wait">
-      <motion.div
+      <m.div
         key={transitionKey}
         data-testid="page-transition-container"
         data-transition-type={type}
@@ -96,7 +98,7 @@ export default function PageTransition({
         className={className}
       >
         {children}
-      </motion.div>
+      </m.div>
     </AnimatePresence>
   );
 }

@@ -2,7 +2,9 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
-import { motion, AnimatePresence, useReducedMotion, PanInfo, Transition } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
+import type { PanInfo, Transition } from "framer-motion";
+import { m, AnimatePresence } from "@/components/MotionProvider";
 import { useHaptic } from "@/lib/hooks/use-haptic";
 
 export type SnapPoint = "collapsed" | "half" | "full";
@@ -162,7 +164,7 @@ export default function BottomSheet({
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center">
           {/* Backdrop */}
-          <motion.div
+          <m.div
             data-testid="bottom-sheet-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -177,7 +179,7 @@ export default function BottomSheet({
           />
 
           {/* Draggable Sheet Surface */}
-          <motion.div
+          <m.div
             ref={sheetRef}
             role="dialog"
             aria-modal="true"
@@ -242,7 +244,7 @@ export default function BottomSheet({
             >
               {children}
             </div>
-          </motion.div>
+          </m.div>
         </div>
       )}
     </AnimatePresence>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { useClosebookStore } from "@/lib/store";
@@ -15,11 +16,25 @@ import CountUp from "@/components/CountUp";
 import { Skeleton, WorkspaceSkeleton } from "@/components/Skeleton";
 import BottomNav from "@/components/mobile/BottomNav";
 import TopAppBar from "@/components/mobile/TopAppBar";
-import FAB from "@/components/mobile/FAB";
-import PullToRefresh from "@/components/mobile/PullToRefresh";
-import PageTransition from "@/components/mobile/PageTransition";
-import EmptyState from "@/components/mobile/EmptyState";
 import { NetworkErrorBanner } from "@/components/mobile/ErrorRecovery";
+
+// Lazy-load heavy animation and below-fold components (ADR A1 — bundle budget)
+const PullToRefresh = dynamic(() => import("@/components/mobile/PullToRefresh"), {
+  ssr: false,
+  loading: () => <div className="relative w-full" />,
+});
+const PageTransition = dynamic(() => import("@/components/mobile/PageTransition"), {
+  ssr: false,
+  loading: () => <div />,
+});
+const FAB = dynamic(() => import("@/components/mobile/FAB"), {
+  ssr: false,
+  loading: () => null,
+});
+const EmptyState = dynamic(() => import("@/components/mobile/EmptyState"), {
+  ssr: false,
+  loading: () => null,
+});
 import {
   LayoutDashboard,
   Receipt,

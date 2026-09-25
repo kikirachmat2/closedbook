@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
+import { m } from "@/components/MotionProvider";
 import { Check, Trash2, Undo2 } from "lucide-react";
 import { useHaptic } from "@/lib/hooks/use-haptic";
 import BottomSheet from "@/components/mobile/BottomSheet";
@@ -85,7 +86,7 @@ export function ToggleSwitch({
         checked ? "bg-[var(--color-primary,#ff1e42)]" : "bg-white/10"
       }`}
     >
-      <motion.span
+      <m.span
         animate={{ x: checked ? 24 : 0 }}
         transition={{ duration: shouldReduceMotion ? 0.001 : 0.15, ease: "easeOut" }}
         className="block w-5 h-5 rounded-full bg-white shadow-sm"
@@ -124,7 +125,7 @@ export function SuccessCheckmark({
         strokeLinecap="round"
         strokeLinejoin="round"
       >
-        <motion.path
+        <m.path
           d="M20 6L9 17l-5-5"
           initial={{ pathLength: shouldReduceMotion ? 1 : 0 }}
           animate={{ pathLength: 1 }}
@@ -150,7 +151,7 @@ export function ShakeContainer({
   const shouldReduceMotion = useReducedMotion();
 
   return (
-    <motion.div
+    <m.div
       data-testid="shake-container"
       animate={
         shake && !shouldReduceMotion
@@ -161,7 +162,7 @@ export function ShakeContainer({
       className={className}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }
 

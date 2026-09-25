@@ -2,7 +2,8 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { RefreshCw } from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
+import { m } from "@/components/MotionProvider";
 import { useHaptic } from "@/lib/hooks/use-haptic";
 
 interface PullToRefreshProps {
@@ -142,7 +143,7 @@ export default function PullToRefresh({
       </div>
 
       {/* Content wrapper with elastic translation */}
-      <motion.div
+      <m.div
         animate={{ y: pullY > 0 ? pullY * 0.4 : 0 }}
         transition={
           isPulling.current
@@ -153,7 +154,7 @@ export default function PullToRefresh({
         }
       >
         {children}
-      </motion.div>
+      </m.div>
     </div>
   );
 }
