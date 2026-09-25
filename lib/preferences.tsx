@@ -6,6 +6,7 @@ export type CurrencyCode = "USD" | "IDR" | "EUR" | "GBP" | "SGD" | "JPY";
 export type LanguageCode = "en" | "id" | "es" | "ja";
 export type ThemeCode = "signature" | "obsidian" | "indigo" | "emerald" | "amber" | "paper";
 export type ListDensity = "comfortable" | "compact" | "spacious";
+export type ListSort = "recent" | "amount_desc" | "alphabetical";
 
 export interface CurrencyConfig {
   code: CurrencyCode;
@@ -1246,6 +1247,8 @@ interface PreferencesContextType {
   setFabPosition: (position: "right" | "left") => void;
   listDensity: ListDensity;
   setListDensity: (density: ListDensity) => void;
+  listSort: ListSort;
+  setListSort: (sort: ListSort) => void;
   geminiApiKey: string;
   setGeminiApiKey: (key: string) => void;
   currencies: Record<CurrencyCode, CurrencyConfig>;
@@ -1265,6 +1268,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
   const [isHapticsEnabled, setIsHapticsEnabledState] = useState<boolean>(true);
   const [fabPosition, setFabPositionState] = useState<"right" | "left">("right");
   const [listDensity, setListDensityState] = useState<ListDensity>("comfortable");
+  const [listSort, setListSortState] = useState<ListSort>("recent");
   const [geminiApiKey, setGeminiApiKeyState] = useState<string>("");
   const [mounted, setMounted] = useState(false);
 
@@ -1289,6 +1293,10 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       const savedDensity = localStorage.getItem("closebook_list_density") as ListDensity;
       if (savedDensity === "comfortable" || savedDensity === "compact" || savedDensity === "spacious") {
         setListDensityState(savedDensity);
+      }
+      const savedSort = localStorage.getItem("closebook_list_sort") as ListSort;
+      if (savedSort === "recent" || savedSort === "amount_desc" || savedSort === "alphabetical") {
+        setListSortState(savedSort);
       }
       const savedGeminiKey = localStorage.getItem("closebook_gemini_api_key");
       if (savedGeminiKey) {
@@ -1369,6 +1377,13 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
     setListDensityState(density);
     try {
       localStorage.setItem("closebook_list_density", density);
+    } catch {}
+  };
+
+  const setListSort = (sort: ListSort) => {
+    setListSortState(sort);
+    try {
+      localStorage.setItem("closebook_list_sort", sort);
     } catch {}
   };
 
@@ -1453,6 +1468,8 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
         setFabPosition,
         listDensity,
         setListDensity,
+        listSort,
+        setListSort,
         geminiApiKey,
         setGeminiApiKey,
         currencies: CURRENCIES,
