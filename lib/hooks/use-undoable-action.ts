@@ -35,11 +35,12 @@ export function useUndoableAction() {
 
   // Clean up timers on unmount
   useEffect(() => {
+    const currentPendingMap = pendingMapRef.current;
     return () => {
-      pendingMapRef.current.forEach((item) => {
+      currentPendingMap.forEach((item) => {
         clearTimeout(item.timerId);
       });
-      pendingMapRef.current.clear();
+      currentPendingMap.clear();
     };
   }, []);
 

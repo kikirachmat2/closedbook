@@ -15,7 +15,7 @@ export interface ListItemAction {
   onClick: () => void;
 }
 
-export interface ListItemCardProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface ListItemCardProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
   id?: string;
   variant?: ListItemVariant;
   density?: ListDensity;
