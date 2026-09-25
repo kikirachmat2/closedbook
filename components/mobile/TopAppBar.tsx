@@ -1,15 +1,24 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Menu } from "lucide-react";
+import { ArrowLeft, Menu, X, CheckSquare } from "lucide-react";
 import { useHaptic } from "@/lib/hooks/use-haptic";
 
-interface TopAppBarProps {
+export interface SelectionModeConfig {
+  isActive: boolean;
+  selectedCount: number;
+  onCancel: () => void;
+  onSelectAll?: () => void;
+  isAllSelected?: boolean;
+}
+
+export interface TopAppBarProps {
   title: string;
   isRoot?: boolean;
   onBack?: () => void;
   onMenuToggle?: () => void;
   actions?: React.ReactNode; // Max 2 action buttons (Hick's Law)
+  selectionMode?: SelectionModeConfig;
 }
 
 /**
@@ -30,6 +39,7 @@ export default function TopAppBar({
   onBack,
   onMenuToggle,
   actions,
+  selectionMode,
 }: TopAppBarProps) {
   const { triggerHaptic } = useHaptic();
   const [isVisible, setIsVisible] = useState(true);
@@ -89,6 +99,57 @@ export default function TopAppBar({
     triggerHaptic("light");
     if (onMenuToggle) onMenuToggle();
   };
+
+  // Selection mode view
+  if (selectionMode?.isActive) {
+    return (
+      <header
+        id="mobile-top-app-bar"
+        role="banner"
+        aria-label="Selection Mode App Bar"
+        className="md:hidden fixed top-0 left-0 right-0 z-40 bg-[#121212]/95 backdrop-blur-xl border-b border-[var(--color-primary,#ff1e42)]/30 pt-[env(safe-area-inset-top,0px)]"
+      >
+        <div className="flex items-center justify-between h-12 px-3 max-w-lg mx-auto">
+          <button
+            type="button"
+            id="selection-cancel-btn"
+            data-testid="selection-cancel-btn"
+            onClick={() => {
+              triggerHaptic("light");
+              selectionMode.onCancel();
+            }}
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[#a3a3a3] hover:text-white rounded-full transition-colors active:scale-95"
+            aria-label="Batalkan pilihan"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          <div className="flex-1 text-center px-2">
+            <span
+              data-testid="selection-count-label"
+              className="text-sm font-semibold text-[var(--color-paper,#fdfdfd)]"
+            >
+              {selectionMode.selectedCount} dipilih
+            </span>
+          </div>
+
+          <button
+            type="button"
+            id="selection-select-all-btn"
+            data-testid="selection-select-all-btn"
+            onClick={() => {
+              triggerHaptic("light");
+              selectionMode.onSelectAll?.();
+            }}
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[var(--color-primary,#ff1e42)] hover:text-white rounded-full transition-colors active:scale-95"
+            aria-label="Pilih semua"
+          >
+            <CheckSquare className="w-5 h-5" />
+          </button>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header
