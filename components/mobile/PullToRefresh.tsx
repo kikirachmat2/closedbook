@@ -149,7 +149,7 @@ export default function PullToRefresh({
           isPulling.current
             ? { duration: 0 }
             : shouldReduceMotion
-            ? { duration: 0.001 }
+            ? { duration: 0 }
             : { type: "spring", damping: 25, stiffness: 300 }
         }
       >

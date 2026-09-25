@@ -22,7 +22,7 @@ const CUBIC_EASE = [0.16, 1, 0.3, 1] as const;
  * - forward: 220ms slide from right
  * - back: 200ms slide to right
  * - modal: 220ms slide from bottom
- * - reduced-motion: 0.001s instant fade
+ * - reduced-motion: 0s instant fade
  */
 export default function PageTransition({
   transitionKey,
@@ -43,7 +43,7 @@ export default function PageTransition({
         initial: { opacity: 0 },
         animate: { opacity: 1 },
         exit: { opacity: 0 },
-        transition: { duration: 0.001 },
+        transition: { duration: 0 },
       };
     }
 

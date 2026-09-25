@@ -14,7 +14,8 @@ import {
   Printer,
   X,
 } from "lucide-react";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
+import { m, AnimatePresence } from "@/components/MotionProvider";
 import { useHaptic } from "@/lib/hooks/use-haptic";
 import { usePreferences } from "@/lib/preferences";
 
@@ -253,7 +254,7 @@ export default function FAB({
       {/* Radial Menu Backdrop */}
       <AnimatePresence>
         {isRadialOpen && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -276,14 +277,14 @@ export default function FAB({
             {radialActions.map((action, idx) => {
               const ActionIcon = action.icon;
               return (
-                <motion.div
+                <m.div
                   key={action.id}
                   role="menuitem"
                   initial={{ opacity: 0, y: 15, scale: 0.8 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.8 }}
                   transition={{
-                    duration: shouldReduceMotion ? 0.001 : 0.15,
+                    duration: shouldReduceMotion ? 0 : 0.15,
                     delay: idx * 0.04,
                   }}
                   className="flex items-center gap-2.5"
@@ -304,7 +305,7 @@ export default function FAB({
                   >
                     <ActionIcon className="w-5 h-5" />
                   </button>
-                </motion.div>
+                </m.div>
               );
             })}
           </div>
@@ -312,7 +313,7 @@ export default function FAB({
       </AnimatePresence>
 
       {/* Primary 56×56px FAB Button */}
-      <motion.button
+      <m.button
         id="context-fab-btn"
         type="button"
         onMouseDown={startLongPress}
@@ -322,7 +323,7 @@ export default function FAB({
         onClick={handleClick}
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
-        transition={{ duration: shouldReduceMotion ? 0.001 : 0.15 }}
+        transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
         whileTap={{ scale: 0.94 }}
         className="w-14 h-14 rounded-full bg-[var(--color-primary,#ff1e42)] text-white flex items-center justify-center shadow-[0_6px_24px_rgba(255,30,66,0.45)] hover:shadow-[0_8px_30px_rgba(255,30,66,0.6)] hover:brightness-105 active:scale-95 transition-shadow select-none relative z-40"
         aria-label={isRadialOpen ? "Close Quick Actions" : "Primary Action"}
@@ -334,7 +335,7 @@ export default function FAB({
         ) : (
           <ContextIcon className="w-6 h-6 stroke-[2.2]" />
         )}
-      </motion.button>
+      </m.button>
     </div>
   );
 }

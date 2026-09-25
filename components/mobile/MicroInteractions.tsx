@@ -88,7 +88,7 @@ export function ToggleSwitch({
     >
       <m.span
         animate={{ x: checked ? 24 : 0 }}
-        transition={{ duration: shouldReduceMotion ? 0.001 : 0.15, ease: "easeOut" }}
+        transition={{ duration: shouldReduceMotion ? 0 : 0.15, ease: "easeOut" }}
         className="block w-5 h-5 rounded-full bg-white shadow-sm"
       />
     </button>
@@ -129,7 +129,7 @@ export function SuccessCheckmark({
           d="M20 6L9 17l-5-5"
           initial={{ pathLength: shouldReduceMotion ? 1 : 0 }}
           animate={{ pathLength: 1 }}
-          transition={{ duration: shouldReduceMotion ? 0.001 : 0.4, ease: "easeOut" }}
+          transition={{ duration: shouldReduceMotion ? 0 : 0.4, ease: "easeOut" }}
         />
       </svg>
     </div>

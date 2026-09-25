@@ -156,7 +156,7 @@ export default function BottomSheet({
   };
 
   const springTransition: Transition = shouldReduceMotion
-    ? { duration: 0.001 }
+    ? { duration: 0 }
     : { type: "spring", damping: 28, stiffness: 280 };
 
   return (
@@ -169,7 +169,7 @@ export default function BottomSheet({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: shouldReduceMotion ? 0.001 : 0.2 }}
+            transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
             onClick={() => {
               triggerHaptic("light");
               onClose();
