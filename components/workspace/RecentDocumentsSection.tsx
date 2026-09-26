@@ -12,8 +12,12 @@ import {
   Sparkles,
 } from "lucide-react";
 import { getRecentDocuments, type DocumentGeneratedRecord } from "@/lib/documents/recent";
-import { generateDocument, type GeneratedDocument } from "@/lib/documents";
-import DocumentPreviewSheet from "@/components/mobile/DocumentPreviewSheet";
+import type { GeneratedDocument } from "@/lib/documents";
+import dynamic from "next/dynamic";
+
+const DocumentPreviewSheet = dynamic(() => import("@/components/mobile/DocumentPreviewSheet"), {
+  ssr: false,
+});
 
 interface RecentDocumentsSectionProps {
   projectId: string;
@@ -95,7 +99,8 @@ export default function RecentDocumentsSection({ projectId }: RecentDocumentsSec
         };
       }
 
-      // Re-compile doc binary for preview/download
+      // Re-compile doc binary for preview/download (on-demand lazy import)
+      const { generateDocument } = await import("@/lib/documents");
       const generated = await generateDocument(docRecord.type, {
         projectId: docRecord.projectId,
         data: dataPayload,
@@ -225,12 +230,14 @@ export default function RecentDocumentsSection({ projectId }: RecentDocumentsSec
         </div>
       )}
 
-      {/* Re-usable Document Preview Sheet */}
-      <DocumentPreviewSheet
-        isOpen={isPreviewOpen}
-        onClose={() => setIsPreviewOpen(false)}
-        document={previewDoc}
-      />
+      {/* Re-usable Document Preview Sheet (Lazy Loaded On Demand) */}
+      {isPreviewOpen && previewDoc && (
+        <DocumentPreviewSheet
+          isOpen={isPreviewOpen}
+          onClose={() => setIsPreviewOpen(false)}
+          document={previewDoc}
+        />
+      )}
     </section>
   );
 }

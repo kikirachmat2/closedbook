@@ -23,15 +23,16 @@ import { m, AnimatePresence } from "@/components/MotionProvider";
 import { useHaptic } from "@/lib/hooks/use-haptic";
 import { usePreferences } from "@/lib/preferences";
 import BottomSheet from "./BottomSheet";
-import DocumentPreviewSheet from "./DocumentPreviewSheet";
-import {
-  generateDocumentWithProgress,
-  preloadDocumentGenerators,
-  type DocumentTemplateType,
-  type GeneratedDocument,
-  type DocumentGenerationProgress,
-} from "@/lib/documents";
-import { saveRecentDocument } from "@/lib/documents/recent";
+import dynamic from "next/dynamic";
+import type {
+  DocumentTemplateType,
+  GeneratedDocument,
+  DocumentGenerationProgress,
+} from "@/lib/documents/types";
+
+const DocumentPreviewSheet = dynamic(() => import("./DocumentPreviewSheet"), {
+  ssr: false,
+});
 
 export interface RadialAction {
   id: string;
@@ -258,6 +259,9 @@ export default function FAB({
         percent: 25,
         message: "Memuat modul penyusun...",
       });
+
+      const { generateDocumentWithProgress } = await import("@/lib/documents");
+      const { saveRecentDocument } = await import("@/lib/documents/recent");
 
       const doc = await generateDocumentWithProgress(templateType, docInput, {
         onProgress: (p) => setGenProgress(p),
@@ -634,12 +638,14 @@ export default function FAB({
         </div>
       </BottomSheet>
 
-      {/* Document Preview Sheet */}
-      <DocumentPreviewSheet
-        isOpen={isDocumentPreviewOpen}
-        onClose={() => setIsDocumentPreviewOpen(false)}
-        document={generatedDoc}
-      />
+      {/* Document Preview Sheet (Lazy Loaded On Demand) */}
+      {isDocumentPreviewOpen && generatedDoc && (
+        <DocumentPreviewSheet
+          isOpen={isDocumentPreviewOpen}
+          onClose={() => setIsDocumentPreviewOpen(false)}
+          document={generatedDoc}
+        />
+      )}
     </>
   );
 }
