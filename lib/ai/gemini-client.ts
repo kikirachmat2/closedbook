@@ -213,3 +213,55 @@ export async function testGeminiApiKey(
     };
   }
 }
+
+export interface GeminiAudioStreamOptions {
+  apiKey: string;
+  model?: string;
+  audioBase64: string;
+  mimeType: string;
+  prompt?: string;
+  systemInstruction?: string;
+  abortSignal?: AbortSignal;
+}
+
+/**
+ * Multimodal audio streaming helper for Gemini 2.0 Flash (Tier 2 Voice Recording)
+ */
+export async function* streamGeminiAudioContent(
+  options: GeminiAudioStreamOptions
+): AsyncGenerator<string, void, unknown> {
+  const {
+    apiKey,
+    model = DEFAULT_GEMINI_MODEL,
+    audioBase64,
+    mimeType,
+    prompt = "Transkripsikan audio ini dan tanggapi secara singkat dan akurat sesuai kebutuhan produksi film.",
+    systemInstruction,
+    abortSignal,
+  } = options;
+
+  const messages: GeminiContentMessage[] = [
+    {
+      role: "user",
+      parts: [
+        {
+          inline_data: {
+            mime_type: mimeType,
+            data: audioBase64,
+          },
+        },
+        {
+          text: prompt,
+        },
+      ],
+    },
+  ];
+
+  yield* streamGeminiContent({
+    apiKey,
+    model,
+    messages,
+    systemInstruction,
+    abortSignal,
+  });
+}
