@@ -42,3 +42,4 @@ next-env.d.ts
 /docs/ux-walkthrough/*.webp
 /docs/ux-walkthrough/*.mp4
 /docs/design/screenshots/*.png
+.env*

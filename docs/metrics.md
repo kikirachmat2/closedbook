@@ -44,9 +44,11 @@ Untuk menghilangkan ambiguitas antara ukuran chunk rute spesifik, shared vendor,
 | **G.2 PWA Hardening** | `/offline` | **2.45 KB** | **110 KB** | **~55 KB** | **100** | **100** | **100** |
 | **G.2 PWA Hardening** | `/` (Home) | **8.08 KB** | **138 KB** | **~71 KB** | **100** | **96** | **100** |
 | **G.2 PWA Hardening** | `/privacy`, `/terms` | **178 B** | **107 KB** | **~45 KB** | **100** | **100** | **100** |
-| **G.7 Gemini AI** | `/workspace` | **46.6 KB** | **241 KB** | **~245 KB** | **74** *(Mobile Prod)* | **96** | **100** |
+| **G.7 Gemini AI (v0.7.0)** | `/workspace` | **46.6 KB** | **241 KB** | **~245 KB** | **74** *(Mobile Prod Regressed)* | **96** | **100** |
+| **G.7.1 Hotfix (v0.7.1)** | `/workspace` | **46.6 KB** | **240 KB** | **~242 KB** | **90** *(TBT 150ms)* | **100** | **96** |
+| **G.7.1 Hotfix (v0.7.1)** | `/` (Home) | **8.12 KB** | **138 KB** | **~71 KB** | **94** *(TBT 160ms)* | **96** | **100** |
 
-*Catatan: Nilai G.7 diukur dari Next.js 15.5.25 production build (`npm run build`) dan Lighthouse mobile audit pada 26 September 2026. Ukuran rute `/workspace` 46.6 KB berada jauh di bawah batas toleransi 60 KB.*
+*Catatan: Nilai G.7.1 diukur dari Next.js 15.5.25 production build (`npm run build`) dan Lighthouse mobile audit pada live production (`https://closedbook.vercel.app`) per 26 September 2026 setelah eliminasi eager generator preloading dan penerapan dynamic chunk splitting untuk PreferencesModal & PreviewSheet.*
 
 ---
 

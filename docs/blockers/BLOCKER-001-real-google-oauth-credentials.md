@@ -1,8 +1,12 @@
 # BLOCKER-001: External Google Cloud OAuth 2.0 Credentials Dependency
 
-- **Status**: PARTIALLY MITIGATED — UI handling done, credentials still pending from Director
+- **Status**: PARTIALLY MITIGATED
+  - UI onboarding flow: DONE
+  - Real OAuth E2E test: PENDING (waiting for Director credentials)
+  - Impact: Document "Save to Drive" not verified; template seeding not verified; document upload flow not verified
+  - Blocker for: G.6 Drive integration, G.7 context-rich AI (jika butuh Drive data)
 - **Date Logged**: 2026-09-23
-- **Last Updated**: 2026-09-26 (v0.6.1)
+- **Last Updated**: 2026-09-26 (v0.7.1)
 - **Priority**: P0 (External Infrastructure Dependency)
 - **Mitigation State**: Gracefully degraded in UI via active Drive onboarding modal and zero-server client compilation. Real live sync remains blocked pending Google Cloud credentials from Director.
 - **Affected Components**: Live Google Drive sync validation, live Google Docs/Sheets binary auto-conversion, real Google OAuth consent & refresh flow.
