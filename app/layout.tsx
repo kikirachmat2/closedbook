@@ -57,7 +57,7 @@ export const viewport: Viewport = {
 };
 
 import { PreferencesProvider } from "@/lib/preferences";
-import PreferencesModal from "@/components/PreferencesModal";
+import ClientPreferencesModal from "@/components/ClientPreferencesModal";
 import { MotionProvider } from "@/components/MotionProvider";
 import PwaManager from "@/components/PwaManager";
 import { IOSInstallPrompt } from "@/components/pwa/ios-install-prompt";
@@ -93,7 +93,7 @@ export default async function RootLayout({
           <MotionProvider>
             <OfflineBanner />
             {children}
-            <PreferencesModal />
+            <ClientPreferencesModal />
             <PwaManager />
             <IOSInstallPrompt />
             <UpdatePrompt />

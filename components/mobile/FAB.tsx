@@ -122,10 +122,7 @@ export default function FAB({
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const isLongPress = useRef(false);
 
-  // Preload document generator chunks on browser idle
-  useEffect(() => {
-    preloadDocumentGenerators();
-  }, []);
+  // Document generators are loaded on-demand when user opens export / document sheet
 
   // Close radial menu on outside click or escape
   useEffect(() => {

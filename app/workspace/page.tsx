@@ -4453,26 +4453,28 @@ export default function WorkspacePage() {
         }}
       />
 
-      {/* AI Assistant Mobile Bottom Sheet (Gemini 2.0 Flash BYOK) */}
-      <GeminiAssistantSheet
-        isOpen={isGeminiSheetOpen}
-        onClose={() => setIsGeminiSheetOpen(false)}
-        appContext={{
-          projectName: store.project.name,
-          projectType: "Feature Film",
-          activeTab: activeTab,
-          totalBudget: store.project.totalBudget,
-          totalSpent: totalSpent,
-          activeAlertsCount: activeAlertsCount,
-          recentTransactions: store.transactions.slice(0, 5).map((tx) => ({
-            date: tx.loggedAt,
-            description: tx.description,
-            amount: tx.amount,
-            department: tx.departmentName,
-            status: tx.status,
-          })),
-        }}
-      />
+      {/* AI Assistant Mobile Bottom Sheet (Gemini 2.0 Flash BYOK - Lazy Loaded On Demand) */}
+      {isGeminiSheetOpen && (
+        <GeminiAssistantSheet
+          isOpen={isGeminiSheetOpen}
+          onClose={() => setIsGeminiSheetOpen(false)}
+          appContext={{
+            projectName: store.project.name,
+            projectType: "Feature Film",
+            activeTab: activeTab,
+            totalBudget: store.project.totalBudget,
+            totalSpent: totalSpent,
+            activeAlertsCount: activeAlertsCount,
+            recentTransactions: store.transactions.slice(0, 5).map((tx) => ({
+              date: tx.loggedAt,
+              description: tx.description,
+              amount: tx.amount,
+              department: tx.departmentName,
+              status: tx.status,
+            })),
+          }}
+        />
+      )}
 
       {/* ========================================================================= */}
       {/* PRINT-ONLY PRODUCTION WRAP REPORT (AUDIT PDF & PHYSICAL SIGN-OFF) */}

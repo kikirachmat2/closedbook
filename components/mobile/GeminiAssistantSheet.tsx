@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import BottomSheet from "./BottomSheet";
-import MarkdownRenderer from "./MarkdownRenderer";
-import VoiceInput from "./VoiceInput";
+import dynamic from "next/dynamic";
+
+const MarkdownRenderer = dynamic(() => import("./MarkdownRenderer"), { ssr: false });
+const VoiceInput = dynamic(() => import("./VoiceInput"), { ssr: false });
 import {
   Sparkles,
   Send,
