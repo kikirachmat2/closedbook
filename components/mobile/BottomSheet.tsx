@@ -231,7 +231,7 @@ export default function BottomSheet({
                   onClose();
                 }}
                 aria-label={closeLabel}
-                className="min-h-[44px] min-w-[44px] -mr-2 flex items-center justify-center text-[var(--color-stone,#737373)] hover:text-white rounded-full transition-colors active:scale-95"
+                className="min-h-[44px] min-w-[44px] -mr-2 flex items-center justify-center text-[#9ca3af] hover:text-white rounded-full transition-colors active:scale-95"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -240,7 +240,10 @@ export default function BottomSheet({
             {/* Independent Scrollable Content */}
             <div
               data-testid="bottom-sheet-content"
-              className="flex-1 overflow-y-auto px-6 py-4 space-y-4 overscroll-contain"
+              tabIndex={0}
+              role="region"
+              aria-label={title || "Sheet Content"}
+              className="flex-1 overflow-y-auto px-6 py-4 space-y-4 overscroll-contain focus:outline-none"
             >
               {children}
             </div>

@@ -25,6 +25,12 @@ export interface GeneratedDocument {
   metadata: DocumentMetadata;
 }
 
+export interface DocumentGenerationProgress {
+  stage: 'downloading' | 'compiling' | 'finalizing';
+  percent: number;
+  message: string;
+}
+
 // Master Ledger Types (.xlsx)
 export interface LedgerEntry {
   date: string;

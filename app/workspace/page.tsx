@@ -1607,7 +1607,7 @@ export default function WorkspacePage() {
                   <button
                     id="btn-demo-create-project"
                     onClick={() => setIsNewProjectModalOpen(true)}
-                    className="px-3.5 py-1.5 rounded-full bg-sky-500 hover:bg-sky-600 text-white text-xs font-medium flex items-center gap-1.5 shadow-sm transition-colors min-h-[36px]"
+                    className="px-3.5 py-1.5 rounded-full bg-sky-400 hover:bg-sky-300 text-neutral-950 text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors min-h-[36px]"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>{t("createMyProject")}</span>
@@ -1750,7 +1750,7 @@ export default function WorkspacePage() {
               {/* Stat Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="surface-panel surface-panel-hover p-5">
-                  <span className="text-xs text-[#737373] block mb-1">{t("totalBudget")}</span>
+                  <span className="text-xs text-[#9ca3af] block mb-1">{t("totalBudget")}</span>
                   <span className="text-3xl font-display font-bold text-[#fdfdfd] tracking-wide block">
                     <CountUp end={store.project.totalBudget} formatter={formatMoney} />
                   </span>
@@ -1758,7 +1758,7 @@ export default function WorkspacePage() {
                 </div>
 
                 <div className="surface-panel surface-panel-hover p-5">
-                  <span className="text-xs text-[#737373] block mb-1">{t("disbursedToDepts")}</span>
+                  <span className="text-xs text-[#9ca3af] block mb-1">{t("disbursedToDepts")}</span>
                   <span className="text-3xl font-display font-bold text-[#fdfdfd] tracking-wide block">
                     <CountUp end={totalSpent} formatter={formatMoney} />
                   </span>
@@ -1768,7 +1768,7 @@ export default function WorkspacePage() {
                 </div>
 
                 <div className="surface-panel surface-panel-hover p-5">
-                  <span className="text-xs text-[#737373] block mb-1">{t("fieldCashOnHand")}</span>
+                  <span className="text-xs text-[#9ca3af] block mb-1">{t("fieldCashOnHand")}</span>
                   <span className="text-3xl font-display font-bold text-[#10b981] tracking-wide block">
                     <CountUp
                       end={store.pockets.find((p) => p.id === "pkt-upm")?.balance || 8420}
@@ -1779,7 +1779,7 @@ export default function WorkspacePage() {
                 </div>
 
                 <div className="surface-panel surface-panel-hover p-5">
-                  <span className="text-xs text-[#737373] block mb-1">{t("activeAlerts")}</span>
+                  <span className="text-xs text-[#9ca3af] block mb-1">{t("activeAlerts")}</span>
                   <span className="text-3xl font-display font-bold text-[var(--color-primary,#ff1e42)] tracking-wide block">
                     <CountUp end={activeAlertsCount} formatter={(n) => `${n} Flags`} />
                   </span>
@@ -1798,7 +1798,7 @@ export default function WorkspacePage() {
                           {forecast.projectedOverBudget ? "⚠ Burn Rate Alert" : "✓ Burn Rate Forecast"}
                         </span>
                         <p className="text-xl font-bold text-[#fdfdfd] mt-1">
-                          {formatMoney(forecast.dailyBurnRate)} <span className="text-sm font-normal text-[#737373]">/ day avg</span>
+                          {formatMoney(forecast.dailyBurnRate)} <span className="text-sm font-normal text-[#9ca3af]">/ day avg</span>
                         </p>
                         <p className={`text-xs mt-1 ${forecast.projectedOverBudget ? "text-[#ff1e42]" : "text-[#10b981]"}`}>
                           {forecast.projectedOverBudget
@@ -1807,7 +1807,7 @@ export default function WorkspacePage() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-[#737373]">Days remaining</p>
+                        <p className="text-xs text-[#9ca3af]">Days remaining</p>
                         <p className="text-2xl font-bold text-[#fdfdfd]">{forecast.daysRemaining}</p>
                         {forecast.daysUntilBudgetExhausted !== null && (
                           <p className="text-[11px] text-[#f59e0b] mt-0.5">Budget exhausted in ~{forecast.daysUntilBudgetExhausted}d</p>
@@ -1815,7 +1815,7 @@ export default function WorkspacePage() {
                       </div>
                     </div>
                     <div className="mt-4">
-                      <div className="flex justify-between text-[11px] text-[#737373] mb-1.5">
+                      <div className="flex justify-between text-[11px] text-[#9ca3af] mb-1.5">
                         <span>{forecast.budgetUtilizationPct.toFixed(1)}% consumed</span>
                         <span>{formatMoney(forecast.totalSpent)} / {formatMoney(store.project.totalBudget)}</span>
                       </div>
@@ -1833,7 +1833,7 @@ export default function WorkspacePage() {
                 <div className="flex items-center justify-between pb-4 mb-6 border-b border-white/[0.06]">
                   <div>
                     <h2 className="text-sm font-medium text-[#fdfdfd]">{t("deptBudgetRealization")}</h2>
-                    <p className="text-xs text-[#737373] mt-0.5">{t("deptBudgetSub")}</p>
+                    <p className="text-xs text-[#9ca3af] mt-0.5">{t("deptBudgetSub")}</p>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-[#a3a3a3] font-mono hidden sm:inline">
@@ -1874,21 +1874,21 @@ export default function WorkspacePage() {
                           <div className="flex items-center gap-2 font-mono text-[#a3a3a3]">
                             <span>
                               {formatMoney(dept.spentAmount)} / {formatMoney(dept.allocatedBudget)}
-                              <span className={`ml-2 font-bold ${isHigh ? "text-[var(--color-primary,#ff1e42)]" : "text-[#737373]"}`}>
+                              <span className={`ml-2 font-bold ${isHigh ? "text-[var(--color-primary,#ff1e42)]" : "text-[#9ca3af]"}`}>
                                 ({pct}%)
                               </span>
                             </span>
                             <div className="flex items-center gap-1 opacity-0 group-hover/cat:opacity-100 transition-opacity ml-1">
                               <button
                                 onClick={() => openEditCategory(dept)}
-                                className="p-1 hover:text-white text-[#737373] transition-colors"
+                                className="p-1 hover:text-white text-[#9ca3af] transition-colors"
                                 title={t("editCategory")}
                               >
                                 <Edit3 className="w-3 h-3" />
                               </button>
                               <button
                                 onClick={() => handleDeleteCategory(dept.id)}
-                                className="p-1 hover:text-[#ff1e42] text-[#737373] transition-colors"
+                                className="p-1 hover:text-[#ff1e42] text-[#9ca3af] transition-colors"
                                 title={t("deleteCategory")}
                               >
                                 <Trash2 className="w-3 h-3" />
@@ -1931,9 +1931,9 @@ export default function WorkspacePage() {
                         <div>
                           <div className="font-medium text-[#fdfdfd] flex items-center gap-2">
                             {tx.description}
-                            <span className="text-[10px] font-mono text-[#737373]">{tx.id}</span>
+                            <span className="text-[10px] font-mono text-[#9ca3af]">{tx.id}</span>
                           </div>
-                          <div className="text-[11px] text-[#737373] mt-0.5">
+                          <div className="text-[11px] text-[#9ca3af] mt-0.5">
                             <span>{tx.departmentName}</span> • <span>{tx.vendor}</span>
                           </div>
                         </div>
@@ -1963,7 +1963,7 @@ export default function WorkspacePage() {
                 <div className="lg:col-span-5 surface-panel p-5 sm:p-6">
                   <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.06]">
                     <h2 className="text-sm font-medium text-[#fdfdfd]">{t("activeFlags")}</h2>
-                    <span className="text-xs text-[#737373]">Autonomous Guardrails</span>
+                    <span className="text-xs text-[#9ca3af]">Autonomous Guardrails</span>
                   </div>
 
                   <div className="space-y-3">
@@ -1985,7 +1985,7 @@ export default function WorkspacePage() {
                             {alert.message}
                           </p>
                           <div className="flex items-center justify-between">
-                            <span className="text-[10px] text-[#737373]">{alert.timestamp}</span>
+                            <span className="text-[10px] text-[#9ca3af]">{alert.timestamp}</span>
                             <button
                               onClick={() => store.resolveAlert(alert.id)}
                               className="text-[11px] font-medium text-[var(--color-primary,#ff1e42)] hover:underline min-h-[36px] flex items-center"
@@ -2010,12 +2010,12 @@ export default function WorkspacePage() {
                     </div>
                     <div>
                       <h3 className="text-sm font-medium text-[#fdfdfd]">{t("projectNotes")}</h3>
-                      <p className="text-[10px] text-[#737373] font-mono">{store.notes.length} {t("notesCount")}</p>
+                      <p className="text-[10px] text-[#9ca3af] font-mono">{store.notes.length} {t("notesCount")}</p>
                     </div>
                   </div>
                   <button
                     onClick={() => setIsNotesPanelOpen((v) => !v)}
-                    className="min-h-[36px] min-w-[36px] flex items-center justify-center text-[#737373] hover:text-[#fdfdfd] hover:bg-white/[0.05] rounded-lg transition-colors"
+                    className="min-h-[36px] min-w-[36px] flex items-center justify-center text-[#9ca3af] hover:text-[#fdfdfd] hover:bg-white/[0.05] rounded-lg transition-colors"
                     aria-label="Toggle notes panel"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className={`w-4 h-4 transition-transform duration-200 ${isNotesPanelOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
@@ -2034,7 +2034,7 @@ export default function WorkspacePage() {
                     >
                       {/* Note Cards */}
                       {store.notes.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-8 text-[#737373] text-center">
+                        <div className="flex flex-col items-center justify-center py-8 text-[#9ca3af] text-center">
                           <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 stroke-1 mb-2 opacity-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                           <p className="text-xs">{t("noNotesYet")}</p>
                         </div>

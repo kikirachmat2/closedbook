@@ -165,7 +165,7 @@ export default function DocumentPreviewSheet({
               >
                 {document.filename}
               </p>
-              <div className="flex items-center gap-2 mt-0.5 text-[11px] text-[var(--cb-text-tertiary,#6B7280)]">
+              <div className="flex items-center gap-2 mt-0.5 text-[11px] text-[var(--cb-text-secondary,#9CA3AF)]">
                 <span>{sizeFormatted}</span>
                 <span>•</span>
                 <span>Diperbarui {lastUpdated}</span>
@@ -187,10 +187,10 @@ export default function DocumentPreviewSheet({
           {/* Kontainer Pratinjau Tabel */}
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium tracking-wide uppercase text-[var(--cb-text-secondary,#4B5563)]">
+              <span className="text-xs font-medium tracking-wide uppercase text-[var(--cb-text-secondary,#9CA3AF)]">
                 Pratinjau (10 Baris Pertama)
               </span>
-              <span className="text-[11px] text-[var(--cb-text-tertiary,#6B7280)]">
+              <span className="text-[11px] text-[var(--cb-text-secondary,#9CA3AF)]">
                 Buffer Memori Lokal (Zero-Retention)
               </span>
             </div>

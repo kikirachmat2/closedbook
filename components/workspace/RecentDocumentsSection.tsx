@@ -139,7 +139,7 @@ export default function RecentDocumentsSection({ projectId }: RecentDocumentsSec
           </div>
           <div>
             <h3 className="text-sm font-semibold text-[#fdfdfd]">Dokumen Produksi Terbaru</h3>
-            <p className="text-xs text-[#737373]">
+            <p className="text-xs text-[#9ca3af]">
               Berkas yang dikompilasi secara lokal (Zero-Retention)
             </p>
           </div>
@@ -158,11 +158,11 @@ export default function RecentDocumentsSection({ projectId }: RecentDocumentsSec
 
       {documents.length === 0 ? (
         <div className="py-8 text-center rounded-xl border border-dashed border-white/[0.08] bg-white/[0.01]">
-          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white/[0.04] text-[#737373] mx-auto mb-2.5">
+          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white/[0.04] text-[#9ca3af] mx-auto mb-2.5">
             <Sparkles className="w-5 h-5" />
           </div>
           <p className="text-xs font-medium text-[#a3a3a3]">Belum ada dokumen yang dibuat</p>
-          <p className="text-[11px] text-[#737373] max-w-xs mx-auto mt-1">
+          <p className="text-[11px] text-[#9ca3af] max-w-xs mx-auto mt-1">
             Gunakan tombol aksi FAB (+) di pojok kanan bawah lalu pilih &quot;Buat Dokumen&quot; untuk menghasilkan Buku Kas (.xlsx) atau Call Sheet (.docx).
           </p>
         </div>
@@ -193,7 +193,7 @@ export default function RecentDocumentsSection({ projectId }: RecentDocumentsSec
                         {extension}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 text-[11px] text-[#737373] mt-1">
+                    <div className="flex items-center gap-2 text-[11px] text-[#9ca3af] mt-1">
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {formatDate(doc.generatedAt)}

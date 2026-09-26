@@ -23,9 +23,14 @@ import { useHaptic } from "@/lib/hooks/use-haptic";
 import { usePreferences } from "@/lib/preferences";
 import BottomSheet from "./BottomSheet";
 import DocumentPreviewSheet from "./DocumentPreviewSheet";
-import { generateDocument } from "@/lib/documents";
+import {
+  generateDocumentWithProgress,
+  preloadDocumentGenerators,
+  type DocumentTemplateType,
+  type GeneratedDocument,
+  type DocumentGenerationProgress,
+} from "@/lib/documents";
 import { saveRecentDocument } from "@/lib/documents/recent";
-import type { DocumentTemplateType, GeneratedDocument } from "@/lib/documents/types";
 
 export interface RadialAction {
   id: string;
@@ -109,9 +114,15 @@ export default function FAB({
   const [generatedDoc, setGeneratedDoc] = useState<GeneratedDocument | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingType, setGeneratingType] = useState<string | null>(null);
+  const [genProgress, setGenProgress] = useState<DocumentGenerationProgress | null>(null);
 
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const isLongPress = useRef(false);
+
+  // Preload document generator chunks on browser idle
+  useEffect(() => {
+    preloadDocumentGenerators();
+  }, []);
 
   // Close radial menu on outside click or escape
   useEffect(() => {
@@ -242,7 +253,16 @@ export default function FAB({
         };
       }
 
-      const doc = await generateDocument(templateType, docInput);
+      setGenProgress({
+        stage: "downloading",
+        percent: 25,
+        message: "Memuat modul penyusun...",
+      });
+
+      const doc = await generateDocumentWithProgress(templateType, docInput, {
+        onProgress: (p) => setGenProgress(p),
+        timeoutMs: 25000,
+      });
       setGeneratedDoc(doc);
 
       // Track recently generated document in Dexie (T3.4)
@@ -263,12 +283,13 @@ export default function FAB({
 
       setIsTemplateSelectorOpen(false);
       setIsDocumentPreviewOpen(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to generate document:", err);
-      alert("Gagal membuat dokumen. Silakan periksa kembali data proyek Anda.");
+      alert(err?.message || "Gagal membuat dokumen. Silakan periksa kembali koneksi atau data proyek Anda.");
     } finally {
       setIsGenerating(false);
       setGeneratingType(null);
+      setGenProgress(null);
     }
   };
 
@@ -544,6 +565,32 @@ export default function FAB({
           <p className="text-xs text-[var(--cb-text-secondary,#4B5563)]">
             Pilih templat produksi terverifikasi untuk dikompilasi langsung di perangkat Anda (Zero-Retention).
           </p>
+
+          {/* Progress Indicator untuk Mobile 3G / Toleransi Unduhan NN/g */}
+          {isGenerating && genProgress && (
+            <div
+              role="status"
+              aria-live="polite"
+              data-testid="document-generation-progress"
+              className="p-3.5 rounded-xl border border-[var(--color-primary,#ff1e42)]/30 bg-[var(--color-primary,#ff1e42)]/[0.06] flex flex-col gap-2 animate-in fade-in duration-200"
+            >
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium text-[var(--color-primary,#ff1e42)] flex items-center gap-1.5">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  {genProgress.message}
+                </span>
+                <span className="font-mono text-[11px] text-[var(--cb-text-secondary,#4B5563)]">
+                  {genProgress.percent}%
+                </span>
+              </div>
+              <div className="h-1.5 w-full bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[var(--color-primary,#ff1e42)] transition-all duration-300 rounded-full"
+                  style={{ width: `${genProgress.percent}%` }}
+                />
+              </div>
+            </div>
+          )}
 
           <div className="flex flex-col gap-2.5">
             {TEMPLATE_OPTIONS.map((tmpl) => {

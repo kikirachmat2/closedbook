@@ -125,3 +125,6 @@ export async function parseDocumentPreview(
     ['Tindakan', 'Ketuk Unduh untuk membuka di MS Word / Docs / Pages'],
   ];
 }
+
+export { generateDocumentWithProgress } from './worker/worker-client';
+export { preloadDocumentGenerators } from './preload';
