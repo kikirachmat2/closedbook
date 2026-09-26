@@ -24,6 +24,7 @@ import { usePreferences } from "@/lib/preferences";
 import BottomSheet from "./BottomSheet";
 import DocumentPreviewSheet from "./DocumentPreviewSheet";
 import { generateDocument } from "@/lib/documents";
+import { saveRecentDocument } from "@/lib/documents/recent";
 import type { DocumentTemplateType, GeneratedDocument } from "@/lib/documents/types";
 
 export interface RadialAction {
@@ -56,24 +57,24 @@ const TEMPLATE_OPTIONS: Array<{
 }> = [
   {
     id: "ledger",
-    title: "Master Production Ledger",
-    description: "Multi-category petty cash ledger with frozen headers and SUM formula.",
+    title: "Buku Kas Produksi",
+    description: "Buku kas kas kecil multi-kategori dengan baris header terkunci dan rumus SUM otomatis.",
     format: ".XLSX",
     badgeColor: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
     icon: FileSpreadsheet,
   },
   {
     id: "call-sheet",
-    title: "Daily Call Sheet",
-    description: "Call times, scene rundown, crew contacts, and hospital advisories.",
+    title: "Call Sheet Harian",
+    description: "Jadwal panggilan, adegan, kontak kru, dan panduan rumah sakit darurat.",
     format: ".DOCX",
     badgeColor: "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",
     icon: FileText,
   },
   {
     id: "wrap-report",
-    title: "Daily Wrap Report",
-    description: "Departmental actuals vs approved budget and burn rate variance.",
+    title: "Laporan Wrap Harian",
+    description: "Realisasi anggaran per departemen vs pagu disetujui serta analisis variansi.",
     format: ".XLSX",
     badgeColor: "bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300",
     icon: FileSpreadsheet,
@@ -243,10 +244,28 @@ export default function FAB({
 
       const doc = await generateDocument(templateType, docInput);
       setGeneratedDoc(doc);
+
+      // Track recently generated document in Dexie (T3.4)
+      try {
+        await saveRecentDocument({
+          id: doc.filename,
+          projectId: docInput.projectId || "proj-quiet-horizon",
+          type: templateType,
+          title: doc.metadata.title,
+          filename: doc.filename,
+          mimeType: doc.mimeType,
+          size: doc.metadata.estimatedSizeBytes,
+          generatedAt: doc.metadata.lastUpdated,
+        });
+      } catch (saveErr) {
+        console.warn("Failed to persist generated document to Dexie:", saveErr);
+      }
+
       setIsTemplateSelectorOpen(false);
       setIsDocumentPreviewOpen(true);
     } catch (err) {
       console.error("Failed to generate document:", err);
+      alert("Gagal membuat dokumen. Silakan periksa kembali data proyek Anda.");
     } finally {
       setIsGenerating(false);
       setGeneratingType(null);
@@ -263,19 +282,19 @@ export default function FAB({
       defaultActions = [
         {
           id: "generate-doc",
-          label: "Generate Document",
+          label: "Buat Dokumen",
           icon: FileSpreadsheet,
           onClick: handleOpenTemplateSelector,
         },
         {
           id: "scan-receipt",
-          label: "Scan Receipt",
+          label: "Pindai Struk",
           icon: Camera,
           onClick: () => onScanReceipt?.(),
         },
         {
           id: "add-expense",
-          label: "Add Expense",
+          label: "Tambah Biaya",
           icon: Receipt,
           onClick: () => onPrimaryAction(),
         },
@@ -287,19 +306,19 @@ export default function FAB({
       defaultActions = [
         {
           id: "generate-doc",
-          label: "Generate Document",
+          label: "Buat Dokumen",
           icon: FileSpreadsheet,
           onClick: handleOpenTemplateSelector,
         },
         {
           id: "add-task-urgent",
-          label: "Urgent Task",
+          label: "Tugas Mendesak",
           icon: AlertTriangle,
           onClick: () => onAddTask?.(),
         },
         {
           id: "add-task",
-          label: "New Task",
+          label: "Tugas Baru",
           icon: CheckSquare,
           onClick: () => onPrimaryAction(),
         },
@@ -311,19 +330,19 @@ export default function FAB({
       defaultActions = [
         {
           id: "generate-doc",
-          label: "Generate Document",
+          label: "Buat Dokumen",
           icon: FileSpreadsheet,
           onClick: handleOpenTemplateSelector,
         },
         {
           id: "transfer-funds",
-          label: "Transfer Cash",
+          label: "Transfer Kas",
           icon: ArrowLeftRight,
           onClick: () => onPrimaryAction(),
         },
         {
           id: "log-cash",
-          label: "Log Expense",
+          label: "Catat Kas",
           icon: Receipt,
           onClick: () => onTransfer?.(),
         },
@@ -335,19 +354,19 @@ export default function FAB({
       defaultActions = [
         {
           id: "generate-doc",
-          label: "Generate Document",
+          label: "Buat Dokumen",
           icon: FileSpreadsheet,
           onClick: handleOpenTemplateSelector,
         },
         {
           id: "edit-schedule",
-          label: "Edit Brief",
+          label: "Ubah Jadwal",
           icon: Calendar,
           onClick: () => onEditSchedule?.(),
         },
         {
           id: "print-summary",
-          label: "Print Summary",
+          label: "Cetak Ringkasan",
           icon: Printer,
           onClick: () => onPrintWrap?.(),
         },
@@ -359,19 +378,19 @@ export default function FAB({
       defaultActions = [
         {
           id: "generate-doc",
-          label: "Generate Document",
+          label: "Buat Dokumen",
           icon: FileSpreadsheet,
           onClick: handleOpenTemplateSelector,
         },
         {
           id: "quick-expense",
-          label: "Expense",
+          label: "Catat Biaya",
           icon: Receipt,
           onClick: () => onPrimaryAction(),
         },
         {
           id: "quick-task",
-          label: "Task",
+          label: "Tugas Baru",
           icon: CheckSquare,
           onClick: () => onAddTask?.(),
         },
@@ -518,12 +537,12 @@ export default function FAB({
       <BottomSheet
         isOpen={isTemplateSelectorOpen}
         onClose={() => setIsTemplateSelectorOpen(false)}
-        title="Generate Document"
+        title="Buat Dokumen Produksi"
         initialSnap="half"
       >
         <div className="flex flex-col gap-3 pb-6 text-[var(--cb-text-primary,#111827)]" data-testid="template-selector-sheet">
           <p className="text-xs text-[var(--cb-text-secondary,#4B5563)]">
-            Select a verified production template to compile directly in your browser.
+            Pilih templat produksi terverifikasi untuk dikompilasi langsung di perangkat Anda (Zero-Retention).
           </p>
 
           <div className="flex flex-col gap-2.5">

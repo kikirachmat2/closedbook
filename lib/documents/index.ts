@@ -25,10 +25,10 @@ export async function generateDocument(
     case 'ledger': {
       const { generateMasterLedger } = await import('./generators/ledger-generator');
       const buffer = await generateMasterLedger(input as DocumentGeneratorInput<LedgerDocumentData>);
-      const filename = `Master_Ledger_${input.projectId || 'production'}_${timestamp}.xlsx`;
+      const filename = `Buku_Kas_${input.projectId || 'production'}_${timestamp}.xlsx`;
       const metadata: DocumentMetadata = {
         templateType: 'ledger',
-        title: 'Master Production Ledger',
+        title: 'Buku Kas Produksi',
         filename,
         mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         estimatedSizeBytes: buffer.byteLength,
@@ -41,10 +41,10 @@ export async function generateDocument(
     case 'call-sheet': {
       const { generateCallSheet } = await import('./generators/call-sheet-generator');
       const buffer = await generateCallSheet(input as DocumentGeneratorInput<CallSheetData>);
-      const filename = `Daily_Call_Sheet_${input.projectId || 'production'}_${timestamp}.docx`;
+      const filename = `Call_Sheet_${input.projectId || 'production'}_${timestamp}.docx`;
       const metadata: DocumentMetadata = {
         templateType: 'call-sheet',
-        title: 'Daily Call Sheet',
+        title: 'Call Sheet Harian',
         filename,
         mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         estimatedSizeBytes: buffer.byteLength,
@@ -57,10 +57,10 @@ export async function generateDocument(
     case 'wrap-report': {
       const { generateWrapReport } = await import('./generators/wrap-report-generator');
       const buffer = await generateWrapReport(input as DocumentGeneratorInput<WrapReportData>);
-      const filename = `Daily_Wrap_Report_${input.projectId || 'production'}_${timestamp}.xlsx`;
+      const filename = `Laporan_Wrap_${input.projectId || 'production'}_${timestamp}.xlsx`;
       const metadata: DocumentMetadata = {
         templateType: 'wrap-report',
-        title: 'Daily Wrap Report',
+        title: 'Laporan Wrap Harian',
         filename,
         mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         estimatedSizeBytes: buffer.byteLength,
@@ -118,10 +118,10 @@ export async function parseDocumentPreview(
 
   // Call sheet (.docx) preview rows fallback
   return [
-    ['Document Type', 'Daily Call Sheet (.docx)'],
-    ['Preview Mode', 'OpenXML Document Ready'],
+    ['Jenis Dokumen', 'Call Sheet Harian (.docx)'],
+    ['Mode Pratinjau', 'Dokumen OpenXML Siap'],
     ['Format', 'Word Processing Document (DOCX)'],
-    ['Status', 'Compiled in memory (Zero-retention client buffer)'],
-    ['Action', 'Tap Download to open in MS Word / Pages / Google Docs'],
+    ['Status', 'Terkonversi di memori lokal (Zero-retention buffer)'],
+    ['Tindakan', 'Ketuk Unduh untuk membuka di MS Word / Docs / Pages'],
   ];
 }

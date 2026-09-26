@@ -109,7 +109,6 @@ export default function BottomNav({ activeTab, onTabChange, badges = {} }: Botto
               role="tab"
               id={`tab-${tab.id}`}
               aria-selected={isActive}
-              aria-controls={`panel-${tab.id}`}
               tabIndex={isActive ? 0 : -1}
               onClick={(e) => handleTabClick(tab.id, e)}
               onKeyDown={(e) => handleKeyDown(e, idx)}

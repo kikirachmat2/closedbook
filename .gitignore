@@ -8,6 +8,8 @@
 /coverage
 /.lighthouseci/
 /test-results/
+lighthouse*.json
+lh-*.json
 
 # next.js
 /.next/

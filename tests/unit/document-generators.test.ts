@@ -250,8 +250,9 @@ describe('Document Generators (T2.2)', () => {
         },
       });
 
-      expect(result.filename).toContain('Master_Ledger_proj-456');
+      expect(result.filename).toContain('Buku_Kas_proj-456');
       expect(result.metadata.templateType).toBe('ledger');
+      expect(result.metadata.title).toBe('Buku Kas Produksi');
       expect(result.buffer.byteLength).toBeGreaterThan(0);
 
       // Test parseDocumentPreview

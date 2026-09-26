@@ -90,7 +90,7 @@ describe('DocumentPreviewSheet Component (T2.3)', () => {
     expect(mockCreateObjectURL).toHaveBeenCalled();
   });
 
-  it('renders Save to Drive as disabled with BLOCKER-001 notice', () => {
+  it('renders Simpan ke Drive as enabled and opens onboarding modal without internal blocker jargon', () => {
     render(
       <DocumentPreviewSheet
         isOpen={true}
@@ -100,10 +100,22 @@ describe('DocumentPreviewSheet Component (T2.3)', () => {
     );
 
     const saveDriveBtn = screen.getByTestId('btn-save-drive');
-    expect(saveDriveBtn).toBeDisabled();
-    expect(saveDriveBtn).toHaveAttribute('aria-disabled', 'true');
-    expect(saveDriveBtn).toHaveAttribute('title', 'Login Google required (blocked by BLOCKER-001)');
+    expect(saveDriveBtn).toBeEnabled();
+    expect(saveDriveBtn).toHaveTextContent('Simpan ke Drive');
 
-    expect(screen.getByText(/BLOCKER-001/)).toBeInTheDocument();
+    // No internal blocker jargon visible in UI
+    expect(screen.queryByText(/BLOCKER-001/i)).not.toBeInTheDocument();
+
+    // Clicking button opens onboarding dialog
+    fireEvent.click(saveDriveBtn);
+    const modal = screen.getByTestId('drive-onboarding-modal');
+    expect(modal).toBeInTheDocument();
+    expect(screen.getByText('Hubungkan Google Drive')).toBeInTheDocument();
+    expect(screen.getByTestId('btn-connect-google-drive')).toBeInTheDocument();
+    expect(screen.getByTestId('btn-dismiss-drive-modal')).toBeInTheDocument();
+
+    // Dismissing modal closes it
+    fireEvent.click(screen.getByTestId('btn-dismiss-drive-modal'));
+    expect(screen.queryByTestId('drive-onboarding-modal')).not.toBeInTheDocument();
   });
 });

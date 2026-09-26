@@ -75,7 +75,7 @@ test.describe("Document Generation Flow (G.6 Unblocked Parts)", () => {
     // Verify table preview is rendered with headers
     const tablePreview = page.locator('[aria-label="Document table preview"]');
     await expect(tablePreview).toBeVisible();
-    await expect(page.locator('text=Preview (First 10 Rows)')).toBeVisible();
+    await expect(page.locator('text=Pratinjau (10 Baris Pertama)')).toBeVisible();
   });
 
   test("4. DocumentPreviewSheet renders metadata and functional download action", async ({ page }) => {
@@ -92,8 +92,8 @@ test.describe("Document Generation Flow (G.6 Unblocked Parts)", () => {
     const previewSheet = page.locator('[data-testid="document-preview-sheet"]');
     await expect(previewSheet).toBeVisible({ timeout: 10000 });
 
-    // Metadata checks
-    await expect(page.locator('[data-testid="doc-preview-title"]')).toContainText("Master Production Ledger");
+    // Metadata checks (Indonesian-first copy)
+    await expect(page.locator('[data-testid="doc-preview-title"]')).toContainText("Buku Kas Produksi");
     await expect(page.locator('[data-testid="doc-preview-filename"]')).toContainText(".xlsx");
 
     // Download button check
@@ -102,7 +102,7 @@ test.describe("Document Generation Flow (G.6 Unblocked Parts)", () => {
     await expect(downloadBtn).toBeEnabled();
   });
 
-  test("5. Save to Drive button is disabled with BLOCKER-001 advisory", async ({ page }) => {
+  test("5. Simpan ke Drive button is enabled and triggers Google Drive onboarding modal without blocker jargon", async ({ page }) => {
     const fabBtn = page.locator("#context-fab-btn");
     await fabBtn.dispatchEvent("mousedown");
     await page.waitForTimeout(650);
@@ -116,12 +116,24 @@ test.describe("Document Generation Flow (G.6 Unblocked Parts)", () => {
     const previewSheet = page.locator('[data-testid="document-preview-sheet"]');
     await expect(previewSheet).toBeVisible({ timeout: 10000 });
 
-    // Save to Drive should be disabled
+    // Simpan ke Drive should be enabled
     const saveDriveBtn = page.locator('[data-testid="btn-save-drive"]');
     await expect(saveDriveBtn).toBeVisible();
-    await expect(saveDriveBtn).toBeDisabled();
+    await expect(saveDriveBtn).toBeEnabled();
+    await expect(saveDriveBtn).toContainText("Simpan ke Drive");
 
-    // Verify BLOCKER-001 text notice
-    await expect(page.locator('text=BLOCKER-001')).toBeVisible();
+    // Verify NO internal blocker jargon appears in UI
+    expect(await page.locator('text=BLOCKER-001').count()).toBe(0);
+
+    // Tap opens onboarding modal
+    await saveDriveBtn.click();
+    const driveModal = page.locator('[data-testid="drive-onboarding-modal"]');
+    await expect(driveModal).toBeVisible();
+    await expect(page.locator('text=Hubungkan Google Drive')).toBeVisible();
+    await expect(page.locator('[data-testid="btn-connect-google-drive"]')).toBeVisible();
+
+    // Dismiss modal
+    await page.locator('[data-testid="btn-dismiss-drive-modal"]').click();
+    await expect(driveModal).not.toBeVisible();
   });
 });
