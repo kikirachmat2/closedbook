@@ -44,8 +44,9 @@ Untuk menghilangkan ambiguitas antara ukuran chunk rute spesifik, shared vendor,
 | **G.2 PWA Hardening** | `/offline` | **2.45 KB** | **110 KB** | **~55 KB** | **100** | **100** | **100** |
 | **G.2 PWA Hardening** | `/` (Home) | **8.08 KB** | **138 KB** | **~71 KB** | **100** | **96** | **100** |
 | **G.2 PWA Hardening** | `/privacy`, `/terms` | **178 B** | **107 KB** | **~45 KB** | **100** | **100** | **100** |
+| **G.7 Gemini AI** | `/workspace` | **46.6 KB** | **241 KB** | **~245 KB** | **74** *(Mobile Prod)* | **96** | **100** |
 
-*Catatan: Nilai G.2 diukur dari Next.js 15.5.25 production build (`npm run build`) dan Lighthouse CI autorun pada 23 September 2026.*
+*Catatan: Nilai G.7 diukur dari Next.js 15.5.25 production build (`npm run build`) dan Lighthouse mobile audit pada 26 September 2026. Ukuran rute `/workspace` 46.6 KB berada jauh di bawah batas toleransi 60 KB.*
 
 ---
 
