@@ -62,6 +62,19 @@ export interface DocumentGeneratedRecord {
   generatedAt: string;
 }
 
+export interface GeminiUsageRecord {
+  id: string;
+  timestamp: number;
+  callType: "chat" | "audio" | "vision";
+  model: string;
+  promptTokens?: number;
+  candidateTokens?: number;
+  totalTokens?: number;
+  period: string; // YYYY-MM
+  status: "success" | "error";
+  errorMessage?: string;
+}
+
 export class ClosedBookDB extends Dexie {
   projects!: Table<Project, string>;
   transactions!: Table<Transaction & { projectId: string }, string>;
@@ -77,6 +90,7 @@ export class ClosedBookDB extends Dexie {
   error_logs!: Table<ErrorLogRecord, number>;
   telemetry_counters!: Table<TelemetryCounterRecord, string>;
   documents_generated!: Table<DocumentGeneratedRecord, string>;
+  gemini_usage!: Table<GeminiUsageRecord, string>;
 
   constructor(databaseName = "ClosedBookDB") {
     super(databaseName);
@@ -101,6 +115,11 @@ export class ClosedBookDB extends Dexie {
     // Version 2 Schema Definition: Track client-generated documents
     this.version(2).stores({
       documents_generated: "id, projectId, type, generatedAt, [projectId+type]",
+    });
+
+    // Version 3 Schema Definition: Track Gemini BYOK usage and rate limits
+    this.version(3).stores({
+      gemini_usage: "id, timestamp, callType, period, status, [period+status]",
     });
   }
 }

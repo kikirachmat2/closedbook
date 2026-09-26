@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { usePreferences, CurrencyCode, LanguageCode, ThemeCode, ListDensity } from "@/lib/preferences";
-import { X, Check, Globe, DollarSign, Palette, Sparkles, Bell, ExternalLink, Eye, EyeOff, RefreshCw, CheckCircle2, AlertCircle, LayoutList } from "lucide-react";
+import { X, Check, Globe, DollarSign, Palette, Sparkles, Bell, ExternalLink, Eye, EyeOff, RefreshCw, CheckCircle2, AlertCircle, LayoutList, BarChart3 } from "lucide-react";
 
 import { testGeminiApiKey } from "@/lib/ai/gemini-client";
 import {
@@ -12,6 +12,10 @@ import {
   getGeminiKeyStatus,
   setGeminiKeyStatus,
 } from "@/lib/ai/gemini-key-storage";
+import {
+  getMonthlyGeminiUsage,
+  getCurrentPeriod,
+} from "@/lib/ai/gemini-usage-tracker";
 
 export default function PreferencesModal() {
   const {
@@ -46,22 +50,33 @@ export default function PreferencesModal() {
   const [testStatus, setTestStatus] = useState<"idle" | "testing" | "success" | "invalid">("idle");
   const [testErrorMsg, setTestErrorMsg] = useState<string | null>(null);
   const [keyStatus, setKeyStatusState] = useState<"active" | "invalid" | "none">("none");
+  const [usageStats, setUsageStats] = useState({
+    totalCalls: 0,
+    totalTokens: 0,
+    period: getCurrentPeriod(),
+  });
 
   useEffect(() => {
     let isMounted = true;
-    async function loadKey() {
+    async function loadKeyAndUsage() {
       const stored = await getGeminiApiKey();
       const current = stored || geminiApiKey || "";
+      const stats = await getMonthlyGeminiUsage();
       if (isMounted) {
         setTempKey(current);
         const status = getGeminiKeyStatus();
         setKeyStatusState(current ? status : "none");
         setTestStatus("idle");
         setTestErrorMsg(null);
+        setUsageStats({
+          totalCalls: stats.totalCalls,
+          totalTokens: stats.totalTokens,
+          period: getCurrentPeriod(),
+        });
       }
     }
     if (isSettingsOpen) {
-      loadKey();
+      loadKeyAndUsage();
     }
     return () => {
       isMounted = false;
@@ -615,6 +630,20 @@ export default function PreferencesModal() {
                     <span>Koneksi Berhasil</span>
                   </div>
                 )}
+              </div>
+
+              {/* Usage & Cost Transparency (ADR-011) */}
+              <div
+                data-testid="gemini-usage-stats"
+                className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-between text-xs"
+              >
+                <div className="flex items-center gap-2 text-[#9ca3af]">
+                  <BarChart3 className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
+                  <span>Penggunaan Bulan Ini ({usageStats.period})</span>
+                </div>
+                <div className="font-mono text-[#fdfdfd] font-medium">
+                  {usageStats.totalCalls} panggilan ({usageStats.totalTokens.toLocaleString()} token)
+                </div>
               </div>
             </div>
           </div>
