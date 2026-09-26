@@ -29,6 +29,12 @@ import {
   BASE_SYSTEM_PROMPT,
   AppContextState,
 } from "@/lib/ai/context-builder";
+import {
+  checkGeminiRateLimit,
+  checkCircuitBreaker,
+  recordGeminiUsage,
+  CIRCUIT_BREAKER_MAX_FAILURES,
+} from "@/lib/ai/gemini-usage-tracker";
 
 export interface ChatMessage {
   id: string;
@@ -70,6 +76,8 @@ export default function GeminiAssistantSheet({
   const [includeFinancials, setIncludeFinancials] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(true);
   const [isVoiceOpen, setIsVoiceOpen] = useState(false);
+  const [rateLimitWarning, setRateLimitWarning] = useState<string | null>(null);
+  const [circuitWarning, setCircuitWarning] = useState<string | null>(null);
 
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -96,6 +104,31 @@ export default function GeminiAssistantSheet({
   const handleSendMessage = async (textToSend?: string) => {
     const text = (textToSend || inputText).trim();
     if (!text || isStreaming) return;
+
+    // 1. Check Circuit Breaker
+    const cb = checkCircuitBreaker();
+    if (cb.tripped) {
+      setCircuitWarning(
+        `AI Assistant dinonaktifkan sementara karena ${CIRCUIT_BREAKER_MAX_FAILURES} kegagalan berturut-turut. Tunggu ${cb.minutesRemaining} menit.`
+      );
+      triggerHaptic("heavy");
+      return;
+    } else {
+      setCircuitWarning(null);
+    }
+
+    // 2. Check Rate Limit (20 calls / hr)
+    const rateLimit = await checkGeminiRateLimit();
+    if (!rateLimit.allowed) {
+      setRateLimitWarning(rateLimit.warning || "Batas panggilan AI (20/jam) tercapai.");
+      triggerHaptic("heavy");
+      return;
+    }
+    if (rateLimit.isApproachingLimit && rateLimit.warning) {
+      setRateLimitWarning(rateLimit.warning);
+    } else {
+      setRateLimitWarning(null);
+    }
 
     triggerHaptic("medium");
     setInputText("");
@@ -127,6 +160,13 @@ export default function GeminiAssistantSheet({
     setIsStreaming(true);
 
     abortControllerRef.current = new AbortController();
+
+    // 30s Timeout Recovery
+    const timeoutTimer = setTimeout(() => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort("timeout");
+      }
+    }, 30000);
 
     // Prepare message history for Gemini API
     const contextPrompt = appContext
@@ -172,28 +212,52 @@ export default function GeminiAssistantSheet({
         );
       }
 
+      clearTimeout(timeoutTimer);
+
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === assistantMsgId ? { ...msg, isStreaming: false } : msg
         )
       );
+
+      // Record successful usage
+      await recordGeminiUsage({
+        callType: "chat",
+        model: activeModel,
+        status: "success",
+        totalTokens: Math.round((fullResponse.length + text.length) / 4),
+      });
     } catch (err: any) {
-      if (err.name === "AbortError") {
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === assistantMsgId
-              ? { ...msg, text: msg.text + "\n*(Permintaan dibatalkan)*", isStreaming: false }
-              : msg
-          )
-        );
+      clearTimeout(timeoutTimer);
+
+      let errorText = "";
+      if (err.name === "AbortError" || err === "timeout" || abortControllerRef.current?.signal.aborted) {
+        errorText = "**Batas Waktu Habis (>30s)**: Gemini tidak merespon dalam 30 detik. Silakan periksa koneksi dan coba lagi.";
+      } else if (err.status === 401 || err.code === "INVALID_API_KEY") {
+        errorText = "**Kunci API Tidak Valid (401)**: Kunci Gemini Anda tidak dapat digunakan. Silakan perbarui di Pengaturan.";
+      } else if (err.status === 429 || err.code === "RATE_LIMIT_EXCEEDED") {
+        errorText = "**Batas Permintaan Tercapai (429)**: Terlalu banyak permintaan ke Google Gemini. Silakan tunggu beberapa detik.";
+      } else if (err.code === "SAFETY_BLOCKED" || err.message?.includes("SAFETY")) {
+        errorText = "**Konten Diblokir**: Respon ditahan oleh filter keamanan Gemini. Silakan ubah susunan kalimat pertanyaan Anda.";
+      } else if (typeof navigator !== "undefined" && !navigator.onLine) {
+        errorText = "**Mode Offline**: Perangkat Anda tidak terhubung ke internet. Permintaan akan dicoba saat online.";
       } else {
-        const errorText = `**Terjadi Kesalahan**: ${err?.message || "Gagal menghubungi Gemini"}`;
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === assistantMsgId ? { ...msg, text: errorText, isStreaming: false } : msg
-          )
-        );
+        errorText = `**Terjadi Kesalahan**: ${err?.message || "Gagal menghubungi Gemini"}`;
       }
+
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === assistantMsgId ? { ...msg, text: errorText, isStreaming: false } : msg
+        )
+      );
+
+      // Record error in usage log
+      await recordGeminiUsage({
+        callType: "chat",
+        model: activeModel,
+        status: "error",
+        errorMessage: err.message || errorText,
+      });
     } finally {
       setIsStreaming(false);
       abortControllerRef.current = null;
@@ -273,6 +337,28 @@ export default function GeminiAssistantSheet({
             >
               Pengaturan
             </button>
+          </div>
+        )}
+
+        {/* Circuit Breaker Warning Banner */}
+        {circuitWarning && (
+          <div
+            data-testid="gemini-circuit-warning"
+            className="p-3 bg-rose-500/10 border-b border-rose-500/20 flex items-center gap-2 text-xs text-rose-300 shrink-0"
+          >
+            <Info className="w-4 h-4 text-rose-400 shrink-0" />
+            <span>{circuitWarning}</span>
+          </div>
+        )}
+
+        {/* Rate Limit Warning Banner */}
+        {rateLimitWarning && (
+          <div
+            data-testid="gemini-rate-limit-warning"
+            className="p-3 bg-amber-500/10 border-b border-amber-500/20 flex items-center gap-2 text-xs text-amber-300 shrink-0"
+          >
+            <Info className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>{rateLimitWarning}</span>
           </div>
         )}
 
