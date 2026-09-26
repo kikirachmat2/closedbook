@@ -16,6 +16,7 @@ import {
   FileText,
   ChevronRight,
   Loader2,
+  Sparkles,
 } from "lucide-react";
 import { useReducedMotion } from "framer-motion";
 import { m, AnimatePresence } from "@/components/MotionProvider";
@@ -50,6 +51,7 @@ interface FABProps {
   onEditSchedule?: () => void;
   onPrintWrap?: () => void;
   onGenerateDocument?: () => void;
+  onOpenAiAssistant?: () => void;
 }
 
 const TEMPLATE_OPTIONS: Array<{
@@ -104,6 +106,7 @@ export default function FAB({
   onEditSchedule,
   onPrintWrap,
   onGenerateDocument,
+  onOpenAiAssistant,
 }: FABProps) {
   const { triggerHaptic } = useHaptic();
   const { fabPosition } = usePreferences();
@@ -398,6 +401,14 @@ export default function FAB({
       ContextIcon = Plus;
       defaultActions = [
         {
+          id: "ai-assistant",
+          label: "AI Assistant",
+          icon: Sparkles,
+          onClick: () => {
+            if (onOpenAiAssistant) onOpenAiAssistant();
+          },
+        },
+        {
           id: "generate-doc",
           label: "Buat Dokumen",
           icon: FileSpreadsheet,
@@ -408,12 +419,6 @@ export default function FAB({
           label: "Catat Biaya",
           icon: Receipt,
           onClick: () => onPrimaryAction(),
-        },
-        {
-          id: "quick-task",
-          label: "Tugas Baru",
-          icon: CheckSquare,
-          onClick: () => onAddTask?.(),
         },
       ];
       break;

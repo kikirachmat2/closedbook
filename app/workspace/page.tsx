@@ -39,6 +39,10 @@ const RecentDocumentsSection = dynamic(() => import("@/components/workspace/Rece
   ssr: false,
   loading: () => <div className="surface-panel p-6 h-32 animate-pulse" />,
 });
+const GeminiAssistantSheet = dynamic(() => import("@/components/mobile/GeminiAssistantSheet"), {
+  ssr: false,
+  loading: () => null,
+});
 import {
   LayoutDashboard,
   Receipt,
@@ -249,6 +253,7 @@ export default function WorkspacePage() {
   const [editingCategory, setEditingCategory] = useState<Department | null>(null);
   const [activeCommentEntity, setActiveCommentEntity] = useState<{ id: string; title: string } | null>(null);
   const [previewReceiptTx, setPreviewReceiptTx] = useState<Transaction | null>(null);
+  const [isGeminiSheetOpen, setIsGeminiSheetOpen] = useState(false);
 
   // Project Switcher & Management states
   const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
@@ -3361,6 +3366,7 @@ export default function WorkspacePage() {
         onExportCsv={store.exportLedgerCSV}
         onEditSchedule={() => setIsCallSheetModalOpen(true)}
         onPrintWrap={() => window.print()}
+        onOpenAiAssistant={() => setIsGeminiSheetOpen(true)}
       />
 
       {/* ========================================================================= */}
@@ -4444,6 +4450,27 @@ export default function WorkspacePage() {
         comments={store.comments}
         onAddComment={(entityId, author, message) => {
           store.addComment(entityId, author, message);
+        }}
+      />
+
+      {/* AI Assistant Mobile Bottom Sheet (Gemini 2.0 Flash BYOK) */}
+      <GeminiAssistantSheet
+        isOpen={isGeminiSheetOpen}
+        onClose={() => setIsGeminiSheetOpen(false)}
+        appContext={{
+          projectName: store.project.name,
+          projectType: "Feature Film",
+          activeTab: activeTab,
+          totalBudget: store.project.totalBudget,
+          totalSpent: totalSpent,
+          activeAlertsCount: activeAlertsCount,
+          recentTransactions: store.transactions.slice(0, 5).map((tx) => ({
+            date: tx.loggedAt,
+            description: tx.description,
+            amount: tx.amount,
+            department: tx.departmentName,
+            status: tx.status,
+          })),
         }}
       />
 
