@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import BottomSheet from "./BottomSheet";
 import MarkdownRenderer from "./MarkdownRenderer";
+import VoiceInput from "./VoiceInput";
 import {
   Sparkles,
   Send,
@@ -68,6 +69,7 @@ export default function GeminiAssistantSheet({
   const [includeContext, setIncludeContext] = useState(true);
   const [includeFinancials, setIncludeFinancials] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(true);
+  const [isVoiceOpen, setIsVoiceOpen] = useState(false);
 
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -372,54 +374,69 @@ export default function GeminiAssistantSheet({
           })}
         </div>
 
-        {/* Input Bar — iOS anti-zoom text (16px font-size minimum) */}
+        {/* Input Bar — iOS anti-zoom text (16px font-size minimum) or VoiceInput */}
         <div className="p-3 sm:p-4 bg-[#0a0a0a] border-t border-white/[0.08] shrink-0">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSendMessage();
-            }}
-            className="flex items-center gap-2"
-          >
-            {/* Voice input button placeholder (Tier 1 Web Speech / Tier 2 Audio) */}
-            <button
-              type="button"
-              id="btn-gemini-voice"
-              data-testid="btn-gemini-voice"
-              onClick={() => {
-                triggerHaptic("medium");
-                if (onVoiceClick) {
-                  onVoiceClick();
+          {isVoiceOpen ? (
+            <VoiceInput
+              isOpen={isVoiceOpen}
+              onClose={() => setIsVoiceOpen(false)}
+              onTranscript={(text, autoSend) => {
+                setInputText(text);
+                setIsVoiceOpen(false);
+                if (autoSend) {
+                  setTimeout(() => handleSendMessage(text), 100);
                 }
               }}
-              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-[#9ca3af] hover:text-[#fdfdfd] transition-colors"
-              aria-label="Input Suara"
-            >
-              <Mic className="w-4 h-4" />
-            </button>
-
-            <input
-              ref={inputRef}
-              id="gemini-chat-input"
-              data-testid="gemini-chat-input"
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              placeholder="Tanyakan jadwal syuting, analisis anggaran..."
-              className="flex-1 bg-[#161616] border border-white/[0.1] rounded-xl px-4 min-h-[44px] text-[16px] sm:text-xs text-[#fdfdfd] placeholder-[#9ca3af] focus:outline-none focus:border-[var(--color-primary,#ff1e42)] transition-colors"
             />
-
-            <button
-              type="submit"
-              id="btn-gemini-send"
-              data-testid="btn-gemini-send"
-              disabled={!inputText.trim() || isStreaming}
-              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl bg-[var(--color-primary,#ff1e42)] hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed text-white shadow-md transition-all active:scale-95"
-              aria-label="Kirim Pesan"
+          ) : (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSendMessage();
+              }}
+              className="flex items-center gap-2"
             >
-              <Send className="w-4 h-4" />
-            </button>
-          </form>
+              <button
+                type="button"
+                id="btn-gemini-voice"
+                data-testid="btn-gemini-voice"
+                onClick={() => {
+                  triggerHaptic("medium");
+                  if (onVoiceClick) {
+                    onVoiceClick();
+                  } else {
+                    setIsVoiceOpen(true);
+                  }
+                }}
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-[#9ca3af] hover:text-[#fdfdfd] transition-colors"
+                aria-label="Input Suara"
+              >
+                <Mic className="w-4 h-4" />
+              </button>
+
+              <input
+                ref={inputRef}
+                id="gemini-chat-input"
+                data-testid="gemini-chat-input"
+                type="text"
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder="Tanyakan jadwal syuting, analisis anggaran..."
+                className="flex-1 bg-[#161616] border border-white/[0.1] rounded-xl px-4 min-h-[44px] text-[16px] sm:text-xs text-[#fdfdfd] placeholder-[#9ca3af] focus:outline-none focus:border-[var(--color-primary,#ff1e42)] transition-colors"
+              />
+
+              <button
+                type="submit"
+                id="btn-gemini-send"
+                data-testid="btn-gemini-send"
+                disabled={!inputText.trim() || isStreaming}
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl bg-[var(--color-primary,#ff1e42)] hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed text-white shadow-md transition-all active:scale-95"
+                aria-label="Kirim Pesan"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </form>
+          )}
         </div>
       </div>
     </BottomSheet>
