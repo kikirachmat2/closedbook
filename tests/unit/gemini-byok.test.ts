@@ -143,6 +143,97 @@ describe("Gemini BYOK Client", () => {
     }
   });
 
+  it("handles SAFETY content filter block", async () => {
+    const mockSSE = [
+      'data: {"candidates":[{"finishReason":"SAFETY","content":{"parts":[]}}]}\n\n',
+    ].join("");
+
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode(mockSSE));
+        controller.close();
+      },
+    });
+
+    vi.spyOn(global, "fetch").mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      body: stream,
+    } as any);
+
+    const generator = streamGeminiContent({
+      apiKey: "valid-key",
+      messages: [{ role: "user", parts: [{ text: "unsafe prompt" }] }],
+    });
+
+    try {
+      await generator.next();
+      expect.fail("Should have thrown SAFETY_BLOCKED");
+    } catch (err: any) {
+      expect(err).toBeInstanceOf(GeminiError);
+      expect(err.code).toBe("SAFETY_BLOCKED");
+    }
+  });
+
+  it("handles network failure / offline errors", async () => {
+    vi.spyOn(global, "fetch").mockRejectedValueOnce(new TypeError("Failed to fetch"));
+
+    const generator = streamGeminiContent({
+      apiKey: "valid-key",
+      messages: [{ role: "user", parts: [{ text: "test" }] }],
+    });
+
+    try {
+      await generator.next();
+      expect.fail("Should have thrown NETWORK_ERROR");
+    } catch (err: any) {
+      expect(err).toBeInstanceOf(GeminiError);
+      expect(err.code).toBe("NETWORK_ERROR");
+    }
+  });
+
+  it("handles abort controller signal cleanly", async () => {
+    const abortController = new AbortController();
+    abortController.abort();
+
+    vi.spyOn(global, "fetch").mockRejectedValueOnce({
+      name: "AbortError",
+      message: "The operation was aborted.",
+    });
+
+    const generator = streamGeminiContent({
+      apiKey: "valid-key",
+      messages: [{ role: "user", parts: [{ text: "test" }] }],
+      abortSignal: abortController.signal,
+    });
+
+    await expect(generator.next()).rejects.toMatchObject({
+      name: "AbortError",
+    });
+  });
+
+  it("testGeminiApiKey returns success true when valid response", async () => {
+    const mockSSE = 'data: {"candidates":[{"content":{"parts":[{"text":"pong"}]}}]}\n\n';
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode(mockSSE));
+        controller.close();
+      },
+    });
+
+    vi.spyOn(global, "fetch").mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      body: stream,
+    } as any);
+
+    const res = await testGeminiApiKey("good-key");
+    expect(res.success).toBe(true);
+    expect(res.message).toContain("berhasil");
+  });
+
   it("testGeminiApiKey returns success false on error", async () => {
     vi.spyOn(global, "fetch").mockResolvedValueOnce({
       ok: false,
