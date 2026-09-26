@@ -51,6 +51,17 @@ export interface TelemetryCounterRecord {
   updatedAt: number;
 }
 
+export interface DocumentGeneratedRecord {
+  id: string;
+  projectId: string;
+  type: "ledger" | "call-sheet" | "wrap-report";
+  title: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  generatedAt: string;
+}
+
 export class ClosedBookDB extends Dexie {
   projects!: Table<Project, string>;
   transactions!: Table<Transaction & { projectId: string }, string>;
@@ -65,6 +76,7 @@ export class ClosedBookDB extends Dexie {
   sync_state!: Table<SyncStateRecord, string>;
   error_logs!: Table<ErrorLogRecord, number>;
   telemetry_counters!: Table<TelemetryCounterRecord, string>;
+  documents_generated!: Table<DocumentGeneratedRecord, string>;
 
   constructor(databaseName = "ClosedBookDB") {
     super(databaseName);
@@ -84,6 +96,11 @@ export class ClosedBookDB extends Dexie {
       sync_state: "projectId, lastSyncedAt",
       error_logs: "++id, timestamp, level, resolved",
       telemetry_counters: "id, key, period, updatedAt",
+    });
+
+    // Version 2 Schema Definition: Track client-generated documents
+    this.version(2).stores({
+      documents_generated: "id, projectId, type, generatedAt, [projectId+type]",
     });
   }
 }

@@ -35,6 +35,10 @@ const EmptyState = dynamic(() => import("@/components/mobile/EmptyState"), {
   ssr: false,
   loading: () => null,
 });
+const RecentDocumentsSection = dynamic(() => import("@/components/workspace/RecentDocumentsSection"), {
+  ssr: false,
+  loading: () => <div className="surface-panel p-6 h-32 animate-pulse" />,
+});
 import {
   LayoutDashboard,
   Receipt,
@@ -1576,17 +1580,11 @@ export default function WorkspacePage() {
           </AnimatePresence>
 
           {/* Dismissible Demo Banner for Seed Data */}
-          <AnimatePresence>
-            {showDemoBanner && (
-              <m.div
-                key="workspace-demo-banner"
-                id="workspace-demo-banner"
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, height: 0, overflow: "hidden", marginBottom: 0, transition: { duration: 0.18 } }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className="surface-overlay p-3.5 sm:p-4 rounded-xl border border-sky-500/30 bg-sky-500/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md mb-6"
-              >
+          {showDemoBanner && (
+            <div
+              id="workspace-demo-banner"
+              className="surface-overlay p-3.5 sm:p-4 rounded-xl border border-sky-500/30 bg-sky-500/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md mb-6 transition-all duration-200"
+            >
                 <div className="flex items-start sm:items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-sky-400 shrink-0">
                     <Film className="w-4 h-4" />
@@ -1623,9 +1621,8 @@ export default function WorkspacePage() {
                     <X className="w-4 h-4" />
                   </button>
                 </div>
-              </m.div>
-            )}
-          </AnimatePresence>
+            </div>
+          )}
 
           {/* Proactive Heartbeat Reminder Banner */}
           <AnimatePresence>
@@ -2148,6 +2145,9 @@ export default function WorkspacePage() {
                   )}
                 </AnimatePresence>
               </div>
+
+              {/* Dokumen Produksi Terbaru (T3.4) */}
+              <RecentDocumentsSection projectId={store.project.id} />
             </div>
           )}
 
