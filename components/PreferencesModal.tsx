@@ -4,6 +4,15 @@ import React, { useState, useEffect } from "react";
 import { usePreferences, CurrencyCode, LanguageCode, ThemeCode, ListDensity } from "@/lib/preferences";
 import { X, Check, Globe, DollarSign, Palette, Sparkles, Bell, ExternalLink, Eye, EyeOff, RefreshCw, CheckCircle2, AlertCircle, LayoutList } from "lucide-react";
 
+import { testGeminiApiKey } from "@/lib/ai/gemini-client";
+import {
+  saveGeminiApiKey,
+  getGeminiApiKey,
+  removeGeminiApiKey,
+  getGeminiKeyStatus,
+  setGeminiKeyStatus,
+} from "@/lib/ai/gemini-key-storage";
+
 export default function PreferencesModal() {
   const {
     isSettingsOpen,
@@ -34,13 +43,29 @@ export default function PreferencesModal() {
 
   const [tempKey, setTempKey] = useState(geminiApiKey || "");
   const [showKey, setShowKey] = useState(false);
-  const [testStatus, setTestStatus] = useState<"idle" | "testing" | "success" | "invalid" | "network_error">("idle");
+  const [testStatus, setTestStatus] = useState<"idle" | "testing" | "success" | "invalid">("idle");
   const [testErrorMsg, setTestErrorMsg] = useState<string | null>(null);
+  const [keyStatus, setKeyStatusState] = useState<"active" | "invalid" | "none">("none");
 
   useEffect(() => {
-    setTempKey(geminiApiKey || "");
-    setTestStatus("idle");
-    setTestErrorMsg(null);
+    let isMounted = true;
+    async function loadKey() {
+      const stored = await getGeminiApiKey();
+      const current = stored || geminiApiKey || "";
+      if (isMounted) {
+        setTempKey(current);
+        const status = getGeminiKeyStatus();
+        setKeyStatusState(current ? status : "none");
+        setTestStatus("idle");
+        setTestErrorMsg(null);
+      }
+    }
+    if (isSettingsOpen) {
+      loadKey();
+    }
+    return () => {
+      isMounted = false;
+    };
   }, [geminiApiKey, isSettingsOpen]);
 
   const handleTestConnection = async () => {
@@ -48,22 +73,27 @@ export default function PreferencesModal() {
     if (!keyToTest) return;
     setTestStatus("testing");
     setTestErrorMsg(null);
-    try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash?key=${encodeURIComponent(keyToTest)}`
-      );
-      if (res.ok) {
-        setTestStatus("success");
-      } else {
-        const data = await res.json().catch(() => null);
-        const msg = data?.error?.message || t("keyInvalid");
-        setTestStatus("invalid");
-        setTestErrorMsg(msg);
-      }
-    } catch {
-      setTestStatus("network_error");
-      setTestErrorMsg(t("keyNetworkError"));
+
+    const result = await testGeminiApiKey(keyToTest);
+    if (result.success) {
+      setTestStatus("success");
+      setKeyStatusState("active");
+      setGeminiKeyStatus("active");
+    } else {
+      setTestStatus("invalid");
+      setKeyStatusState("invalid");
+      setGeminiKeyStatus("invalid");
+      setTestErrorMsg(result.message);
     }
+  };
+
+  const handleRemoveKey = async () => {
+    await removeGeminiApiKey();
+    setGeminiApiKey("");
+    setTempKey("");
+    setTestStatus("idle");
+    setTestErrorMsg(null);
+    setKeyStatusState("none");
   };
 
   if (!isSettingsOpen) return null;
@@ -81,7 +111,7 @@ export default function PreferencesModal() {
               <h2 className="text-base sm:text-lg font-semibold text-[var(--color-paper,#fdfdfd)]">
                 {t("settingsTitle")}
               </h2>
-              <p className="text-xs text-[var(--color-stone,#737373)] mt-0.5">
+              <p className="text-xs text-[var(--color-stone,#9ca3af)] mt-0.5">
                 {t("settingsSub")}
               </p>
             </div>
@@ -89,7 +119,7 @@ export default function PreferencesModal() {
           <button
             onClick={() => setIsSettingsOpen(false)}
             aria-label="Close preferences"
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-[var(--color-stone,#737373)] hover:text-[var(--color-paper,#fdfdfd)] hover:bg-white/[0.05] transition-colors"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-[var(--color-stone,#9ca3af)] hover:text-[var(--color-paper,#fdfdfd)] hover:bg-white/[0.05] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -100,7 +130,7 @@ export default function PreferencesModal() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <DollarSign className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-stone,#737373)]">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-stone,#9ca3af)]">
                 {t("currency")} ({currencies[currency].symbol} - {currencies[currency].name})
               </h3>
             </div>
@@ -123,9 +153,9 @@ export default function PreferencesModal() {
                       <div>
                         <div className="text-xs font-semibold text-[var(--color-paper,#fdfdfd)] flex items-center gap-1">
                           {c.code}
-                          <span className="font-mono text-[11px] text-[var(--color-stone,#737373)]">({c.symbol})</span>
+                          <span className="font-mono text-[11px] text-[var(--color-stone,#9ca3af)]">({c.symbol})</span>
                         </div>
-                        <div className="text-[10px] text-[var(--color-stone,#737373)] truncate max-w-[90px]">
+                        <div className="text-[10px] text-[var(--color-stone,#9ca3af)] truncate max-w-[90px]">
                           {c.name}
                         </div>
                       </div>
@@ -145,7 +175,7 @@ export default function PreferencesModal() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Globe className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-stone,#737373)]">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-stone,#9ca3af)]">
                 {t("language")} ({languages[language].nativeName})
               </h3>
             </div>
@@ -169,7 +199,7 @@ export default function PreferencesModal() {
                         <div className="text-xs font-semibold text-[var(--color-paper,#fdfdfd)]">
                           {lang.nativeName}
                         </div>
-                        <div className="text-[10px] text-[var(--color-stone,#737373)] uppercase">
+                        <div className="text-[10px] text-[var(--color-stone,#9ca3af)] uppercase">
                           {lang.name}
                         </div>
                       </div>
@@ -189,7 +219,7 @@ export default function PreferencesModal() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Palette className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-stone,#737373)]">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-stone,#9ca3af)]">
                 {t("theme")} ({themes[theme].name})
               </h3>
             </div>
@@ -235,7 +265,7 @@ export default function PreferencesModal() {
                         </div>
                       )}
                     </div>
-                    <p className="text-[11px] text-[var(--color-stone,#737373)] line-clamp-2">
+                    <p className="text-[11px] text-[var(--color-stone,#9ca3af)] line-clamp-2">
                       {th.description}
                     </p>
                   </button>
@@ -248,11 +278,11 @@ export default function PreferencesModal() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <LayoutList className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-stone,#737373)]">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-stone,#9ca3af)]">
                 {t("listDensity")}
               </h3>
             </div>
-            <p className="text-[11px] text-[var(--color-stone,#737373)] mb-3">
+            <p className="text-[11px] text-[var(--color-stone,#9ca3af)] mb-3">
               {t("listDensityDesc")}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -300,12 +330,12 @@ export default function PreferencesModal() {
                           <Check className="w-2.5 h-2.5 stroke-[3]" />
                         </div>
                       ) : (
-                        <span className="text-[10px] text-[var(--color-stone,#737373)] font-mono">
+                        <span className="text-[10px] text-[var(--color-stone,#9ca3af)] font-mono">
                           {d.height}
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] text-[var(--color-stone,#737373)] line-clamp-2">
+                    <p className="text-[11px] text-[var(--color-stone,#9ca3af)] line-clamp-2">
                       {d.desc}
                     </p>
                   </button>
@@ -318,7 +348,7 @@ export default function PreferencesModal() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Bell className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-stone,#737373)]">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-stone,#9ca3af)]">
                 {t("notificationsAndReminders")}
               </h3>
             </div>
@@ -329,7 +359,7 @@ export default function PreferencesModal() {
                   <div className="text-xs font-semibold text-[var(--color-paper,#fdfdfd)]">
                     {t("enableInAppReminders")}
                   </div>
-                  <div className="text-[11px] text-[var(--color-stone,#737373)] mt-0.5 leading-relaxed">
+                  <div className="text-[11px] text-[var(--color-stone,#9ca3af)] mt-0.5 leading-relaxed">
                     {t("inAppRemindersDesc")}
                   </div>
                 </div>
@@ -356,7 +386,7 @@ export default function PreferencesModal() {
                   <div className="text-xs font-semibold text-[var(--color-paper,#fdfdfd)]">
                     {t("enableWebNotifications")}
                   </div>
-                  <div className="text-[11px] text-[var(--color-stone,#737373)] mt-0.5 leading-relaxed">
+                  <div className="text-[11px] text-[var(--color-stone,#9ca3af)] mt-0.5 leading-relaxed">
                     {t("webNotificationsDesc")}
                   </div>
                 </div>
@@ -395,7 +425,7 @@ export default function PreferencesModal() {
                   <div className="text-xs font-semibold text-[var(--color-paper,#fdfdfd)]">
                     {t("hapticFeedback")}
                   </div>
-                  <div className="text-[11px] text-[var(--color-stone,#737373)] leading-relaxed">
+                  <div className="text-[11px] text-[var(--color-stone,#9ca3af)] leading-relaxed">
                     {t("hapticFeedbackDesc")}
                   </div>
                 </div>
@@ -422,7 +452,7 @@ export default function PreferencesModal() {
                   <div className="text-xs font-semibold text-[var(--color-paper,#fdfdfd)]">
                     {t("fabPlacement")}
                   </div>
-                  <div className="text-[11px] text-[var(--color-stone,#737373)] leading-relaxed">
+                  <div className="text-[11px] text-[var(--color-stone,#9ca3af)] leading-relaxed">
                     {t("fabPlacementDesc")}
                   </div>
                 </div>
@@ -434,7 +464,7 @@ export default function PreferencesModal() {
                     className={`min-h-[44px] px-3 py-2 rounded-xl text-xs font-medium border flex items-center justify-center gap-2 transition-all ${
                       fabPosition === "right"
                         ? "bg-[var(--accent-badge-bg,rgba(255,30,66,0.1))] border-[var(--color-primary,#ff1e42)] text-[var(--color-paper,#fdfdfd)]"
-                        : "surface-overlay border-white/[0.08] text-[var(--color-stone,#737373)] hover:text-white"
+                        : "surface-overlay border-white/[0.08] text-[var(--color-stone,#9ca3af)] hover:text-white"
                     }`}
                   >
                     <span>👉 {t("fabRight")}</span>
@@ -446,7 +476,7 @@ export default function PreferencesModal() {
                     className={`min-h-[44px] px-3 py-2 rounded-xl text-xs font-medium border flex items-center justify-center gap-2 transition-all ${
                       fabPosition === "left"
                         ? "bg-[var(--accent-badge-bg,rgba(255,30,66,0.1))] border-[var(--color-primary,#ff1e42)] text-[var(--color-paper,#fdfdfd)]"
-                        : "surface-overlay border-white/[0.08] text-[var(--color-stone,#737373)] hover:text-white"
+                        : "surface-overlay border-white/[0.08] text-[var(--color-stone,#9ca3af)] hover:text-white"
                     }`}
                   >
                     <span>👈 {t("fabLeft")}</span>
@@ -456,16 +486,16 @@ export default function PreferencesModal() {
             </div>
           </div>
 
-          {/* 5. AI RECEIPT SCANNER (GEMINI VISION BYOK) */}
-          <div>
+          {/* 5. AI ASSISTANT (GEMINI 2.0 FLASH BYOK) */}
+          <div data-testid="settings-ai-section">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="w-4 h-4 text-[var(--color-primary,#ff1e42)]" />
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-stone,#737373)]">
-                {t("geminiScanner")}
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-stone,#9ca3af)]">
+                AI Assistant (Gemini BYOK)
               </h3>
             </div>
-            <p className="text-[11px] text-[var(--color-stone,#737373)] leading-relaxed mb-2.5">
-              {t("geminiApiKeyDesc")}
+            <p className="text-[11px] text-[var(--color-stone,#9ca3af)] leading-relaxed mb-2.5">
+              ClosedBook Assistant ditenagai oleh model Google Gemini 2.0 Flash langsung dari perangkat Anda (Zero-Server-Retention, ADR-011). Kunci API dienkripsi lokal dengan WebCrypto AES-GCM.
             </p>
 
             <a
@@ -474,33 +504,58 @@ export default function PreferencesModal() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-xs text-[var(--color-primary,#ff1e42)] hover:underline mb-3 font-medium"
             >
-              <span>{t("getFreeGeminiKey")}</span>
+              <span>Cara dapat API key gratis →</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
 
             <div className="surface-overlay p-3.5 sm:p-4 rounded-[14px] border border-white/[0.06] space-y-3">
               <div>
-                <label htmlFor="gemini-api-key-input" className="block text-[11px] font-medium text-[var(--color-paper,#fdfdfd)] mb-1.5">
-                  {t("geminiApiKeyLabel")}
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label htmlFor="gemini-api-key-input" className="block text-[11px] font-medium text-[var(--color-paper,#fdfdfd)]">
+                    Gemini API Key
+                  </label>
+                  {/* Status Indicator: Key active / Key invalid / No key set */}
+                  <div id="gemini-key-status-indicator" data-testid="gemini-key-status-indicator">
+                    {keyStatus === "active" ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-[#10b981] font-medium bg-[#10b981]/10 px-2 py-0.5 rounded-full border border-[#10b981]/20">
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>Key active</span>
+                      </span>
+                    ) : keyStatus === "invalid" ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-[#ef4444] font-medium bg-[#ef4444]/10 px-2 py-0.5 rounded-full border border-[#ef4444]/20">
+                        <AlertCircle className="w-3 h-3" />
+                        <span>Key invalid</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-[#9ca3af] font-medium bg-white/[0.05] px-2 py-0.5 rounded-full border border-white/[0.1]">
+                        <span>No key set</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
+
                 <div className="relative">
                   <input
                     id="gemini-api-key-input"
+                    data-testid="gemini-api-key-input"
                     type={showKey ? "text" : "password"}
                     value={tempKey}
                     onChange={(e) => {
                       setTempKey(e.target.value);
                       setTestStatus("idle");
                       setTestErrorMsg(null);
+                      if (!e.target.value.trim()) {
+                        setKeyStatusState("none");
+                      }
                     }}
-                    placeholder={t("keyPlaceholder")}
+                    placeholder="AIzaSy..."
                     className="w-full bg-[#181818] border border-white/[0.1] rounded-xl px-3.5 pr-20 min-h-[44px] text-xs text-[#fdfdfd] placeholder-[#525252] font-mono focus:outline-none focus:border-[var(--color-primary,#ff1e42)] transition-colors"
                   />
                   <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                     <button
                       type="button"
                       onClick={() => setShowKey(!showKey)}
-                      className="p-1.5 rounded-lg text-[#737373] hover:text-[#fdfdfd] transition-colors"
+                      className="p-1.5 rounded-lg text-[#9ca3af] hover:text-[#fdfdfd] transition-colors"
                       aria-label={showKey ? "Hide API key" : "Show API key"}
                     >
                       {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -512,8 +567,9 @@ export default function PreferencesModal() {
                           setTempKey("");
                           setTestStatus("idle");
                           setTestErrorMsg(null);
+                          setKeyStatusState("none");
                         }}
-                        className="p-1.5 rounded-lg text-[#737373] hover:text-[#fdfdfd] transition-colors"
+                        className="p-1.5 rounded-lg text-[#9ca3af] hover:text-[#fdfdfd] transition-colors"
                         aria-label="Clear API key"
                       >
                         <X className="w-4 h-4" />
@@ -521,46 +577,42 @@ export default function PreferencesModal() {
                     )}
                   </div>
                 </div>
+                {testErrorMsg && (
+                  <p className="text-[11px] text-[#ef4444] mt-1.5 leading-tight">{testErrorMsg}</p>
+                )}
               </div>
 
-              {/* Action buttons and Status */}
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                <button
-                  type="button"
-                  id="btn-test-gemini-key"
-                  disabled={!tempKey.trim() || testStatus === "testing"}
-                  onClick={handleTestConnection}
-                  className="btn-ghost-pill text-xs min-h-[38px] px-3.5 flex items-center gap-2 border border-white/[0.1] hover:bg-white/[0.06] disabled:opacity-40 disabled:cursor-not-allowed text-[#fdfdfd]"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 text-[var(--color-primary,#ff1e42)] ${testStatus === "testing" ? "animate-spin" : ""}`} />
-                  <span>{testStatus === "testing" ? t("testingConnection") : t("testConnection")}</span>
-                </button>
+              {/* Action buttons: [Test Connection] [Remove Key] */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-white/[0.04]">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    id="btn-test-gemini-key"
+                    data-testid="btn-test-gemini-key"
+                    disabled={!tempKey.trim() || testStatus === "testing"}
+                    onClick={handleTestConnection}
+                    className="btn-ghost-pill text-xs min-h-[38px] px-3.5 flex items-center gap-2 border border-white/[0.1] hover:bg-white/[0.06] disabled:opacity-40 disabled:cursor-not-allowed text-[#fdfdfd]"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 text-[var(--color-primary,#ff1e42)] ${testStatus === "testing" ? "animate-spin" : ""}`} />
+                    <span>{testStatus === "testing" ? "Menguji..." : "Test Connection"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    id="btn-remove-gemini-key"
+                    data-testid="btn-remove-gemini-key"
+                    disabled={!tempKey.trim() && keyStatus === "none"}
+                    onClick={handleRemoveKey}
+                    className="btn-ghost-pill text-xs min-h-[38px] px-3.5 flex items-center gap-1.5 border border-white/[0.1] hover:bg-white/[0.06] hover:text-[#ef4444] disabled:opacity-40 disabled:cursor-not-allowed text-[#9ca3af]"
+                  >
+                    <span>Remove Key</span>
+                  </button>
+                </div>
 
                 {testStatus === "success" && (
-                  <div id="gemini-key-status-badge" className="flex items-center gap-1.5 text-xs text-[#10b981] font-medium bg-[#10b981]/10 px-2.5 py-1 rounded-full border border-[#10b981]/20">
+                  <div className="flex items-center gap-1.5 text-xs text-[#10b981] font-medium bg-[#10b981]/10 px-2.5 py-1 rounded-full border border-[#10b981]/20">
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>{t("keyConnected")}</span>
-                  </div>
-                )}
-
-                {testStatus === "invalid" && (
-                  <div id="gemini-key-status-badge" className="flex items-center gap-1.5 text-xs text-[#ef4444] font-medium bg-[#ef4444]/10 px-2.5 py-1 rounded-full border border-[#ef4444]/20">
-                    <AlertCircle className="w-3.5 h-3.5" />
-                    <span>{testErrorMsg || t("keyInvalid")}</span>
-                  </div>
-                )}
-
-                {testStatus === "network_error" && (
-                  <div id="gemini-key-status-badge" className="flex items-center gap-1.5 text-xs text-[#f59e0b] font-medium bg-[#f59e0b]/10 px-2.5 py-1 rounded-full border border-[#f59e0b]/20">
-                    <AlertCircle className="w-3.5 h-3.5" />
-                    <span>{testErrorMsg || t("keyNetworkError")}</span>
-                  </div>
-                )}
-
-                {testStatus === "idle" && geminiApiKey && tempKey === geminiApiKey && (
-                  <div id="gemini-key-status-badge" className="flex items-center gap-1.5 text-xs text-[#a3a3a3] font-mono">
-                    <span className="w-2 h-2 rounded-full bg-[#10b981]" />
-                    <span>Configured</span>
+                    <span>Koneksi Berhasil</span>
                   </div>
                 )}
               </div>
@@ -572,9 +624,14 @@ export default function PreferencesModal() {
         <div className="mt-7 pt-4 border-t border-white/[0.08] flex items-center justify-end">
           <button
             id="btn-save-preferences"
-            onClick={() => {
-              if (tempKey !== geminiApiKey) {
-                setGeminiApiKey(tempKey);
+            data-testid="btn-save-preferences"
+            onClick={async () => {
+              if (tempKey.trim()) {
+                await saveGeminiApiKey(tempKey.trim());
+                setGeminiApiKey(tempKey.trim());
+              } else {
+                await removeGeminiApiKey();
+                setGeminiApiKey("");
               }
               setIsSettingsOpen(false);
             }}
